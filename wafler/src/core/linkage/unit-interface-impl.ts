@@ -1,6 +1,6 @@
 import { NotePort, UnitInterface } from "../../unit-types";
-import { HostSystem } from "../core/host-system";
-import { WebAudioActionScheduler } from "../core/webaudio-action-scheduler";
+import { HostSystem } from "../host-system/host-system";
+import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
   HsAudioInputPort,

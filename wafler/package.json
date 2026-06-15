@@ -1,14 +1,14 @@
 {
   "name": "wafler-host",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "WebAudio host framework for the browser based DAW.",
   "author": "yahiro",
   "license": "MIT",
   "exports": {
-    "./host": {
-      "types": "./dist/host/index.d.mts",
-      "default": "./dist/host/index.mjs"
+    "./core": {
+      "types": "./dist/core/index.d.mts",
+      "default": "./dist/core/index.mjs"
     },
     "./react": {
       "types": "./dist/react/index.d.mts",

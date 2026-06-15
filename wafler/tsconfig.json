@@ -11,12 +11,5 @@
     "skipLibCheck": true,
     "preserveSymlinks": true
   },
-  "include": [
-    "src/host",
-    "react",
-    "src/utils",
-    "src/unit-types",
-    "src/unit-helper",
-    "src/vite-plugin"
-  ]
+  "include": ["src"]
 }

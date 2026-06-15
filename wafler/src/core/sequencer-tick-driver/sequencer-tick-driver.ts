@@ -1,4 +1,4 @@
-import { HostSystem } from "../core/host-system";
+import { HostSystem } from "../host-system/host-system";
 import { HsUnitInstance } from "../linkage/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 

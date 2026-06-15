@@ -1,4 +1,4 @@
-import { HostStateBus } from "../core/host-state-bus";
+import { HostStateBus } from "../host-system/host-state-bus";
 import { DestinationCode, HsUnitInstance } from "./types";
 
 export type ConnectionManager = {

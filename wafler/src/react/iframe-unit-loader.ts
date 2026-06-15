@@ -1,5 +1,5 @@
-import { HostSystem, HsUnitInstance } from "../host";
-import { createUnitInterface } from "../host/linkage/unit-interface-impl";
+import { HostSystem, HsUnitInstance } from "../core";
+import { createUnitInterface } from "../core/linkage/unit-interface-impl";
 import { UnitInterface, UnitInterfaceProvider } from "../unit-types";
 export function loadIframeUnitInstance(
   hostSystem: HostSystem,

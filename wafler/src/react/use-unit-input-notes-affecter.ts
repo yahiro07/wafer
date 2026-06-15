@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { HsUnitInstance } from "../host";
+import { HsUnitInstance } from "../core";
 
 export function useUnitInputNotesAffecter(
   unitInstance: HsUnitInstance | null,

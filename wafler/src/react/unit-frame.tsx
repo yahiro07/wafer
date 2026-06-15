@@ -1,5 +1,5 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
-import { HsUnitInstance } from "../host/linkage/types";
+import { HsUnitInstance } from "../core/linkage/types";
 import { mergeStyleWithFrameSize } from "../utils/frame-size-helper";
 import { useHostAppContext } from "./host-app-context";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
