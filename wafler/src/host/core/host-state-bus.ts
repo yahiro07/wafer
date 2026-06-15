@@ -1,0 +1,52 @@
+import { createEventPort, EventPort } from "../../utils/event-port";
+import { HsAudioInputPort, HsUnitInstance } from "../linkage/types";
+
+export type HostSystemEvent =
+  | { type: "loadStarted" }
+  | { type: "loadCompleted" };
+// | { type: "unitAdded"; unitInstance: HsUnitInstance }
+// | { type: "unitRemoved"; unitId: string };
+// | { type: "unitsAdded"; units: HsUnitInstance[] }
+// | { type: "unitsRemoved"; unitIds: string[] };
+
+export type HostStateBus = {
+  eventPort: EventPort<HostSystemEvent>;
+  audioContext: AudioContext;
+  masterGainNode: GainNode;
+  audioDestinationVirtualInputPort: HsAudioInputPort;
+  addUnit(unit: HsUnitInstance): void;
+  getUnit(unitId: string): HsUnitInstance | undefined;
+  getAllUnits(): HsUnitInstance[];
+  removeUnit(unitId: string): void;
+};
+
+export function createHostStateBus(audioContext: AudioContext): HostStateBus {
+  const eventPort = createEventPort<HostSystemEvent>();
+  const masterGainNode = audioContext.createGain();
+  masterGainNode.connect(audioContext.destination);
+  const audioDestinationVirtualInputPort: HsAudioInputPort = {
+    node: masterGainNode,
+  };
+  const units: Map<string, HsUnitInstance> = new Map();
+
+  return {
+    eventPort,
+    audioContext,
+    masterGainNode,
+    audioDestinationVirtualInputPort,
+    addUnit(unit: HsUnitInstance) {
+      units.set(unit.unitId, unit);
+      // eventPort.emit({ type: "unitAdded", unitInstance: unit });
+    },
+    getUnit(unitId: string) {
+      return units.get(unitId);
+    },
+    getAllUnits() {
+      return Array.from(units.values());
+    },
+    removeUnit(unitId: string) {
+      units.delete(unitId);
+      // eventPort.emit({ type: "unitRemoved", unitId });
+    },
+  };
+}

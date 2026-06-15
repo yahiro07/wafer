@@ -1,0 +1,76 @@
+{
+  "name": "wafler-host",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "WebAudio host framework for the browser based DAW.",
+  "author": "yahiro",
+  "license": "MIT",
+  "exports": {
+    "./host": {
+      "types": "./dist/host/index.d.mts",
+      "default": "./dist/host/index.mjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.mts",
+      "default": "./dist/react/index.mjs"
+    },
+    "./unit-types": {
+      "types": "./dist/unit-types/index.d.mts",
+      "default": "./dist/unit-types/index.mjs"
+    },
+    "./unit-helper": {
+      "types": "./dist/unit-helper/index.d.mts",
+      "default": "./dist/unit-helper/index.mjs"
+    },
+    "./vite-plugin": {
+      "types": "./dist/vite-plugin/index.d.mts",
+      "default": "./dist/vite-plugin/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yahiro07/webaudio-unit-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yahiro07/webaudio-unit-system/issues"
+  },
+  "homepage": "https://github.com/yahiro07/webaudio-unit-system#readme",
+  "keywords": [
+    "webaudio",
+    "plugin",
+    "framework",
+    "wafler",
+    "host",
+    "daw"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tsdown": "^0.22.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  }
+}
