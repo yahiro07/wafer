@@ -73,7 +73,7 @@ export function unitLoaderPlugin(options: {
   }
 
   return {
-    name: "wafler-vite-unit-loader-plugin",
+    name: "wafer-vite-unit-loader-plugin",
     configResolved(_config) {
       config = _config;
     },

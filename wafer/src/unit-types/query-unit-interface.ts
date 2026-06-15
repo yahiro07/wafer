@@ -1,6 +1,6 @@
 import { UnitInterface, UnitInterfaceProvider } from "./unit-interfaces";
 
-type VersionCode = "wafler-v01";
+type VersionCode = "wafer-v01";
 
 export function queryUnitInterface(
   versionCode: VersionCode,

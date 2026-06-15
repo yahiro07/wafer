@@ -30,7 +30,7 @@ export function loadIframeUnitInstance(
     win.unitInterface = unitInterface;
     win.queryUnitInterface = (versionCode: string) => {
       // console.log("iframe queryUnitInterface", { unitId, versionCode });
-      if (versionCode === "wafler-v01" || versionCode === "wus-v01") {
+      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
         return unitInterface;
       }
       // else if (versionCode === "wus-v01") {
@@ -47,9 +47,9 @@ export function loadIframeUnitInstance(
       //   unitId,
       //   versionCode,
       // });
-      if (versionCode === "wafler-v01" || versionCode === "wus-v01") {
+      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
       }
-      // else if (versionCode === "wafler-v01") {
+      // else if (versionCode === "wafer-v01") {
       //   // win.unitInterface = unitInterfaceV01 as any;
       // }
       else {

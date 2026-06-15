@@ -53,7 +53,7 @@ async function loadUnitElementClass(
     // });
     const item = setupContextMap.get(requestModuleUrl);
     if (item) {
-      if (versionCode === "wafler-v01" || versionCode === "wus-v01") {
+      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
         return item.unitInterface;
       }
       //  else if (versionCode === "wus-v02") {

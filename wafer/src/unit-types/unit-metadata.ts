@@ -7,7 +7,7 @@ export type UnitMetadata = {
   preferredSize: string; //w,h
   outputSignalTypes: string; //audio,note
   inputSignalTypes: string; //audio,note
-  protocol: "wafler-v01";
+  protocol: "wafer-v01";
   unitTypesVersion: string;
   integrationFormat: "iframe" | "webComponents";
 } & (
