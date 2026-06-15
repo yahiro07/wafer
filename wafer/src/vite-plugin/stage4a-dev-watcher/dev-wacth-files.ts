@@ -17,6 +17,8 @@ export function startWatchEntryFiles(
         const hasIndexJs = fs.existsSync(indexJsPath);
         if (!hasIndexHtml && hasIndexJs) {
           return { catalogKey: item.catalogKey, filePath: indexJsPath };
+        } else if (hasIndexHtml) {
+          return { catalogKey: item.catalogKey, filePath: indexHtmlPath };
         }
       }
       return undefined;
