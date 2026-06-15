@@ -1,7 +1,7 @@
 {
   "name": "wafer-host",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "WebAudio host framework for the browser based DAW.",
   "author": "yahiro",
   "license": "MIT",
