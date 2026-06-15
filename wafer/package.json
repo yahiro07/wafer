@@ -7,20 +7,20 @@
   "license": "MIT",
   "exports": {
     "./core": {
-      "types": "./dist/core/index.d.mts",
-      "default": "./dist/core/index.mjs"
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
     },
     "./react": {
-      "types": "./dist/react/index.d.mts",
-      "default": "./dist/react/index.mjs"
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
     },
     "./unit-types": {
-      "types": "./dist/unit-types/index.d.mts",
-      "default": "./dist/unit-types/index.mjs"
+      "types": "./dist/unit-types/index.d.ts",
+      "default": "./dist/unit-types/index.js"
     },
     "./unit-helper": {
-      "types": "./dist/unit-helper/index.d.mts",
-      "default": "./dist/unit-helper/index.mjs"
+      "types": "./dist/unit-helper/index.d.ts",
+      "default": "./dist/unit-helper/index.js"
     },
     "./vite-plugin": {
       "types": "./dist/vite-plugin/index.d.mts",
