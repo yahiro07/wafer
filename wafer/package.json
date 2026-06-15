@@ -33,12 +33,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yahiro07/webaudio-unit-system.git"
+    "url": "git+https://github.com/yahiro07/wafer.git"
   },
   "bugs": {
-    "url": "https://github.com/yahiro07/webaudio-unit-system/issues"
+    "url": "https://github.com/yahiro07/wafer/issues"
   },
-  "homepage": "https://github.com/yahiro07/webaudio-unit-system#readme",
+  "homepage": "https://github.com/yahiro07/wafer#readme",
   "keywords": [
     "webaudio",
     "plugin",
