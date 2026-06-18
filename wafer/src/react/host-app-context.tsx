@@ -5,8 +5,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { HostSystem } from "../core";
-import { createSequencerTickDriver } from "../core/sequencer-tick-driver/sequencer-tick-driver";
+import { createSequencerTickDriver, HostSystem } from "../core";
 
 type HostAppContextValue = {
   hostSystem: HostSystem;

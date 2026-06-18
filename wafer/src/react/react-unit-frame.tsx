@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { HsUnitInstance } from "../core/linkage/types";
+import { HsUnitInstance } from "../core";
 import { useHostAppContext } from "./host-app-context";
 import {
   instantiateReactUnit,
