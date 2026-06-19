@@ -30,8 +30,12 @@ export type HostSystem = {
   ): void;
   setMasterGain(gain: number): void;
   exportUnitStates(): HsUnitStateData[];
-  reserveImportUnitStates(unitStates: HsUnitStateData[]): void;
+  reserveImportUnitStates(
+    unitStates: HsUnitStateData[],
+    forNextBar?: boolean,
+  ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
+  flushPendingOperationsForNextBar(): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -51,6 +55,8 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
       };
     },
   };
+
+  let pendingOperationForNextBar: (() => void) | undefined;
 
   return {
     audioContext,
@@ -78,13 +84,23 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     exportUnitStates() {
       return unitPersistenceHandlers.exportUnitStates();
     },
-    reserveImportUnitStates(unitStates) {
+    reserveImportUnitStates(unitStates, forNextBar) {
       const op = () => unitPersistenceHandlers.importUnitStates(unitStates);
-      loadingManager.reserveUnitOperation({ type: "state", op });
+      if (forNextBar) {
+        pendingOperationForNextBar = op;
+      } else {
+        loadingManager.reserveUnitOperation({ type: "state", op });
+      }
     },
     emitMetaAttributes(attributes) {
       for (const unit of bus.getAllUnits()) {
         unit.hostCallbacks?.setMetaAttributes?.(attributes);
+      }
+    },
+    flushPendingOperationsForNextBar() {
+      if (pendingOperationForNextBar) {
+        pendingOperationForNextBar();
+        pendingOperationForNextBar = undefined;
       }
     },
   };

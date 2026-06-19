@@ -85,6 +85,10 @@ function processAllUnitsScheduling(
     ppqTo,
     bpm,
   );
+  if (crossingStepInfos.some((it) => it.stepIndex % 16 === 0)) {
+    hostSystem.flushPendingOperationsForNextBar();
+  }
+
   const units = hostSystem.getAllUnits();
 
   const priorityUnits = units.filter(
@@ -135,6 +139,7 @@ export function createSequencerTickDriver(
     stop() {
       core.stop();
       processAllUnitsStartStop(hostSystem, "stop");
+      hostSystem.flushPendingOperationsForNextBar();
     },
   };
 }
