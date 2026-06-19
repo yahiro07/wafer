@@ -14,7 +14,7 @@ type CrossingStepInfo = {
 };
 
 function getCrossingStepIndices(
-  startTime: number,
+  timeFrom: number,
   barFrom: number,
   barTo: number,
   bpm: number,
@@ -25,16 +25,11 @@ function getCrossingStepIndices(
   const crossingStepInfos: CrossingStepInfo[] = [];
   const stepDurationSec = 60 / bpm / 4;
   if (barFrom === 0) {
-    crossingStepInfos.push({
-      stepIndex: 0,
-      time: startTime,
-    });
+    crossingStepInfos.push({ stepIndex: 0, time: timeFrom });
   }
   for (let stepIndex = stepFrom + 1; stepIndex <= stepTo; stepIndex++) {
-    crossingStepInfos.push({
-      stepIndex,
-      time: startTime + stepIndex * stepDurationSec,
-    });
+    const time = timeFrom + (stepIndex - barFrom * 16) * stepDurationSec;
+    crossingStepInfos.push({ stepIndex, time });
   }
   return crossingStepInfos;
 }
@@ -51,7 +46,7 @@ function processAllUnitsStartStop(
 
 function processUnitsScheduling(
   units: HsUnitInstance[],
-  startTime: number,
+  timeFrom: number,
   barFrom: number,
   barTo: number,
   bpm: number,
@@ -68,19 +63,19 @@ function processUnitsScheduling(
     }
   }
   for (const unit of units) {
-    unit.clockHandlers?.processScheduling?.(startTime, barFrom, barTo, bpm);
+    unit.clockHandlers?.processScheduling?.(timeFrom, barFrom, barTo, bpm);
   }
 }
 
 function processAllUnitsScheduling(
   hostSystem: HostSystem,
-  startTime: number,
+  timeFrom: number,
   barFrom: number,
   barTo: number,
   bpm: number,
 ) {
   const crossingStepInfos = getCrossingStepIndices(
-    startTime,
+    timeFrom,
     barFrom,
     barTo,
     bpm,
@@ -99,7 +94,7 @@ function processAllUnitsScheduling(
   );
   processUnitsScheduling(
     priorityUnits,
-    startTime,
+    timeFrom,
     barFrom,
     barTo,
     bpm,
@@ -107,7 +102,7 @@ function processAllUnitsScheduling(
   );
   processUnitsScheduling(
     normalUnits,
-    startTime,
+    timeFrom,
     barFrom,
     barTo,
     bpm,
@@ -127,11 +122,11 @@ export function createSequencerTickDriver(
       tickFrameIndex = 0;
       processAllUnitsStartStop(hostSystem, "start");
       core.start({
-        processScheduling(startTime, barFrom, barTo, bpm) {
+        processScheduling(timeFrom, barFrom, barTo, bpm) {
           if (0) {
             console.log("host tick", tickFrameIndex);
           }
-          processAllUnitsScheduling(hostSystem, startTime, barFrom, barTo, bpm);
+          processAllUnitsScheduling(hostSystem, timeFrom, barFrom, barTo, bpm);
           tickFrameIndex++;
         },
       });

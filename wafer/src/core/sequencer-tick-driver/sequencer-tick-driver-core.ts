@@ -1,6 +1,6 @@
 export type SequencerCallbacks = {
   processScheduling(
-    startTime: number, //the value of audioContext.currentTime when playback started
+    timeFrom: number, //absolute time based on AudioContext.currentTime
     barFrom: number, //decimal bar position in song
     barTo: number, //decimal bar position in song
     bpm: number,
@@ -19,18 +19,6 @@ function mapTimeToBar(timeSec: number, bpm: number): number {
   return beats / 4;
 }
 
-function callSequencerScheduling(
-  sequencer: SequencerCallbacks,
-  startTime: number,
-  timeFrom: number,
-  timeTo: number,
-  bpm: number,
-) {
-  const barFrom = mapTimeToBar(timeFrom, bpm);
-  const barTo = mapTimeToBar(timeTo, bpm);
-  sequencer.processScheduling(startTime, barFrom, barTo, bpm);
-}
-
 export function createSequencerTickDriverCore(
   audioContext: AudioContext,
   intervalMs: number = 25,
@@ -43,37 +31,31 @@ export function createSequencerTickDriverCore(
 
   return {
     setBpm(bpm: number) {
-      state.bpm = bpm;
+      if (10 <= bpm && bpm <= 400) {
+        state.bpm = bpm;
+      }
     },
     start(sequencer: SequencerCallbacks) {
-      const startTime = audioContext.currentTime;
       // sequencer.handleStart?.();
 
-      const getRelativeTime = () => audioContext.currentTime - startTime;
+      let scheduledUntil = audioContext.currentTime;
+      let barPos = 0;
 
-      let timePos = 0;
-      {
-        const timePosNext = lookaheadSec;
-        callSequencerScheduling(
-          sequencer,
-          startTime,
-          timePos,
-          timePosNext,
-          state.bpm,
-        );
-        timePos = timePosNext;
+      function scheduleUntil(timeTo: number) {
+        const timeFrom = scheduledUntil;
+        const duration = timeTo - timeFrom;
+
+        const barPosNext = barPos + mapTimeToBar(duration, state.bpm);
+        sequencer.processScheduling(timeFrom, barPos, barPosNext, state.bpm);
+
+        scheduledUntil = timeTo;
+        barPos = barPosNext;
       }
+
+      scheduleUntil(audioContext.currentTime + lookaheadSec);
+
       timerId = setInterval(() => {
-        const relativeTime = getRelativeTime();
-        const timePosNext = relativeTime + lookaheadSec;
-        callSequencerScheduling(
-          sequencer,
-          startTime,
-          timePos,
-          timePosNext,
-          state.bpm,
-        );
-        timePos = timePosNext;
+        scheduleUntil(audioContext.currentTime + lookaheadSec);
       }, intervalMs);
     },
     stop() {

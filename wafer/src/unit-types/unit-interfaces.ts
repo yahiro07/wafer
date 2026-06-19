@@ -28,7 +28,7 @@ export type ClockHandlers = {
   start?(): void;
   stop?(): void;
   processScheduling?(
-    startTime: number, //audio context time when playback started
+    timeFrom: number, //absolute time based on AudioContext.currentTime
     barFrom: number, //decimal bar position in song
     barTo: number, //decimal bar position in song
     bpm: number,
