@@ -76,7 +76,11 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     reserveConnectionChange(srcUnitId, destSpec) {
       const op = () =>
         connectionManager.updateConnection(srcUnitId, destSpec ?? "");
-      loadingManager.reserveUnitOperation({ type: "connection", op });
+      loadingManager.reserveUnitOperation({
+        type: "connection",
+        op,
+        debugMetadata: `${srcUnitId}-->${destSpec}`,
+      });
     },
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
