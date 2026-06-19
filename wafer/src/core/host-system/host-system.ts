@@ -32,7 +32,10 @@ export type HostSystem = {
   exportUnitStates(): HsUnitStateData[];
   reserveImportUnitStates(
     unitStates: HsUnitStateData[],
-    forNextBar?: boolean,
+    options?: {
+      forNextBar: boolean;
+      appliedCallback?: () => void;
+    },
   ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   flushPendingOperationsForNextBar(): void;
@@ -84,10 +87,13 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     exportUnitStates() {
       return unitPersistenceHandlers.exportUnitStates();
     },
-    reserveImportUnitStates(unitStates, forNextBar) {
+    reserveImportUnitStates(unitStates, options) {
       const op = () => unitPersistenceHandlers.importUnitStates(unitStates);
-      if (forNextBar) {
-        pendingOperationForNextBar = op;
+      if (options?.forNextBar) {
+        pendingOperationForNextBar = () => {
+          op();
+          options?.appliedCallback?.();
+        };
       } else {
         loadingManager.reserveUnitOperation({ type: "state", op });
       }
