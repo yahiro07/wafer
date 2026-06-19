@@ -1,9 +1,8 @@
 export type SequencerCallbacks = {
-  //480ppq based
   processScheduling(
-    startTime: number,
-    ppqFrom: number,
-    ppqTo: number,
+    startTime: number, //the value of audioContext.currentTime when playback started
+    barFrom: number, //decimal bar position in song
+    barTo: number, //decimal bar position in song
     bpm: number,
   ): void;
 };
@@ -14,11 +13,10 @@ export type SequencerTickDriver = {
   stop(): void;
 };
 
-function mapTimeToPpq(timeSec: number, bpm: number): number {
+function mapTimeToBar(timeSec: number, bpm: number): number {
   const minutes = timeSec / 60;
   const beats = minutes * bpm;
-  const ppq = beats * 480;
-  return ppq;
+  return beats / 4;
 }
 
 function callSequencerScheduling(
@@ -28,9 +26,9 @@ function callSequencerScheduling(
   timeTo: number,
   bpm: number,
 ) {
-  const ppqFrom = mapTimeToPpq(timeFrom, bpm);
-  const ppqTo = mapTimeToPpq(timeTo, bpm);
-  sequencer.processScheduling(startTime, ppqFrom, ppqTo, bpm);
+  const barFrom = mapTimeToBar(timeFrom, bpm);
+  const barTo = mapTimeToBar(timeTo, bpm);
+  sequencer.processScheduling(startTime, barFrom, barTo, bpm);
 }
 
 export function createSequencerTickDriverCore(

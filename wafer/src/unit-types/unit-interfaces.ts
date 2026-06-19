@@ -27,11 +27,10 @@ export type ClockHandlers = {
   preferSchedulingOrderInPriority?: boolean;
   start?(): void;
   stop?(): void;
-  //480PPQ based tick from song start
   processScheduling?(
-    startTime: number,
-    ppqFrom: number,
-    ppqTo: number,
+    startTime: number, //audio context time when playback started
+    barFrom: number, //decimal bar position in song
+    barTo: number, //decimal bar position in song
     bpm: number,
   ): void;
   processStep?(
