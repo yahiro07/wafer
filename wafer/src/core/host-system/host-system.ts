@@ -34,18 +34,11 @@ export type HostSystem = {
     destSpec: DestinationCode | undefined,
   ): void;
   setMasterGain(gain: number): void;
-  exportUnitStates(): HsUnitStateData[];
-  reserveImportUnitStates(
-    unitStates: HsUnitStateData[],
-    options?: {
-      forNextBar: boolean;
-      appliedCallback?: () => void;
-    },
-  ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
-  // flushPendingOperationsForNextBar(): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
+  getAllUnitStates(): HsUnitStateData[];
+  setAllUnitStates(unitStates: HsUnitStateData[]): void;
   waitUnitsLoaded(): Promise<void>;
   setBpm(bpm: number): void;
   startSequencer(): void;
@@ -86,8 +79,6 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     },
   };
 
-  // let pendingOperationForNextBar: (() => void) | undefined;
-
   return {
     audioContext,
     actionScheduler,
@@ -115,31 +106,17 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
         audioContext.currentTime + 0.01,
       );
     },
-    exportUnitStates() {
+    getAllUnitStates() {
       return unitPersistenceHandlers.exportUnitStates();
     },
-    reserveImportUnitStates(unitStates, options) {
-      const op = () => unitPersistenceHandlers.importUnitStates(unitStates);
-      if (options?.forNextBar) {
-        // pendingOperationForNextBar = () => {
-        //   op();
-        //   options?.appliedCallback?.();
-        // };
-      } else {
-        loadingManager.reserveUnitOperation({ type: "state", op });
-      }
+    setAllUnitStates(unitStates: HsUnitStateData[]) {
+      unitPersistenceHandlers.importUnitStates(unitStates);
     },
     emitMetaAttributes(attributes) {
       for (const unit of bus.getAllUnits()) {
         unit.hostCallbacks?.setMetaAttributes?.(attributes);
       }
     },
-    // flushPendingOperationsForNextBar() {
-    //   if (pendingOperationForNextBar) {
-    //     pendingOperationForNextBar();
-    //     pendingOperationForNextBar = undefined;
-    //   }
-    // },
     getUnitState(unitId: string) {
       const unit = bus.getUnit(unitId);
       return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;
