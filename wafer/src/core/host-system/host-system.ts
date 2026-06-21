@@ -8,7 +8,10 @@ import {
 } from "../linkage/types";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
-import { createUnitPersistenceHandlers } from "./unit-persistence";
+import {
+  createUnitPersistenceHandlers,
+  unitStateOperations,
+} from "./unit-persistence";
 import {
   createWebAudioActionScheduler,
   WebAudioActionScheduler,
@@ -39,6 +42,8 @@ export type HostSystem = {
   ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   flushPendingOperationsForNextBar(): void;
+  getUnitState(unitId: string): HsUnitStateData | undefined;
+  setUnitState(unitId: string, state: HsUnitStateData): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -112,6 +117,14 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
         pendingOperationForNextBar();
         pendingOperationForNextBar = undefined;
       }
+    },
+    getUnitState(unitId: string) {
+      const unit = bus.getUnit(unitId);
+      return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;
+    },
+    setUnitState(unitId: string, state: HsUnitStateData) {
+      const unit = bus.getUnit(unitId);
+      unit && unitStateOperations.applyStateToUnit(unit, state);
     },
   };
 }
