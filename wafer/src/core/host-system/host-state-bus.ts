@@ -3,9 +3,10 @@ import { HsAudioInputPort, HsUnitInstance } from "../linkage/types";
 
 export type HostSystemEvent =
   | { type: "loadStarted" }
-  | { type: "loadCompleted" };
-// | { type: "unitAdded"; unitInstance: HsUnitInstance }
-// | { type: "unitRemoved"; unitId: string };
+  | { type: "loadCompleted" }
+  | { type: "unitAdded"; unitInstance: HsUnitInstance }
+  | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
+  | { type: "unitRemoved"; unitId: string };
 // | { type: "unitsAdded"; units: HsUnitInstance[] }
 // | { type: "unitsRemoved"; unitIds: string[] };
 
@@ -36,7 +37,7 @@ export function createHostStateBus(audioContext: AudioContext): HostStateBus {
     audioDestinationVirtualInputPort,
     addUnit(unit: HsUnitInstance) {
       units.set(unit.unitId, unit);
-      // eventPort.emit({ type: "unitAdded", unitInstance: unit });
+      eventPort.emit({ type: "unitAdded", unitInstance: unit });
     },
     getUnit(unitId: string) {
       return units.get(unitId);
@@ -45,8 +46,12 @@ export function createHostStateBus(audioContext: AudioContext): HostStateBus {
       return Array.from(units.values());
     },
     removeUnit(unitId: string) {
+      const unit = units.get(unitId);
+      if (unit) {
+        eventPort.emit({ type: "beforeRemoveUnit", unitInstance: unit });
+      }
       units.delete(unitId);
-      // eventPort.emit({ type: "unitRemoved", unitId });
+      eventPort.emit({ type: "unitRemoved", unitId });
     },
   };
 }

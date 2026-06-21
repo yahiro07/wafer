@@ -57,6 +57,7 @@ export type HostSystem = {
     velocity?: number;
   }): void;
   setUnitClocking(unitId: string, enabled: boolean): void;
+  cleanup(): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -73,11 +74,16 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
       loadingManager.reserveLoadUnit(unitId, promise);
       return () => {
         loadingManager.cancelLoadUnit(promise);
-        connectionManager.removeConnectionsForUnit(unitId);
         bus.removeUnit(unitId);
       };
     },
   };
+
+  const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
+    if (e.type === "beforeRemoveUnit") {
+      connectionManager.onUnitRemoving(e.unitInstance.unitId);
+    }
+  });
 
   return {
     audioContext,
@@ -92,12 +98,10 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
       return internal.addUnitInstancePromise(unitId, unitInstancePromise);
     },
     reserveConnectionChange(srcUnitId, destSpec) {
-      const op = () =>
-        connectionManager.updateConnection(srcUnitId, destSpec ?? "");
       loadingManager.reserveUnitOperation({
         type: "connection",
-        op,
-        debugMetadata: `${srcUnitId}-->${destSpec}`,
+        op: () =>
+          connectionManager.setConnectionChange(srcUnitId, destSpec ?? ""),
       });
     },
     setMasterGain(gain) {
@@ -126,9 +130,8 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
       unit && unitStateOperations.applyStateToUnit(unit, state);
     },
     async waitUnitsLoaded() {
-      //start awaiting units after iframes mounted in dom, here the delay of 100ms would be enough
-      await delayMs(100);
-      return new Promise<void>((resolve) => {
+      await delayMs(100); //wait for iframes to be mounted in dom
+      await new Promise<void>((resolve) => {
         loadingManager.reserveUnitOperation({
           type: "state",
           op: () => resolve(),
@@ -181,6 +184,9 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
       if (unit) {
         unit.isClockingOn = enabled;
       }
+    },
+    cleanup() {
+      unsubscribeInternalEvents();
     },
   };
 }

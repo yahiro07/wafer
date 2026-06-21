@@ -89,6 +89,7 @@ export function createUnitsLoadingManager(bus: HostStateBus) {
         pendingUnitOperationItems.length = 0;
 
         bus.eventPort.emit({ type: "loadCompleted" });
+        console.log(`${newUnits.length} units loaded`);
         isProcessing = false;
         if (
           unitLoadingJobs.length > 0 ||
