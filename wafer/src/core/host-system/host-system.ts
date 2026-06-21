@@ -7,10 +7,7 @@ import {
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
-import {
-  createSequencerTickDriver,
-  SequencerTickDriver,
-} from "../sequencer-tick-driver/sequencer-tick-driver";
+import { createSequencerTickDriver } from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
@@ -25,7 +22,6 @@ import {
 export type HostSystem = {
   audioContext: AudioContext;
   actionScheduler: WebAudioActionScheduler;
-  sequencerTickDriver: SequencerTickDriver;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
@@ -51,6 +47,9 @@ export type HostSystem = {
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
   waitUnitsLoaded(): Promise<void>;
+  setBpm(bpm: number): void;
+  startSequencer(): void;
+  stopSequencer(): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -77,7 +76,6 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
   return {
     audioContext,
     actionScheduler,
-    sequencerTickDriver,
     getAllUnits: bus.getAllUnits,
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
@@ -144,6 +142,15 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
           op: () => resolve(),
         });
       });
+    },
+    setBpm(bpm: number) {
+      sequencerTickDriver.setBpm(bpm);
+    },
+    startSequencer() {
+      sequencerTickDriver.start();
+    },
+    stopSequencer() {
+      sequencerTickDriver.stop();
     },
   };
 }

@@ -25,9 +25,6 @@ function useHostAppDrivers({
   bpm?: number;
   masterGain?: number;
 }) {
-  const { sequencerTickDriver } = hostSystem;
-
-  // useEffect(hostSystem.setupLifecycle, []);
   useEffect(() => {
     if (masterGain !== undefined) {
       hostSystem.setMasterGain(masterGain);
@@ -35,17 +32,17 @@ function useHostAppDrivers({
   }, [hostSystem, masterGain]);
   useEffect(() => {
     if (bpm) {
-      sequencerTickDriver.setBpm(bpm);
+      hostSystem.setBpm(bpm);
     }
-  }, [sequencerTickDriver, bpm]);
+  }, [hostSystem, bpm]);
   useEffect(() => {
     if (playing) {
-      sequencerTickDriver.start();
-      return () => sequencerTickDriver.stop();
+      hostSystem.startSequencer();
+      return () => hostSystem.stopSequencer();
     } else {
-      sequencerTickDriver.stop();
+      hostSystem.stopSequencer();
     }
-  }, [sequencerTickDriver, playing]);
+  }, [hostSystem, playing]);
 }
 
 export const HostAppProvider = ({
