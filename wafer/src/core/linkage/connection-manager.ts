@@ -23,6 +23,8 @@ function updateConnectionToUnit(
   }
 }
 
+let numConnections = 0;
+
 function updateUnitConnectionToPort(
   bus: HostStateBus,
   srcUnit: HsUnitInstance,
@@ -36,9 +38,11 @@ function updateUnitConnectionToPort(
       if (operation === "connect") {
         console.log(`connecting ${srcSpec} --> ${destSpec}`);
         srcUnit.outputPorts.audioOutput.connectTo(destPort);
+        numConnections++;
       } else if (operation === "disconnect") {
         console.log(`disconnecting ${srcSpec} --> ${destSpec}`);
         srcUnit.outputPorts.audioOutput.disconnectTo(destPort);
+        numConnections--;
       }
     }
   } else {
@@ -47,9 +51,11 @@ function updateUnitConnectionToPort(
       if (operation === "connect") {
         console.log(`connecting ${srcSpec} --> ${destSpec}`);
         updateConnectionToUnit(srcUnit, destUnit, "connectTo");
+        numConnections++;
       } else if (operation === "disconnect") {
         console.log(`disconnecting ${srcSpec} --> ${destSpec}`);
         updateConnectionToUnit(srcUnit, destUnit, "disconnectTo");
+        numConnections--;
       }
     }
   }
@@ -91,14 +97,16 @@ export function createUnitConnectionsManager(bus: HostStateBus) {
           connectionCodeMap.set(unit.unitId, next);
         }
       }
+      console.log(`numConnections: ${numConnections}`);
     },
     removeConnectionsForUnit(unitId: string) {
       const unit = bus.getUnit(unitId);
-      const curr = connectionCodeMap.get(unitId);
-      if (unit && curr) {
-        updateUnitConnectionForSingleOutputPortWithFanOut(bus, unit, curr, "");
+      const dest = connectionCodeMap.get(unitId);
+      if (unit && dest) {
+        updateUnitConnectionForSingleOutputPortWithFanOut(bus, unit, dest, "");
         connectionCodeMap.delete(unitId);
       }
+      console.log(`numConnections: ${numConnections}`);
     },
   };
 }
