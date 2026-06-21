@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useHostAppContext } from "./host-app-context";
 import {
   instantiateReactUnit,
@@ -11,8 +11,13 @@ type Props = {
 };
 
 const routingDummyUnitTemplateFn: ReactUnitTemplateFn = (unitInterface) => {
+  unitInterface.audioInputNode.connect(unitInterface.audioOutputNode);
   unitInterface.completeSetup({
-    unitAspects: { unitType: "effect" },
+    unitAspects: {
+      unitType: "effect",
+      outputs: ["audio"],
+      inputs: ["audio"],
+    },
   });
   return {
     RenderUi: () => null,
@@ -22,11 +27,18 @@ const routingDummyUnitTemplateFn: ReactUnitTemplateFn = (unitInterface) => {
 export const RoutingDummyUnit = ({ unitId, destSpec }: Props) => {
   const { hostSystem } = useHostAppContext();
 
-  instantiateReactUnit(hostSystem, routingDummyUnitTemplateFn, unitId);
+  const unit = useMemo(
+    () => instantiateReactUnit(hostSystem, routingDummyUnitTemplateFn, unitId),
+    [hostSystem, unitId],
+  );
+
+  useEffect(() => {
+    return hostSystem.registerUnitInstance(unit);
+  }, [unit, hostSystem]);
 
   useEffect(() => {
     hostSystem.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
-  return null;
+  return <unit.RenderUi />;
 };
