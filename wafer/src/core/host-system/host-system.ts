@@ -7,6 +7,10 @@ import {
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
+import {
+  createSequencerTickDriver,
+  SequencerTickDriver,
+} from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
@@ -21,6 +25,7 @@ import {
 export type HostSystem = {
   audioContext: AudioContext;
   actionScheduler: WebAudioActionScheduler;
+  sequencerTickDriver: SequencerTickDriver;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
@@ -42,7 +47,7 @@ export type HostSystem = {
     },
   ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
-  flushPendingOperationsForNextBar(): void;
+  // flushPendingOperationsForNextBar(): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
   waitUnitsLoaded(): Promise<void>;
@@ -54,6 +59,7 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
   const actionScheduler = createWebAudioActionScheduler(audioContext);
+  const sequencerTickDriver = createSequencerTickDriver(bus);
 
   const internal = {
     addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
@@ -66,11 +72,12 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     },
   };
 
-  let pendingOperationForNextBar: (() => void) | undefined;
+  // let pendingOperationForNextBar: (() => void) | undefined;
 
   return {
     audioContext,
     actionScheduler,
+    sequencerTickDriver,
     getAllUnits: bus.getAllUnits,
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
@@ -101,10 +108,10 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     reserveImportUnitStates(unitStates, options) {
       const op = () => unitPersistenceHandlers.importUnitStates(unitStates);
       if (options?.forNextBar) {
-        pendingOperationForNextBar = () => {
-          op();
-          options?.appliedCallback?.();
-        };
+        // pendingOperationForNextBar = () => {
+        //   op();
+        //   options?.appliedCallback?.();
+        // };
       } else {
         loadingManager.reserveUnitOperation({ type: "state", op });
       }
@@ -114,12 +121,12 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
         unit.hostCallbacks?.setMetaAttributes?.(attributes);
       }
     },
-    flushPendingOperationsForNextBar() {
-      if (pendingOperationForNextBar) {
-        pendingOperationForNextBar();
-        pendingOperationForNextBar = undefined;
-      }
-    },
+    // flushPendingOperationsForNextBar() {
+    //   if (pendingOperationForNextBar) {
+    //     pendingOperationForNextBar();
+    //     pendingOperationForNextBar = undefined;
+    //   }
+    // },
     getUnitState(unitId: string) {
       const unit = bus.getUnit(unitId);
       return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;

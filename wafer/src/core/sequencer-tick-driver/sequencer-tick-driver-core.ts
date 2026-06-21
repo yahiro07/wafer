@@ -1,4 +1,4 @@
-export type SequencerCallbacks = {
+export type SequencerTickDriverCoreCallbacks = {
   processScheduling(
     timeFrom: number, //absolute time based on AudioContext.currentTime
     barFrom: number, //decimal bar position in song
@@ -7,9 +7,9 @@ export type SequencerCallbacks = {
   ): void;
 };
 
-export type SequencerTickDriver = {
+export type SequencerTickDriverCore = {
   setBpm(bpm: number): void;
-  start(sequencer: SequencerCallbacks): void;
+  start(sequencer: SequencerTickDriverCoreCallbacks): void;
   stop(): void;
 };
 
@@ -23,7 +23,7 @@ export function createSequencerTickDriverCore(
   audioContext: AudioContext,
   intervalMs: number = 25,
   lookaheadMs: number = 100,
-): SequencerTickDriver {
+): SequencerTickDriverCore {
   const state = { bpm: 120 };
   const lookaheadSec = lookaheadMs / 1000;
 
@@ -35,7 +35,7 @@ export function createSequencerTickDriverCore(
         state.bpm = bpm;
       }
     },
-    start(sequencer: SequencerCallbacks) {
+    start(sequencer: SequencerTickDriverCoreCallbacks) {
       // sequencer.handleStart?.();
 
       let scheduledUntil = audioContext.currentTime;

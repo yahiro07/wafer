@@ -1,11 +1,5 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
-import { createSequencerTickDriver, HostSystem } from "../core";
+import { createContext, ReactNode, useContext, useEffect } from "react";
+import { HostSystem } from "../core";
 
 type HostAppContextValue = {
   hostSystem: HostSystem;
@@ -31,10 +25,8 @@ function useHostAppDrivers({
   bpm?: number;
   masterGain?: number;
 }) {
-  const sequencerTickDriver = useMemo(
-    () => createSequencerTickDriver(hostSystem),
-    [hostSystem],
-  );
+  const { sequencerTickDriver } = hostSystem;
+
   // useEffect(hostSystem.setupLifecycle, []);
   useEffect(() => {
     if (masterGain !== undefined) {
