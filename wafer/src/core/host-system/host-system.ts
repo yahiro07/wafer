@@ -63,6 +63,7 @@ export type HostSystem = {
     time?: number;
     velocity?: number;
   }): void;
+  setUnitClocking(unitId: string, enabled: boolean): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -196,6 +197,12 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
           }
         }
         noteNumberToUnitIdMap.delete(noteNumber);
+      }
+    },
+    setUnitClocking(unitId, enabled) {
+      const unit = bus.getUnit(unitId);
+      if (unit) {
+        unit.isClockingOn = enabled;
       }
     },
   };

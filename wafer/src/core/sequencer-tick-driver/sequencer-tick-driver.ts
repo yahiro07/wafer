@@ -83,7 +83,7 @@ function processAllUnitsScheduling(
     barTo,
     bpm,
   );
-  const units = hostStateBus.getAllUnits();
+  const units = hostStateBus.getAllUnits().filter((unit) => unit.isClockingOn);
 
   const priorityUnits = units.filter(
     (unit) => unit.clockHandlers?.preferSchedulingOrderInPriority,
