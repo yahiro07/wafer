@@ -117,7 +117,7 @@ async function wrapLoadUnitElementClass(
     return sharableUnitClassTagNameMap.get(moduleUrl)!;
   }
   const res = await loadUnitElementClass(moduleUrl, unitInterface);
-
+  // console.log([moduleUrl, res.isSharableUnitClass, res.tagName]);
   if (res.isSharableUnitClass) {
     //it's possible that sharable unit class is loaded duplicated in first loading,
     //so we simply ignore later one and use first one's cached tag.
