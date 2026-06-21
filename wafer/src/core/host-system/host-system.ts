@@ -1,5 +1,6 @@
 import { MetaAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
+import { delayMs } from "../../utils/timer-utils";
 import { createUnitConnectionsManager } from "../linkage/connection-manager";
 import {
   DestinationCode,
@@ -44,6 +45,7 @@ export type HostSystem = {
   flushPendingOperationsForNextBar(): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
+  waitUnitsLoaded(): Promise<void>;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -125,6 +127,16 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     setUnitState(unitId: string, state: HsUnitStateData) {
       const unit = bus.getUnit(unitId);
       unit && unitStateOperations.applyStateToUnit(unit, state);
+    },
+    async waitUnitsLoaded() {
+      //start awaiting units after iframes mounted in dom, here the delay of 100ms would be enough
+      await delayMs(100);
+      return new Promise<void>((resolve) => {
+        loadingManager.reserveUnitOperation({
+          type: "state",
+          op: () => resolve(),
+        });
+      });
     },
   };
 }
