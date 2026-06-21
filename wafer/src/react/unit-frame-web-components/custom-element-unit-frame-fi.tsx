@@ -18,45 +18,31 @@ type Props = {
 
 type UnitSetupContextItem = {
   unitInterface: UnitInterface;
-  // unitInterfaceV01: UnitInterfaceV01;
 };
 
 const setupContextMap = new Map<string, UnitSetupContextItem>();
 
-async function loadUnitElementClass(
+async function loadUnitElement(
   tagName: string,
   moduleUrl: string,
   unitInterface: UnitInterface,
-  // unitInterfaceV01: UnitInterfaceV01,
 ) {
   if (!moduleUrl.startsWith("http")) {
     moduleUrl = location.origin + moduleUrl;
   }
   moduleUrl += `?tagName=${tagName}`;
 
-  setupContextMap.set(moduleUrl, {
-    unitInterface,
-    // unitInterfaceV01,
-  });
+  setupContextMap.set(moduleUrl, { unitInterface });
 
   (window as any).queryUnitInterfaceForModule = (
     versionCode: string,
     requestModuleUrl: string,
   ) => {
-    // console.log("CE queryUnitInterfaceForModule", {
-    //   moduleUrl,
-    //   requestModuleUrl,
-    //   versionCode,
-    // });
     const item = setupContextMap.get(requestModuleUrl);
     if (item) {
       if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
         return item.unitInterface;
-      }
-      //  else if (versionCode === "wus-v02") {
-      //   // return item.unitInterface;
-      // }
-      else {
+      } else {
         console.warn(
           `incompatible unit interface version: ${versionCode} for module ${moduleUrl}`,
         );
@@ -71,6 +57,9 @@ async function loadUnitElementClass(
   )) as any;
 
   customElements.define(tagName, unitElementClass);
+
+  const element = document.createElement(tagName);
+  return element;
 }
 
 function createUnitInstantiationPromise(
@@ -95,17 +84,7 @@ function createUnitInstantiationPromise(
           resolve(unitInstance);
         },
       );
-      // const unitInterfaceV01 = createUnitInterfaceV01(
-      //   hostSystem,
-      //   unitId,
-      //   (unitInstance) => {
-      //     callbacks.onInstanceLoaded(unitInstance);
-      //     resolve(unitInstance);
-      //   },
-      // );
-      await loadUnitElementClass(tagName, scriptUrl, unitInterface);
-
-      const element = document.createElement(tagName);
+      const element = await loadUnitElement(tagName, scriptUrl, unitInterface);
       callbacks.onElementCreated(element);
     },
   );
