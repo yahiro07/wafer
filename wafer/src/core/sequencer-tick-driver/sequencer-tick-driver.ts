@@ -6,9 +6,10 @@ export type SequencerTickDriver = {
   setBpm(bpm: number): void;
   start(): void;
   stop(): void;
+  getCurrentBarPosition(): number;
+  setBarSwitchingCallbackOnce(nextBar: number, fn: () => void): void;
+  cancelBarSwitchingCallback(): void;
 };
-
-type SequencerTickDriverInternal = SequencerTickDriver & {};
 
 type CrossingStepInfo = {
   stepIndex: number;
@@ -82,10 +83,6 @@ function processAllUnitsScheduling(
     barTo,
     bpm,
   );
-  if (crossingStepInfos.some((it) => it.stepIndex % 16 === 0)) {
-    // hostSystem.flushPendingOperationsForNextBar();
-  }
-
   const units = hostStateBus.getAllUnits();
 
   const priorityUnits = units.filter(
@@ -112,15 +109,22 @@ function processAllUnitsScheduling(
   );
 }
 
+type BarCallbackSpec = {
+  nextBar: number;
+  fn: () => void;
+};
+
 export function createSequencerTickDriver(
   hostStateBus: HostStateBus,
-): SequencerTickDriverInternal {
+): SequencerTickDriver {
   const core = createSequencerTickDriverCore(
     hostStateBus.audioContext,
     25,
     100,
   );
   let tickFrameIndex = 0;
+  let currentBarPosition = 0;
+  let barCallbackSpec: BarCallbackSpec | undefined;
 
   return {
     setBpm: core.setBpm,
@@ -132,6 +136,11 @@ export function createSequencerTickDriver(
           if (0) {
             console.log("host tick", tickFrameIndex);
           }
+          //if next scheduling span includes the head point of the waiting bar, invoke the callback
+          if (barCallbackSpec && barTo > barCallbackSpec.nextBar) {
+            barCallbackSpec.fn();
+            barCallbackSpec = undefined;
+          }
           processAllUnitsScheduling(
             hostStateBus,
             timeFrom,
@@ -140,13 +149,22 @@ export function createSequencerTickDriver(
             bpm,
           );
           tickFrameIndex++;
+          currentBarPosition = barFrom;
         },
       });
     },
     stop() {
       core.stop();
       processAllUnitsStartStop(hostStateBus, "stop");
-      // hostSystem.flushPendingOperationsForNextBar();
+    },
+    getCurrentBarPosition() {
+      return currentBarPosition;
+    },
+    setBarSwitchingCallbackOnce(nextBar, fn) {
+      barCallbackSpec = { nextBar, fn };
+    },
+    cancelBarSwitchingCallback() {
+      barCallbackSpec = undefined;
     },
   };
 }

@@ -50,6 +50,12 @@ export type HostSystem = {
   setBpm(bpm: number): void;
   startSequencer(): void;
   stopSequencer(): void;
+  getCurrentBarPosition(): number; //decimal bar position
+  setBarSwitchingCallbackOnce(
+    nextBar: number, //integer bar number to wait for scheduling
+    fn: () => void,
+  ): void;
+  cancelBarSwitchingCallback(): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -151,6 +157,15 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     },
     stopSequencer() {
       sequencerTickDriver.stop();
+    },
+    getCurrentBarPosition() {
+      return sequencerTickDriver.getCurrentBarPosition();
+    },
+    setBarSwitchingCallbackOnce(nextBar, fn) {
+      sequencerTickDriver.setBarSwitchingCallbackOnce(nextBar, fn);
+    },
+    cancelBarSwitchingCallback() {
+      sequencerTickDriver.cancelBarSwitchingCallback();
     },
   };
 }
