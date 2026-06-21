@@ -56,6 +56,13 @@ export type HostSystem = {
     fn: () => void,
   ): void;
   cancelBarSwitchingCallback(): void;
+  deliverNote(args: {
+    destUnitId: string;
+    noteNumber: number;
+    isOn: boolean;
+    time?: number;
+    velocity?: number;
+  }): void;
 };
 
 export function createHostSystem(audioContext: AudioContext): HostSystem {
@@ -65,6 +72,7 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
   const loadingManager = createUnitsLoadingManager(bus);
   const actionScheduler = createWebAudioActionScheduler(audioContext);
   const sequencerTickDriver = createSequencerTickDriver(bus);
+  const noteNumberToUnitIdMap = new Map<number, string>();
 
   const internal = {
     addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
@@ -166,6 +174,29 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     },
     cancelBarSwitchingCallback() {
       sequencerTickDriver.cancelBarSwitchingCallback();
+    },
+    deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
+      if (isOn) {
+        const unit = bus.getUnit(destUnitId);
+        const noteOnFn = unit?.inputPorts.noteInput?.noteOn;
+        if (noteOnFn) {
+          actionScheduler.pushAction(
+            () => noteOnFn(noteNumber, time, velocity),
+            time,
+          );
+        }
+        noteNumberToUnitIdMap.set(noteNumber, destUnitId);
+      } else {
+        const unitId = noteNumberToUnitIdMap.get(noteNumber);
+        if (unitId) {
+          const unit = bus.getUnit(unitId);
+          const noteOffFn = unit?.inputPorts.noteInput?.noteOff;
+          if (noteOffFn) {
+            actionScheduler.pushAction(() => noteOffFn(noteNumber, time), time);
+          }
+        }
+        noteNumberToUnitIdMap.delete(noteNumber);
+      }
     },
   };
 }
