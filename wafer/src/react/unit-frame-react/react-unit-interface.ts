@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../core";
-import { UnitInterface } from "../unit-types";
+import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { UnitInterface } from "../../unit-types";
 
 type PlainComponentFn = () => ReactNode;
 

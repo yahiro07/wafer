@@ -1,9 +1,9 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../core";
-import { UnitInterface } from "../unit-types";
-import { mergeStyleWithFrameSize } from "../utils/frame-size-helper";
-import { useHostAppContext } from "./host-app-context";
-import { useUnitInputNotesAffecter } from "./use-unit-input-notes-affecter";
+import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { UnitInterface } from "../../unit-types";
+import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
+import { useHostAppContext } from "../host-app-context";
+import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 
 type Props = {
   unitId: string;

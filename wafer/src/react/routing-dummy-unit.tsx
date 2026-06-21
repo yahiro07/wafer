@@ -3,7 +3,7 @@ import { useHostAppContext } from "./host-app-context";
 import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
-} from "./react-unit-interface";
+} from "./unit-frame-react/react-unit-interface";
 
 type Props = {
   unitId: string;

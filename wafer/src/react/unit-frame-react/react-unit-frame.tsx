@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from "react";
-import { HsUnitInstance } from "../core";
-import { useHostAppContext } from "./host-app-context";
+import { HsUnitInstance } from "../../core";
+import { useHostAppContext } from "../host-app-context";
+import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
-import { useUnitInputNotesAffecter } from "./use-unit-input-notes-affecter";
 
 type Props = {
   unitId: string;
