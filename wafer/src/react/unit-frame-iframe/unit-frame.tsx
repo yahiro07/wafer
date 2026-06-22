@@ -68,6 +68,7 @@ export const UnitFrame = ({
 
   return (
     <iframe
+      key={pageUrl}
       className={className}
       style={mergedStyle}
       ref={iframeRef}
