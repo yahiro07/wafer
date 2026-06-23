@@ -1,4 +1,10 @@
 export type SequencerTickDriverCoreCallbacks = {
+  processPreScheduling?(
+    timeFrom: number,
+    barFrom: number,
+    barTo: number,
+    bpm: number,
+  ): { barShifting?: number } | void;
   processScheduling(
     timeFrom: number, //absolute time based on AudioContext.currentTime
     barFrom: number, //decimal bar position in song
@@ -45,7 +51,17 @@ export function createSequencerTickDriverCore(
         const timeFrom = scheduledUntil;
         const duration = timeTo - timeFrom;
 
-        const barPosNext = barPos + mapTimeToBar(duration, state.bpm);
+        let barPosNext = barPos + mapTimeToBar(duration, state.bpm);
+        const res = sequencer.processPreScheduling?.(
+          timeFrom,
+          barPos,
+          barPosNext,
+          state.bpm,
+        );
+        if (res?.barShifting) {
+          barPos += res.barShifting;
+          barPosNext += res.barShifting;
+        }
         sequencer.processScheduling(timeFrom, barPos, barPosNext, state.bpm);
 
         scheduledUntil = timeTo;

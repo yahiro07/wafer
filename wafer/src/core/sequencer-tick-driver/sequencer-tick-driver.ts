@@ -2,12 +2,14 @@ import { HostStateBus } from "../host-system/host-state-bus";
 import { HsUnitInstance } from "../linkage/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 
+export type BarSwitchingCallbackFn = () => { nextBar: number } | void;
+
 export type SequencerTickDriver = {
   setBpm(bpm: number): void;
   start(): void;
   stop(): void;
   getCurrentBarPosition(): number;
-  setBarSwitchingCallbackOnce(nextBar: number, fn: () => void): void;
+  setBarSwitchingCallbackOnce(barAt: number, fn: BarSwitchingCallbackFn): void;
   cancelBarSwitchingCallback(): void;
 };
 
@@ -110,8 +112,8 @@ function processAllUnitsScheduling(
 }
 
 type BarCallbackSpec = {
-  nextBar: number;
-  fn: () => void;
+  barAt: number;
+  fn: BarSwitchingCallbackFn;
 };
 
 export function createSequencerTickDriver(
@@ -132,15 +134,21 @@ export function createSequencerTickDriver(
       tickFrameIndex = 0;
       processAllUnitsStartStop(hostStateBus, "start");
       core.start({
-        processScheduling(timeFrom, barFrom, barTo, bpm) {
+        processPreScheduling(_timeFrom, _barFrom, barTo, _bpm) {
           if (0) {
             console.log("host tick", tickFrameIndex);
           }
           //if next scheduling span includes the head point of the waiting bar, invoke the callback
-          if (barCallbackSpec && barTo > barCallbackSpec.nextBar) {
-            barCallbackSpec.fn();
-            barCallbackSpec = undefined;
+          if (barCallbackSpec && barTo > barCallbackSpec.barAt) {
+            const res = barCallbackSpec.fn();
+            if (res?.nextBar) {
+              const barShifting = res.nextBar - barCallbackSpec.barAt;
+              barCallbackSpec = undefined;
+              return { barShifting: barShifting };
+            }
           }
+        },
+        processScheduling(timeFrom, barFrom, barTo, bpm) {
           processAllUnitsScheduling(
             hostStateBus,
             timeFrom,
@@ -149,7 +157,7 @@ export function createSequencerTickDriver(
             bpm,
           );
           tickFrameIndex++;
-          currentBarPosition = barFrom;
+          currentBarPosition = barTo;
         },
       });
     },
@@ -160,8 +168,8 @@ export function createSequencerTickDriver(
     getCurrentBarPosition() {
       return currentBarPosition;
     },
-    setBarSwitchingCallbackOnce(nextBar, fn) {
-      barCallbackSpec = { nextBar, fn };
+    setBarSwitchingCallbackOnce(barAt, fn) {
+      barCallbackSpec = { barAt, fn };
     },
     cancelBarSwitchingCallback() {
       barCallbackSpec = undefined;

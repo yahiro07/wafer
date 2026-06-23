@@ -7,7 +7,10 @@ import {
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
-import { createSequencerTickDriver } from "../sequencer-tick-driver/sequencer-tick-driver";
+import {
+  BarSwitchingCallbackFn,
+  createSequencerTickDriver,
+} from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
@@ -45,8 +48,8 @@ export type HostSystem = {
   stopSequencer(): void;
   getCurrentBarPosition(): number; //decimal bar position
   setBarSwitchingCallbackOnce(
-    nextBar: number, //integer bar number to wait for scheduling
-    fn: () => void,
+    barAt: number, //integer bar number to wait for scheduling
+    fn: BarSwitchingCallbackFn,
   ): void;
   cancelBarSwitchingCallback(): void;
   deliverNote(args: {
