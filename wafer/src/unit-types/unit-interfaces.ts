@@ -1,3 +1,5 @@
+import { IAudioContext } from "../core/host-system/types";
+
 export type UnitType = "instrument" | "sequencer" | "effect";
 
 export type UnitCategoryHint =
@@ -56,7 +58,7 @@ export type HostCallbacks = {
 };
 
 export type UnitInterface = {
-  audioContext: AudioContext;
+  audioContext: IAudioContext;
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
   noteOutputPort: NotePort;

@@ -12,6 +12,7 @@ import {
   createSequencerTickDriver,
 } from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
+import { IAudioContext } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
   createUnitPersistenceHandlers,
@@ -23,7 +24,7 @@ import {
 } from "./webaudio-action-scheduler";
 
 export type HostSystem = {
-  audioContext: AudioContext;
+  audioContext: IAudioContext;
   actionScheduler: WebAudioActionScheduler;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
@@ -63,7 +64,7 @@ export type HostSystem = {
   cleanup(): void;
 };
 
-export function createHostSystem(audioContext: AudioContext): HostSystem {
+export function createHostSystem(audioContext: IAudioContext): HostSystem {
   const bus = createHostStateBus(audioContext);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
