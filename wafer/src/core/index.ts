@@ -1,4 +1,5 @@
 export * from "./host-system/host-system";
+export type { WebAudioActionScheduler } from "./host-system/webaudio-action-scheduler";
 export type {
   DestinationCode,
   HsUnitInstance,
