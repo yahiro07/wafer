@@ -19,6 +19,7 @@ import {
   unitStateOperations,
 } from "./unit-persistence";
 import {
+  createDummyActionScheduler,
   createWebAudioActionScheduler,
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
@@ -66,14 +67,16 @@ export type HostSystem = {
 
 export function createHostSystem(
   audioContext: IAudioContext,
-  options?: { customActionScheduler?: WebAudioActionScheduler },
+  options?: { actionScheduler?: WebAudioActionScheduler | "none" },
 ): HostSystem {
   const bus = createHostStateBus(audioContext);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
-  const actionScheduler =
-    options?.customActionScheduler ??
+  const actionScheduler: WebAudioActionScheduler =
+    (options?.actionScheduler === "none"
+      ? createDummyActionScheduler()
+      : options?.actionScheduler) ??
     createWebAudioActionScheduler(audioContext);
   const sequencerTickDriver = createSequencerTickDriver(bus);
   const noteNumberToUnitIdMap = new Map<number, string>();

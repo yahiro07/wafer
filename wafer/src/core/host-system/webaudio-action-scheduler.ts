@@ -80,3 +80,11 @@ export function createWebAudioActionScheduler(
     },
   };
 }
+
+export function createDummyActionScheduler(): WebAudioActionScheduler {
+  return {
+    pushAction(action: () => void, _time?: number) {
+      action();
+    },
+  };
+}
