@@ -25,9 +25,9 @@ function updateConnectionToUnit(
     portSubtypes.push("automation");
   }
   if (operation === "connectTo") {
-    srcUnit.unitCallbacks?.onConnectedTo(portSubtypes);
+    srcUnit.unitCallbacks?.onConnectedTo?.(portSubtypes);
   } else {
-    srcUnit.unitCallbacks?.onDisconnectedTo();
+    srcUnit.unitCallbacks?.onDisconnectedTo?.();
   }
 }
 
