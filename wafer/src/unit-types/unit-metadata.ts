@@ -5,8 +5,8 @@ export type UnitMetadata = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
   preferredSize: string; //w,h
-  outputSignalTypes: string; //audio,note
-  inputSignalTypes: string; //audio,note
+  outputSignalTypes: string; //audio,note,automation
+  inputSignalTypes: string; //audio,note,automation
   protocol: "wafer-v01";
   unitTypesVersion: string;
   integrationFormat: "iframe" | "webComponents";

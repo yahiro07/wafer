@@ -8,11 +8,23 @@ export type UnitCategoryHint =
   | "drumMachine"
   | "keyboard";
 
-export type PortSubtype = "audio" | "note";
+export type PortSubtype = "audio" | "note" | "automation";
 
 export type NotePort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
   noteOff(noteNumber: number, time?: number): void;
+};
+
+export type AutomationParameterSpec = {
+  id: string;
+  steps?: number; //2 for on/off, 3 for low/medium/high, etc
+  //all parameters are ranged in 0~1
+};
+
+export type AutomationPort = {
+  getParameterSpecs(): AutomationParameterSpec[];
+  getParameter(id: string): number;
+  setParameter(id: string, value: number, time?: number): void;
 };
 
 export type Persistence = {
@@ -60,6 +72,7 @@ export type UnitInterface = {
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
   noteOutputPort: NotePort;
+  automationOutputPort: AutomationPort;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
@@ -67,6 +80,7 @@ export type UnitInterface = {
     noteInput?: NotePort;
     persistence?: Persistence;
     clockHandlers?: ClockHandlers;
+    automationInput?: AutomationPort;
   }): void;
 };
 
