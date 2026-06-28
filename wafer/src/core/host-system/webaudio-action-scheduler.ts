@@ -1,9 +1,11 @@
+import { IAudioContext } from "./types";
+
 export type WebAudioActionScheduler = {
   pushAction(action: () => void, time?: number): void;
 };
 
 export function createWebAudioActionScheduler(
-  audioContext: AudioContext,
+  audioContext: IAudioContext,
   aheadTimeMs = 50,
 ): WebAudioActionScheduler {
   type ScheduledAction = {
@@ -75,6 +77,14 @@ export function createWebAudioActionScheduler(
       }
 
       internal.scheduleTimer();
+    },
+  };
+}
+
+export function createDummyActionScheduler(): WebAudioActionScheduler {
+  return {
+    pushAction(action: () => void, _time?: number) {
+      action();
     },
   };
 }

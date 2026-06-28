@@ -1,3 +1,5 @@
+import { IAudioContext } from "../host-system/types";
+
 export type SequencerTickDriverCoreCallbacks = {
   processPreScheduling?(
     timeFrom: number,
@@ -26,7 +28,7 @@ function mapTimeToBar(timeSec: number, bpm: number): number {
 }
 
 export function createSequencerTickDriverCore(
-  audioContext: AudioContext,
+  audioContext: IAudioContext,
   intervalMs: number = 25,
   lookaheadMs: number = 100,
 ): SequencerTickDriverCore {

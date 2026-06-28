@@ -12,18 +12,20 @@ import {
   createSequencerTickDriver,
 } from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
+import { IAudioContext } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
   createUnitPersistenceHandlers,
   unitStateOperations,
 } from "./unit-persistence";
 import {
+  createDummyActionScheduler,
   createWebAudioActionScheduler,
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
 
 export type HostSystem = {
-  audioContext: AudioContext;
+  audioContext: IAudioContext;
   actionScheduler: WebAudioActionScheduler;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
@@ -63,12 +65,19 @@ export type HostSystem = {
   cleanup(): void;
 };
 
-export function createHostSystem(audioContext: AudioContext): HostSystem {
+export function createHostSystem(
+  audioContext: IAudioContext,
+  options?: { actionScheduler?: WebAudioActionScheduler | "none" },
+): HostSystem {
   const bus = createHostStateBus(audioContext);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
-  const actionScheduler = createWebAudioActionScheduler(audioContext);
+  const actionScheduler: WebAudioActionScheduler =
+    (options?.actionScheduler === "none"
+      ? createDummyActionScheduler()
+      : options?.actionScheduler) ??
+    createWebAudioActionScheduler(audioContext);
   const sequencerTickDriver = createSequencerTickDriver(bus);
   const noteNumberToUnitIdMap = new Map<number, string>();
 

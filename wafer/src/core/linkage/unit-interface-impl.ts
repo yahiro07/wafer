@@ -1,5 +1,6 @@
 import { NotePort, UnitInterface } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
+import { IAudioContext } from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
@@ -37,13 +38,13 @@ function createHsNoteOutputPort(
   };
 }
 
-function createHsAudioInputPort(audioContext: AudioContext): HsAudioInputPort {
+function createHsAudioInputPort(audioContext: IAudioContext): HsAudioInputPort {
   const node = audioContext.createGain();
   return { node };
 }
 
 function createHsAudioOutputPort(
-  audioContext: AudioContext,
+  audioContext: IAudioContext,
 ): HsAudioOutputPort {
   const node = audioContext.createGain();
   return {
