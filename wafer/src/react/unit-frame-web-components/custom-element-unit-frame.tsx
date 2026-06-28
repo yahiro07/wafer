@@ -1,10 +1,9 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../core";
-import { UnitInterface, UnitInterfaceProvider } from "../unit-types";
-import { mergeStyleWithFrameSize } from "../utils/frame-size-helper";
-import { useHostAppContext } from "./host-app-context";
-import { loadUnitElementClassCached } from "./unit-element-loader";
-import { useUnitInputNotesAffecter } from "./use-unit-input-notes-affecter";
+import { HsUnitInstance } from "../../core";
+import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
+import { useHostAppContext } from "../host-app-context";
+import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
+import { createUnitInstantiationPromise } from "./unit-element-loader";
 
 type Props = {
   unitId: string;
@@ -17,50 +16,7 @@ type Props = {
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
 
-function createUnitInstantiationPromise(
-  unitId: string,
-  scriptUrl: string,
-  hostSystem: HostSystem,
-  callbacks: {
-    onElementCreated: (element: HTMLElement) => void;
-    onInstanceLoaded: (unitInstance: HsUnitInstance) => void;
-  },
-) {
-  return new Promise<HsUnitInstance>(
-    // biome-ignore lint/suspicious/noAsyncPromiseExecutor: rough impl
-    async (resolve) => {
-      const tagName = `unit-${Math.random().toString().slice(2, 8)}`;
-
-      await loadUnitElementClassCached(tagName, scriptUrl);
-
-      const element = document.createElement(tagName);
-
-      const unitInterface: UnitInterface | undefined = createUnitInterface(
-        hostSystem,
-        unitId,
-        (unitInstance) => {
-          callbacks.onInstanceLoaded(unitInstance);
-          resolve(unitInstance);
-        },
-      );
-      const unitInstantiateContext: UnitInterfaceProvider = {
-        queryUnitInterface(versionCode: string) {
-          if (versionCode !== "wus-v02") {
-            console.warn(
-              `incompatible unit interface version: ${versionCode} for ${unitId}`,
-            );
-            return undefined;
-          }
-          return unitInterface;
-        },
-      };
-      (element as any).setupUnit(unitInstantiateContext);
-      callbacks.onElementCreated(element);
-    },
-  );
-}
-
-export const CustomElementUnitFrame__untestedYet = ({
+export const CustomElementUnitFrame = ({
   unitId,
   scriptUrl,
   destSpec,

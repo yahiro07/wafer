@@ -2,7 +2,7 @@ import { base64Helper, isUint8ArrayLike } from "../../utils/binary-helper";
 import { HsUnitInstance, HsUnitStateData } from "../linkage/types";
 import { HostStateBus } from "./host-state-bus";
 
-const unitStateOperations = {
+export const unitStateOperations = {
   readStateFromUnit(unit: HsUnitInstance): HsUnitStateData | undefined {
     const stateInput = unit.persistence;
     const state = stateInput?.emitStateBytes?.() ?? stateInput?.emitState?.();

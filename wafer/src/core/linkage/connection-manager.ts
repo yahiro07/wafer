@@ -1,11 +1,6 @@
 import { HostStateBus } from "../host-system/host-state-bus";
 import { DestinationCode, HsUnitInstance } from "./types";
 
-export type ConnectionManager = {
-  updateConnections(newConnectionCodeMap: Map<string, DestinationCode>): void;
-  removeConnectionsForUnit(unitId: string): void;
-};
-
 type ConnectingOperation = "connect" | "disconnect";
 
 function updateConnectionToUnit(
@@ -61,51 +56,71 @@ function updateUnitConnectionToPort(
   }
 }
 
-function updateUnitConnectionForSingleOutputPortWithFanOut(
-  bus: HostStateBus,
-  unit: HsUnitInstance,
-  curr: DestinationCode,
-  next: DestinationCode,
-) {
-  const currs = curr?.split("&").filter(Boolean) ?? [];
-  const nexts = next?.split("&").filter(Boolean) ?? [];
-  const toConnect = nexts.filter((dest) => !currs.includes(dest));
-  const toDisconnect = currs.filter((dest) => !nexts.includes(dest));
-  for (const destSpec of toDisconnect) {
-    updateUnitConnectionToPort(bus, unit, destSpec, "disconnect");
-  }
-  for (const destSpec of toConnect) {
-    updateUnitConnectionToPort(bus, unit, destSpec, "connect");
-  }
-}
+export type ConnectionManager = {
+  setConnectionChange(srcUnitId: string, destSpec: DestinationCode): void;
+  onUnitRemoving(unitId: string): void;
+};
 
-export function createUnitConnectionsManager(bus: HostStateBus) {
-  const connectionCodeMap: Map<string, DestinationCode> = new Map();
+export function createUnitConnectionsManager(
+  bus: HostStateBus,
+): ConnectionManager {
+  let activeConnectionKeys: string[] = [];
+
   return {
-    updateConnection(unitId: string, newConnectionCode: DestinationCode) {
-      const unit = bus.getUnit(unitId);
-      if (unit) {
-        const curr = connectionCodeMap.get(unit.unitId);
-        const next = newConnectionCode;
-        if (next !== undefined && next !== curr) {
-          updateUnitConnectionForSingleOutputPortWithFanOut(
-            bus,
-            unit,
-            curr ?? "",
-            next,
-          );
-          connectionCodeMap.set(unit.unitId, next);
-        }
+    setConnectionChange(srcUnitId: string, destSpec: DestinationCode) {
+      const unit = bus.getUnit(srcUnitId);
+      if (!unit) return;
+
+      let connectionsToAdd: string[] = [];
+      let connectionsToRemove: string[] = [];
+
+      if (destSpec) {
+        const existingKeys = activeConnectionKeys.filter(
+          (key) => key.split(">")[0] === srcUnitId,
+        );
+        const codes = [...new Set(destSpec.split("&").filter(Boolean))];
+        const nextKeys = codes.map((code) => `${srcUnitId}>${code}`);
+
+        connectionsToAdd = nextKeys.filter(
+          (key) => !existingKeys.includes(key),
+        );
+        connectionsToRemove = existingKeys.filter(
+          (key) => !nextKeys.includes(key),
+        );
+      } else {
+        connectionsToRemove = activeConnectionKeys.filter(
+          (key) => key.split(">")[0] === srcUnitId,
+        );
       }
+      for (const key of connectionsToAdd) {
+        updateUnitConnectionToPort(bus, unit, key.split(">")[1], "connect");
+      }
+      for (const key of connectionsToRemove) {
+        updateUnitConnectionToPort(bus, unit, key.split(">")[1], "disconnect");
+      }
+      activeConnectionKeys = [
+        ...activeConnectionKeys,
+        ...connectionsToAdd,
+      ].filter((key) => !connectionsToRemove.includes(key));
       console.log(`numConnections: ${numConnections}`);
     },
-    removeConnectionsForUnit(unitId: string) {
+    onUnitRemoving(unitId: string) {
       const unit = bus.getUnit(unitId);
-      const dest = connectionCodeMap.get(unitId);
-      if (unit && dest) {
-        updateUnitConnectionForSingleOutputPortWithFanOut(bus, unit, dest, "");
-        connectionCodeMap.delete(unitId);
+      if (!unit) return;
+      const connectionsToRemove = activeConnectionKeys.filter((key) => {
+        const [first, second] = key.split(">");
+        return first === unitId || second === unitId;
+      });
+      for (const key of connectionsToRemove) {
+        const [first, second] = key.split(">");
+        const srcUnit = bus.getUnit(first);
+        if (srcUnit) {
+          updateUnitConnectionToPort(bus, srcUnit, second, "disconnect");
+        }
       }
+      activeConnectionKeys = activeConnectionKeys.filter(
+        (key) => !connectionsToRemove.includes(key),
+      );
       console.log(`numConnections: ${numConnections}`);
     },
   };

@@ -1,11 +1,16 @@
-import { HostSystem } from "../host-system/host-system";
+import { HostStateBus } from "../host-system/host-state-bus";
 import { HsUnitInstance } from "../linkage/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 
-type SequencerTickDriver = {
+export type BarSwitchingCallbackFn = () => { nextBar: number } | void;
+
+export type SequencerTickDriver = {
   setBpm(bpm: number): void;
   start(): void;
   stop(): void;
+  getCurrentBarPosition(): number;
+  setBarSwitchingCallbackOnce(barAt: number, fn: BarSwitchingCallbackFn): void;
+  cancelBarSwitchingCallback(): void;
 };
 
 type CrossingStepInfo = {
@@ -35,10 +40,10 @@ function getCrossingStepIndices(
 }
 
 function processAllUnitsStartStop(
-  hostSystem: HostSystem,
+  hostStateBus: HostStateBus,
   method: "start" | "stop",
 ) {
-  const units = hostSystem.getAllUnits();
+  const units = hostStateBus.getAllUnits();
   for (const unit of units) {
     unit.clockHandlers?.[method]?.();
   }
@@ -68,7 +73,7 @@ function processUnitsScheduling(
 }
 
 function processAllUnitsScheduling(
-  hostSystem: HostSystem,
+  hostStateBus: HostStateBus,
   timeFrom: number,
   barFrom: number,
   barTo: number,
@@ -80,11 +85,7 @@ function processAllUnitsScheduling(
     barTo,
     bpm,
   );
-  if (crossingStepInfos.some((it) => it.stepIndex % 16 === 0)) {
-    hostSystem.flushPendingOperationsForNextBar();
-  }
-
-  const units = hostSystem.getAllUnits();
+  const units = hostStateBus.getAllUnits().filter((unit) => unit.isClockingOn);
 
   const priorityUnits = units.filter(
     (unit) => unit.clockHandlers?.preferSchedulingOrderInPriority,
@@ -110,31 +111,68 @@ function processAllUnitsScheduling(
   );
 }
 
+type BarCallbackSpec = {
+  barAt: number;
+  fn: BarSwitchingCallbackFn;
+};
+
 export function createSequencerTickDriver(
-  hostSystem: HostSystem,
+  hostStateBus: HostStateBus,
 ): SequencerTickDriver {
-  const core = createSequencerTickDriverCore(hostSystem.audioContext, 25, 100);
+  const core = createSequencerTickDriverCore(
+    hostStateBus.audioContext,
+    25,
+    100,
+  );
   let tickFrameIndex = 0;
+  let currentBarPosition = 0;
+  let barCallbackSpec: BarCallbackSpec | undefined;
 
   return {
     setBpm: core.setBpm,
     start() {
       tickFrameIndex = 0;
-      processAllUnitsStartStop(hostSystem, "start");
+      processAllUnitsStartStop(hostStateBus, "start");
       core.start({
-        processScheduling(timeFrom, barFrom, barTo, bpm) {
+        processPreScheduling(_timeFrom, _barFrom, barTo, _bpm) {
           if (0) {
             console.log("host tick", tickFrameIndex);
           }
-          processAllUnitsScheduling(hostSystem, timeFrom, barFrom, barTo, bpm);
+          //if next scheduling span includes the head point of the waiting bar, invoke the callback
+          if (barCallbackSpec && barTo > barCallbackSpec.barAt) {
+            const res = barCallbackSpec.fn();
+            if (res?.nextBar) {
+              const barShifting = res.nextBar - barCallbackSpec.barAt;
+              barCallbackSpec = undefined;
+              return { barShifting: barShifting };
+            }
+          }
+        },
+        processScheduling(timeFrom, barFrom, barTo, bpm) {
+          processAllUnitsScheduling(
+            hostStateBus,
+            timeFrom,
+            barFrom,
+            barTo,
+            bpm,
+          );
           tickFrameIndex++;
+          currentBarPosition = barTo;
         },
       });
     },
     stop() {
       core.stop();
-      processAllUnitsStartStop(hostSystem, "stop");
-      hostSystem.flushPendingOperationsForNextBar();
+      processAllUnitsStartStop(hostStateBus, "stop");
+    },
+    getCurrentBarPosition() {
+      return currentBarPosition;
+    },
+    setBarSwitchingCallbackOnce(barAt, fn) {
+      barCallbackSpec = { barAt, fn };
+    },
+    cancelBarSwitchingCallback() {
+      barCallbackSpec = undefined;
     },
   };
 }
