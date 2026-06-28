@@ -23,7 +23,7 @@ export type AutomationParameterSpec = {
 
 export type AutomationPort = {
   getParameterSpecs(): AutomationParameterSpec[];
-  getParameter(id: string): number;
+  getParameter(id: string): number | undefined;
   setParameter(id: string, value: number, time?: number): void;
 };
 
@@ -67,6 +67,11 @@ export type HostCallbacks = {
   setMetaAttributes?(metaAttrs: MetaAttributes): void;
 };
 
+export type UnitCallbacks = {
+  onConnectedTo(linkedPortSubtypes: PortSubtype[]): void;
+  onDisconnectedTo(): void;
+};
+
 export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
@@ -81,6 +86,7 @@ export type UnitInterface = {
     persistence?: Persistence;
     clockHandlers?: ClockHandlers;
     automationInput?: AutomationPort;
+    unitCallbacks?: UnitCallbacks;
   }): void;
 };
 
