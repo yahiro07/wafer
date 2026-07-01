@@ -1,5 +1,16 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { HostSystem } from "../core";
+import { createSequencerTickDriver } from "../core/sequencer-tick-driver/sequencer-tick-driver";
+import {
+  createSequencerTickDriverDummy,
+  useSequencerTickDriverRunner,
+} from "./sequencer-tick-driver-runner";
 
 type HostAppContextValue = {
   hostSystem: HostSystem;
@@ -14,38 +25,17 @@ export function useHostAppContext() {
   return useContext(hostAppContext);
 }
 
-function useHostAppDrivers({
-  hostSystem,
-  playing = false,
-  bpm,
-  masterGain,
-}: {
-  hostSystem: HostSystem;
-  playing?: boolean;
-  bpm?: number;
-  masterGain?: number;
-}) {
-  useEffect(() => {
-    if (masterGain !== undefined) {
-      hostSystem.setMasterGain(masterGain);
-    }
-  }, [hostSystem, masterGain]);
-  useEffect(() => {
-    if (bpm) {
-      hostSystem.setBpm(bpm);
-    }
-  }, [hostSystem, bpm]);
-  useEffect(() => {
-    if (playing) {
-      hostSystem.startSequencer();
-      return () => hostSystem.stopSequencer();
-    } else {
-      hostSystem.stopSequencer();
-    }
-  }, [hostSystem, playing]);
-}
-
-export const HostAppProvider = ({
+/*
+usage for manual clocking (for advanced host):
+const audioContext = new AudioContext();
+const hostSystem = createHostSystem(audioContext)
+const sequencerTickDriver = createSequencerTickDriver(hostSystem)
+<HostAppPlainProvider hostSystem={hostSystem}>
+  <SequencerTickDriverRunner sequencerTickDriver={sequencerTickDriver} />
+  <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
+</HostAppPlainProvider>
+*/
+export const HostAppPlainProvider = ({
   hostSystem,
   playing = false,
   bpm,
@@ -58,12 +48,63 @@ export const HostAppProvider = ({
   masterGain?: number;
   children: ReactNode;
 }) => {
-  useHostAppDrivers({ hostSystem, playing, bpm, masterGain });
+  useEffect(() => {
+    if (masterGain !== undefined) {
+      hostSystem.setMasterGain(masterGain);
+    }
+  }, [hostSystem, masterGain]);
   return (
     <hostAppContext.Provider
       value={{ hostSystem, hostBpm: bpm, hostPlaying: playing, masterGain }}
     >
       {children}
     </hostAppContext.Provider>
+  );
+};
+
+/*
+usage for default clocking (for simple host):
+const audioContext = new AudioContext();
+const hostSystem = createHostSystem(audioContext)
+<HostAppPlainProvider hostSystem={hostSystem} defaultClocking>
+  <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
+</HostAppPlainProvider>
+*/
+export const HostAppProvider = ({
+  hostSystem,
+  playing = false,
+  bpm,
+  masterGain,
+  children,
+  defaultClocking,
+}: {
+  hostSystem: HostSystem;
+  playing?: boolean;
+  bpm?: number;
+  masterGain?: number;
+  children: ReactNode;
+  defaultClocking: boolean;
+}) => {
+  const sequencerTickDriver = useMemo(() => {
+    return defaultClocking
+      ? createSequencerTickDriver(hostSystem)
+      : createSequencerTickDriverDummy();
+  }, [hostSystem, defaultClocking]);
+
+  useSequencerTickDriverRunner({
+    sequencerTickDriver,
+    playing,
+    bpm,
+  });
+
+  return (
+    <HostAppPlainProvider
+      hostSystem={hostSystem}
+      playing={playing}
+      bpm={bpm}
+      masterGain={masterGain}
+    >
+      {children}
+    </HostAppPlainProvider>
   );
 };

@@ -6,3 +6,4 @@ export type {
   HsUnitStateData,
 } from "./linkage/types";
 export * from "./linkage/unit-interface-impl";
+export * from "./sequencer-tick-driver/sequencer-tick-driver";

@@ -7,10 +7,6 @@ import {
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
-import {
-  BarSwitchingCallbackFn,
-  createSequencerTickDriver,
-} from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
 import { IAudioContext } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
@@ -45,15 +41,6 @@ export type HostSystem = {
   getAllUnitStates(): HsUnitStateData[];
   setAllUnitStates(unitStates: HsUnitStateData[]): void;
   waitUnitsLoaded(): Promise<void>;
-  setBpm(bpm: number): void;
-  startSequencer(): void;
-  stopSequencer(): void;
-  getCurrentBarPosition(): number; //decimal bar position
-  setBarSwitchingCallbackOnce(
-    barAt: number, //integer bar number to wait for scheduling
-    fn: BarSwitchingCallbackFn,
-  ): void;
-  cancelBarSwitchingCallback(): void;
   deliverNote(args: {
     destUnitId: string;
     noteNumber: number;
@@ -78,7 +65,6 @@ export function createHostSystem(
       ? createDummyActionScheduler()
       : options?.actionScheduler) ??
     createWebAudioActionScheduler(audioContext);
-  const sequencerTickDriver = createSequencerTickDriver(bus);
   const noteNumberToUnitIdMap = new Map<number, string>();
 
   const internal = {
@@ -149,24 +135,6 @@ export function createHostSystem(
           op: () => resolve(),
         });
       });
-    },
-    setBpm(bpm: number) {
-      sequencerTickDriver.setBpm(bpm);
-    },
-    startSequencer() {
-      sequencerTickDriver.start();
-    },
-    stopSequencer() {
-      sequencerTickDriver.stop();
-    },
-    getCurrentBarPosition() {
-      return sequencerTickDriver.getCurrentBarPosition();
-    },
-    setBarSwitchingCallbackOnce(nextBar, fn) {
-      sequencerTickDriver.setBarSwitchingCallbackOnce(nextBar, fn);
-    },
-    cancelBarSwitchingCallback() {
-      sequencerTickDriver.cancelBarSwitchingCallback();
     },
     deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
       if (isOn) {

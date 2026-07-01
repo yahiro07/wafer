@@ -1,4 +1,4 @@
-import { HostStateBus } from "../host-system/host-state-bus";
+import { HostSystem } from "../host-system/host-system";
 import { HsUnitInstance } from "../linkage/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 
@@ -40,10 +40,10 @@ function getCrossingStepIndices(
 }
 
 function processAllUnitsStartStop(
-  hostStateBus: HostStateBus,
+  hostSystem: HostSystem,
   method: "start" | "stop",
 ) {
-  const units = hostStateBus.getAllUnits();
+  const units = hostSystem.getAllUnits();
   for (const unit of units) {
     unit.clockHandlers?.[method]?.();
   }
@@ -73,7 +73,7 @@ function processUnitsScheduling(
 }
 
 function processAllUnitsScheduling(
-  hostStateBus: HostStateBus,
+  hostSystem: HostSystem,
   timeFrom: number,
   barFrom: number,
   barTo: number,
@@ -85,7 +85,7 @@ function processAllUnitsScheduling(
     barTo,
     bpm,
   );
-  const units = hostStateBus.getAllUnits().filter((unit) => unit.isClockingOn);
+  const units = hostSystem.getAllUnits().filter((unit) => unit.isClockingOn);
 
   const priorityUnits = units.filter(
     (unit) => unit.clockHandlers?.preferSchedulingOrderInPriority,
@@ -117,13 +117,9 @@ type BarCallbackSpec = {
 };
 
 export function createSequencerTickDriver(
-  hostStateBus: HostStateBus,
+  hostSystem: HostSystem,
 ): SequencerTickDriver {
-  const core = createSequencerTickDriverCore(
-    hostStateBus.audioContext,
-    25,
-    100,
-  );
+  const core = createSequencerTickDriverCore(hostSystem.audioContext, 25, 100);
   let tickFrameIndex = 0;
   let currentBarPosition = 0;
   let barCallbackSpec: BarCallbackSpec | undefined;
@@ -132,7 +128,7 @@ export function createSequencerTickDriver(
     setBpm: core.setBpm,
     start() {
       tickFrameIndex = 0;
-      processAllUnitsStartStop(hostStateBus, "start");
+      processAllUnitsStartStop(hostSystem, "start");
       core.start({
         processPreScheduling(_timeFrom, _barFrom, barTo, _bpm) {
           if (0) {
@@ -149,13 +145,7 @@ export function createSequencerTickDriver(
           }
         },
         processScheduling(timeFrom, barFrom, barTo, bpm) {
-          processAllUnitsScheduling(
-            hostStateBus,
-            timeFrom,
-            barFrom,
-            barTo,
-            bpm,
-          );
+          processAllUnitsScheduling(hostSystem, timeFrom, barFrom, barTo, bpm);
           tickFrameIndex++;
           currentBarPosition = barTo;
         },
@@ -163,7 +153,7 @@ export function createSequencerTickDriver(
     },
     stop() {
       core.stop();
-      processAllUnitsStartStop(hostStateBus, "stop");
+      processAllUnitsStartStop(hostSystem, "stop");
     },
     getCurrentBarPosition() {
       return currentBarPosition;
