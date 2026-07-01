@@ -7,10 +7,7 @@ import {
 } from "react";
 import { HostSystem } from "../core";
 import { createSequencerTickDriver } from "../core/sequencer-tick-driver/sequencer-tick-driver";
-import {
-  createSequencerTickDriverDummy,
-  useSequencerTickDriverRunner,
-} from "./sequencer-tick-driver-runner";
+import { useSequencerTickDriverRunner } from "./sequencer-tick-driver-runner";
 
 type HostAppContextValue = {
   hostSystem: HostSystem;
@@ -26,12 +23,13 @@ export function useHostAppContext() {
 }
 
 /*
-usage for manual clocking (for advanced host):
+usage with manual clocking (for advanced host):
 const audioContext = new AudioContext();
 const hostSystem = createHostSystem(audioContext)
 const sequencerTickDriver = createSequencerTickDriver(hostSystem)
+//in component:
+useSequencerTickDriverRunner({ sequencerTickDriver, playing, bpm });
 <HostAppPlainProvider hostSystem={hostSystem}>
-  <SequencerTickDriverRunner sequencerTickDriver={sequencerTickDriver} />
   <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
 </HostAppPlainProvider>
 */
@@ -63,10 +61,11 @@ export const HostAppPlainProvider = ({
 };
 
 /*
-usage for default clocking (for simple host):
+usage with built-in clocking (for simple host):
 const audioContext = new AudioContext();
 const hostSystem = createHostSystem(audioContext)
-<HostAppPlainProvider hostSystem={hostSystem} defaultClocking>
+//in component:
+<HostAppPlainProvider hostSystem={hostSystem} playing={playing} bpm={bpm}>
   <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
 </HostAppPlainProvider>
 */
@@ -76,21 +75,17 @@ export const HostAppProvider = ({
   bpm,
   masterGain,
   children,
-  defaultClocking,
 }: {
   hostSystem: HostSystem;
   playing?: boolean;
   bpm?: number;
   masterGain?: number;
   children: ReactNode;
-  defaultClocking: boolean;
 }) => {
-  const sequencerTickDriver = useMemo(() => {
-    return defaultClocking
-      ? createSequencerTickDriver(hostSystem)
-      : createSequencerTickDriverDummy();
-  }, [hostSystem, defaultClocking]);
-
+  const sequencerTickDriver = useMemo(
+    () => createSequencerTickDriver(hostSystem),
+    [hostSystem],
+  );
   useSequencerTickDriverRunner({
     sequencerTickDriver,
     playing,

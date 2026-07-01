@@ -6,14 +6,6 @@ export type ISequencerTickDriver = {
   stop(): void;
 };
 
-export function createSequencerTickDriverDummy(): ISequencerTickDriver {
-  return {
-    setBpm: () => {},
-    start: () => {},
-    stop: () => {},
-  };
-}
-
 export function useSequencerTickDriverRunner({
   sequencerTickDriver,
   playing = false,
@@ -37,20 +29,3 @@ export function useSequencerTickDriverRunner({
     }
   }, [sequencerTickDriver, playing]);
 }
-
-export const SequencerTickDriverRunner = ({
-  sequencerTickDriver,
-  playing = false,
-  bpm,
-}: {
-  sequencerTickDriver: ISequencerTickDriver;
-  playing?: boolean;
-  bpm?: number;
-}) => {
-  useSequencerTickDriverRunner({
-    sequencerTickDriver,
-    playing,
-    bpm,
-  });
-  return null;
-};
