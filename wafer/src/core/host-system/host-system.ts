@@ -23,6 +23,9 @@ import {
 export type HostSystem = {
   audioContext: IAudioContext;
   actionScheduler: WebAudioActionScheduler;
+  setCustomActionScheduler(
+    customActionScheduler: WebAudioActionScheduler | "none",
+  ): void;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
@@ -52,18 +55,12 @@ export type HostSystem = {
   cleanup(): void;
 };
 
-export function createHostSystem(
-  audioContext: IAudioContext,
-  options?: { actionScheduler?: WebAudioActionScheduler | "none" },
-): HostSystem {
+export function createHostSystem(audioContext: IAudioContext): HostSystem {
   const bus = createHostStateBus(audioContext);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
-  const actionScheduler: WebAudioActionScheduler =
-    (options?.actionScheduler === "none"
-      ? createDummyActionScheduler()
-      : options?.actionScheduler) ??
+  let actionScheduler: WebAudioActionScheduler =
     createWebAudioActionScheduler(audioContext);
   const noteNumberToUnitIdMap = new Map<number, string>();
 
@@ -85,7 +82,18 @@ export function createHostSystem(
 
   return {
     audioContext,
-    actionScheduler,
+    get actionScheduler() {
+      return actionScheduler;
+    },
+    setCustomActionScheduler(
+      customActionScheduler: WebAudioActionScheduler | "none",
+    ) {
+      if (customActionScheduler === "none") {
+        actionScheduler = createDummyActionScheduler();
+      } else {
+        actionScheduler = customActionScheduler;
+      }
+    },
     getAllUnits: bus.getAllUnits,
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
