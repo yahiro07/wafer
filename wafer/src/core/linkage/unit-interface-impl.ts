@@ -1,6 +1,6 @@
 import { AutomationPort, NotePort, UnitInterface } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
-import { IAudioContext } from "../host-system/types";
+import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
@@ -13,6 +13,8 @@ import {
 
 function createHsNoteOutputPort(
   actionScheduler: WebAudioActionScheduler,
+  unitId: string,
+  getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
 ): HsNoteOutputPort {
   const connectedInputPorts = new Set<NotePort>();
   return {
@@ -23,6 +25,11 @@ function createHsNoteOutputPort(
       connectedInputPorts.delete(port);
     },
     noteOn(noteNumber, time, velocity) {
+      const monitorFn = getUnitNoteOutputMonitor();
+      if (monitorFn) {
+        const sourceUnitId = unitId;
+        monitorFn({ sourceUnitId, noteNumber, isOn: true, time, velocity });
+      }
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOn(noteNumber, time, velocity);
@@ -30,6 +37,11 @@ function createHsNoteOutputPort(
       }, time);
     },
     noteOff(noteNumber, time) {
+      const monitorFn = getUnitNoteOutputMonitor();
+      if (monitorFn) {
+        const sourceUnitId = unitId;
+        monitorFn({ sourceUnitId, noteNumber, isOn: false, time });
+      }
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOff(noteNumber, time);
@@ -94,7 +106,11 @@ export function createUnitInterface(
   const { audioContext } = hostSystem;
   const audioOutputPort = createHsAudioOutputPort(audioContext);
   const audioInputPort = createHsAudioInputPort(audioContext);
-  const noteOutputPort = createHsNoteOutputPort(hostSystem.actionScheduler);
+  const noteOutputPort = createHsNoteOutputPort(
+    hostSystem.actionScheduler,
+    unitId,
+    hostSystem.getUnitNoteOutputMonitor,
+  );
   const automationOutputPort = createHsAutomationOutputPort(
     hostSystem.actionScheduler,
   );

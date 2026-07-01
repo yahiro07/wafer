@@ -8,7 +8,7 @@ import {
   HsUnitStateData,
 } from "../linkage/types";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
-import { IAudioContext } from "./types";
+import { IAudioContext, UnitNoteOutputMonitorFn } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
   createUnitPersistenceHandlers,
@@ -52,6 +52,10 @@ export type HostSystem = {
     velocity?: number;
   }): void;
   cleanup(): void;
+  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
 };
 
 export function createHostSystem(audioContext: IAudioContext): HostSystem {
@@ -62,6 +66,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
   let actionScheduler: WebAudioActionScheduler =
     createWebAudioActionScheduler(audioContext);
   const noteNumberToUnitIdMap = new Map<number, string>();
+  let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
 
   const internal = {
     addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
@@ -168,6 +173,12 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     },
     cleanup() {
       unsubscribeInternalEvents();
+    },
+    getUnitNoteOutputMonitor() {
+      return unitNoteOutputMonitorFn;
+    },
+    setUnitNoteOutputMonitor(monitorFn) {
+      unitNoteOutputMonitorFn = monitorFn;
     },
   };
 }
