@@ -43,6 +43,7 @@ export type HsUnitInstance = {
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
   RenderUi?: () => ReactNode;
+  //host app can get/set this flag, sequencerTickDriver refers this
   isClockingOn: boolean;
 };
 
