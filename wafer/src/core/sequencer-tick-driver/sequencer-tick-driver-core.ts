@@ -1,12 +1,6 @@
 import { IAudioContext } from "../host-system/types";
 
 export type SequencerTickDriverCoreCallbacks = {
-  processPreScheduling?(
-    timeFrom: number,
-    barFrom: number,
-    barTo: number,
-    bpm: number,
-  ): { barShifting?: number } | void;
   processScheduling(
     timeFrom: number, //absolute time based on AudioContext.currentTime
     barFrom: number, //decimal bar position in song
@@ -31,15 +25,22 @@ export function createSequencerTickDriverCore(
   audioContext: IAudioContext,
   intervalMs: number = 25,
   lookaheadMs: number = 100,
+  bpmOptions?: {
+    min?: number;
+    max?: number;
+    default?: number;
+  },
 ): SequencerTickDriverCore {
-  const state = { bpm: 120 };
+  const state = { bpm: bpmOptions?.default ?? 120 };
   const lookaheadSec = lookaheadMs / 1000;
 
   let timerId: NodeJS.Timeout | null = null;
 
   return {
     setBpm(bpm: number) {
-      if (10 <= bpm && bpm <= 400) {
+      const lowerBound = bpmOptions?.min ?? 10;
+      const upperBound = bpmOptions?.max ?? 400;
+      if (lowerBound <= bpm && bpm <= upperBound) {
         state.bpm = bpm;
       }
     },
@@ -53,17 +54,7 @@ export function createSequencerTickDriverCore(
         const timeFrom = scheduledUntil;
         const duration = timeTo - timeFrom;
 
-        let barPosNext = barPos + mapTimeToBar(duration, state.bpm);
-        const res = sequencer.processPreScheduling?.(
-          timeFrom,
-          barPos,
-          barPosNext,
-          state.bpm,
-        );
-        if (res?.barShifting) {
-          barPos += res.barShifting;
-          barPosNext += res.barShifting;
-        }
+        const barPosNext = barPos + mapTimeToBar(duration, state.bpm);
         sequencer.processScheduling(timeFrom, barPos, barPosNext, state.bpm);
 
         scheduledUntil = timeTo;

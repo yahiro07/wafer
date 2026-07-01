@@ -1,10 +1,5 @@
 import { useEffect } from "react";
-
-export type ISequencerTickDriver = {
-  setBpm(bpm: number): void;
-  start(): void;
-  stop(): void;
-};
+import { ISequencerTickDriver } from "../core";
 
 export function useSequencerTickDriverRunner({
   sequencerTickDriver,

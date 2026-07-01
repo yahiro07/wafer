@@ -7,3 +7,5 @@ export type {
 } from "./linkage/types";
 export * from "./linkage/unit-interface-impl";
 export * from "./sequencer-tick-driver/sequencer-tick-driver";
+export * from "./sequencer-tick-driver/sequencer-tick-driver-core";
+export * from "./sequencer-tick-driver/sequencer-tick-driver-helper";
