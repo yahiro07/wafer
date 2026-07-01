@@ -45,8 +45,6 @@ export function createSequencerTickDriverCore(
       }
     },
     start(sequencer: SequencerTickDriverCoreCallbacks) {
-      // sequencer.handleStart?.();
-
       let scheduledUntil = audioContext.currentTime;
       let barPos = 0;
 
