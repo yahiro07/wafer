@@ -137,7 +137,6 @@ export function createUnitInterface(
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
         unitCallbacks: attrs.unitCallbacks,
-        isClockingOn: true,
       });
     },
   };

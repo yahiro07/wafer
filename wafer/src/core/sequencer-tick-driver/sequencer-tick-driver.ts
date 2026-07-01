@@ -85,7 +85,7 @@ function processAllUnitsScheduling(
     barTo,
     bpm,
   );
-  const units = hostSystem.getAllUnits().filter((unit) => unit.isClockingOn);
+  const units = hostSystem.getAllUnits();
 
   processUnitsScheduling(
     units,
