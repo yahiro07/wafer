@@ -87,22 +87,8 @@ function processAllUnitsScheduling(
   );
   const units = hostSystem.getAllUnits().filter((unit) => unit.isClockingOn);
 
-  const priorityUnits = units.filter(
-    (unit) => unit.clockHandlers?.preferSchedulingOrderInPriority,
-  );
-  const normalUnits = units.filter(
-    (unit) => !unit.clockHandlers?.preferSchedulingOrderInPriority,
-  );
   processUnitsScheduling(
-    priorityUnits,
-    timeFrom,
-    barFrom,
-    barTo,
-    bpm,
-    crossingStepInfos,
-  );
-  processUnitsScheduling(
-    normalUnits,
+    units,
     timeFrom,
     barFrom,
     barTo,
