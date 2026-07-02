@@ -1,4 +1,4 @@
-import { NotePort, UnitInterface } from "../../unit-types";
+import { AutomationPort, NotePort, UnitInterface } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
 import { IAudioContext } from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
@@ -6,6 +6,7 @@ import {
   AudioPort,
   HsAudioInputPort,
   HsAudioOutputPort,
+  HsAutomationOutputPort,
   HsNoteOutputPort,
   HsUnitInstance,
 } from "./types";
@@ -33,6 +34,33 @@ function createHsNoteOutputPort(
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOff(noteNumber, time);
         });
+      }, time);
+    },
+  };
+}
+
+function createHsAutomationOutputPort(
+  actionScheduler: WebAudioActionScheduler,
+): HsAutomationOutputPort {
+  let connectedInputPort: AutomationPort | undefined;
+  return {
+    connectTo(port: AutomationPort) {
+      connectedInputPort = port;
+    },
+    disconnectTo(port: AutomationPort) {
+      if (connectedInputPort === port) {
+        connectedInputPort = undefined;
+      }
+    },
+    getParameterSpecs() {
+      return connectedInputPort?.getParameterSpecs() ?? [];
+    },
+    getParameter(id: string) {
+      return connectedInputPort?.getParameter(id);
+    },
+    setParameter(id: string, value: number, time?: number) {
+      actionScheduler.pushAction(() => {
+        connectedInputPort?.setParameter(id, value, time);
       }, time);
     },
   };
@@ -67,11 +95,15 @@ export function createUnitInterface(
   const audioOutputPort = createHsAudioOutputPort(audioContext);
   const audioInputPort = createHsAudioInputPort(audioContext);
   const noteOutputPort = createHsNoteOutputPort(hostSystem.actionScheduler);
+  const automationOutputPort = createHsAutomationOutputPort(
+    hostSystem.actionScheduler,
+  );
   return {
-    audioContext,
+    audioContext: audioContext as AudioContext,
     audioOutputNode: audioOutputPort.node,
     audioInputNode: audioInputPort.node,
     noteOutputPort,
+    automationOutputPort,
     emitMetaAttributes(metaAttrs) {
       hostSystem.emitMetaAttributes(metaAttrs);
     },
@@ -80,20 +112,31 @@ export function createUnitInterface(
       const hasAudioInput = attrs.unitAspects.inputs?.includes("audio");
       const hasNoteOutput = attrs.unitAspects.outputs?.includes("note");
       const hasNoteInput = attrs.unitAspects.inputs?.includes("note");
+      const hasAutomationOutput =
+        attrs.unitAspects.outputs?.includes("automation");
+      const hasAutomationInput =
+        attrs.unitAspects.inputs?.includes("automation");
 
       createdCallback({
         unitId,
         inputPorts: {
           audioInput: hasAudioInput ? audioInputPort : undefined,
           noteInput: hasNoteInput ? attrs.noteInput : undefined,
+          automationInput: hasAutomationInput
+            ? attrs.automationInput
+            : undefined,
         },
         outputPorts: {
           audioOutput: hasAudioOutput ? audioOutputPort : undefined,
           noteOutput: hasNoteOutput ? noteOutputPort : undefined,
+          automationOutput: hasAutomationOutput
+            ? automationOutputPort
+            : undefined,
         },
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
+        unitCallbacks: attrs.unitCallbacks,
         isClockingOn: true,
       });
     },

@@ -1,3 +1,4 @@
+import { PortSubtype } from "../../unit-types";
 import { HostStateBus } from "../host-system/host-state-bus";
 import { DestinationCode, HsUnitInstance } from "./types";
 
@@ -10,11 +11,23 @@ function updateConnectionToUnit(
 ) {
   const srcOuts = srcUnit.outputPorts;
   const destIns = destUnit.inputPorts;
+  const portSubtypes: PortSubtype[] = [];
   if (srcOuts.audioOutput && destIns.audioInput) {
     srcOuts.audioOutput[operation](destIns.audioInput);
+    portSubtypes.push("audio");
   }
   if (srcOuts.noteOutput && destIns.noteInput) {
     srcOuts.noteOutput[operation](destIns.noteInput);
+    portSubtypes.push("note");
+  }
+  if (srcOuts.automationOutput && destIns.automationInput) {
+    srcOuts.automationOutput[operation](destIns.automationInput);
+    portSubtypes.push("automation");
+  }
+  if (operation === "connectTo") {
+    srcUnit.unitCallbacks?.onConnectedTo?.(portSubtypes);
+  } else {
+    srcUnit.unitCallbacks?.onDisconnectedTo?.();
   }
 }
 
