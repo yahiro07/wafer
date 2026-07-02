@@ -36,7 +36,6 @@ export type Persistence = {
 };
 
 export type ClockHandlers = {
-  preferSchedulingOrderInPriority?: boolean;
   start?(): void;
   stop?(): void;
   processScheduling?(

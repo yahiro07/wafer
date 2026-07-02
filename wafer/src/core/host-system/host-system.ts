@@ -7,12 +7,8 @@ import {
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
-import {
-  BarSwitchingCallbackFn,
-  createSequencerTickDriver,
-} from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
-import { IAudioContext } from "./types";
+import { IAudioContext, UnitNoteOutputMonitorFn } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
 import {
   createUnitPersistenceHandlers,
@@ -27,6 +23,9 @@ import {
 export type HostSystem = {
   audioContext: IAudioContext;
   actionScheduler: WebAudioActionScheduler;
+  setCustomActionScheduler(
+    customActionScheduler: WebAudioActionScheduler | "none",
+  ): void;
   getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
@@ -45,15 +44,6 @@ export type HostSystem = {
   getAllUnitStates(): HsUnitStateData[];
   setAllUnitStates(unitStates: HsUnitStateData[]): void;
   waitUnitsLoaded(): Promise<void>;
-  setBpm(bpm: number): void;
-  startSequencer(): void;
-  stopSequencer(): void;
-  getCurrentBarPosition(): number; //decimal bar position
-  setBarSwitchingCallbackOnce(
-    barAt: number, //integer bar number to wait for scheduling
-    fn: BarSwitchingCallbackFn,
-  ): void;
-  cancelBarSwitchingCallback(): void;
   deliverNote(args: {
     destUnitId: string;
     noteNumber: number;
@@ -61,25 +51,22 @@ export type HostSystem = {
     time?: number;
     velocity?: number;
   }): void;
-  setUnitClocking(unitId: string, enabled: boolean): void;
   cleanup(): void;
+  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
 };
 
-export function createHostSystem(
-  audioContext: IAudioContext,
-  options?: { actionScheduler?: WebAudioActionScheduler | "none" },
-): HostSystem {
+export function createHostSystem(audioContext: IAudioContext): HostSystem {
   const bus = createHostStateBus(audioContext);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
-  const actionScheduler: WebAudioActionScheduler =
-    (options?.actionScheduler === "none"
-      ? createDummyActionScheduler()
-      : options?.actionScheduler) ??
+  let actionScheduler: WebAudioActionScheduler =
     createWebAudioActionScheduler(audioContext);
-  const sequencerTickDriver = createSequencerTickDriver(bus);
   const noteNumberToUnitIdMap = new Map<number, string>();
+  let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
 
   const internal = {
     addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
@@ -99,7 +86,18 @@ export function createHostSystem(
 
   return {
     audioContext,
-    actionScheduler,
+    get actionScheduler() {
+      return actionScheduler;
+    },
+    setCustomActionScheduler(
+      customActionScheduler: WebAudioActionScheduler | "none",
+    ) {
+      if (customActionScheduler === "none") {
+        actionScheduler = createDummyActionScheduler();
+      } else {
+        actionScheduler = customActionScheduler;
+      }
+    },
     getAllUnits: bus.getAllUnits,
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
@@ -150,24 +148,6 @@ export function createHostSystem(
         });
       });
     },
-    setBpm(bpm: number) {
-      sequencerTickDriver.setBpm(bpm);
-    },
-    startSequencer() {
-      sequencerTickDriver.start();
-    },
-    stopSequencer() {
-      sequencerTickDriver.stop();
-    },
-    getCurrentBarPosition() {
-      return sequencerTickDriver.getCurrentBarPosition();
-    },
-    setBarSwitchingCallbackOnce(nextBar, fn) {
-      sequencerTickDriver.setBarSwitchingCallbackOnce(nextBar, fn);
-    },
-    cancelBarSwitchingCallback() {
-      sequencerTickDriver.cancelBarSwitchingCallback();
-    },
     deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
       if (isOn) {
         const unit = bus.getUnit(destUnitId);
@@ -191,14 +171,14 @@ export function createHostSystem(
         noteNumberToUnitIdMap.delete(noteNumber);
       }
     },
-    setUnitClocking(unitId, enabled) {
-      const unit = bus.getUnit(unitId);
-      if (unit) {
-        unit.isClockingOn = enabled;
-      }
-    },
     cleanup() {
       unsubscribeInternalEvents();
+    },
+    getUnitNoteOutputMonitor() {
+      return unitNoteOutputMonitorFn;
+    },
+    setUnitNoteOutputMonitor(monitorFn) {
+      unitNoteOutputMonitorFn = monitorFn;
     },
   };
 }

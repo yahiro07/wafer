@@ -43,7 +43,6 @@ export type HsUnitInstance = {
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
   RenderUi?: () => ReactNode;
-  isClockingOn: boolean;
 };
 
 export type DestinationCode = string;
