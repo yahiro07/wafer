@@ -10,6 +10,12 @@ import {
 
 export type AudioPort = { node: AudioNode };
 
+export type HsAdditionalAudioPort = {
+  node: AudioNode;
+  id: string;
+  label?: string;
+};
+
 export type HsUnitStateData =
   | { unitId: string; type: "bytes"; base64: string }
   | { unitId: string; type: "json"; json: Record<string, any> };
@@ -17,6 +23,7 @@ export type HsUnitStateData =
 export type HsAudioInputPort = AudioPort;
 export type HsNoteInputPort = NotePort;
 export type HsAutomationInputPort = AutomationPort;
+export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
 
 type WrapperOutputPort<T> = T & {
   connectTo(port: T): void;
@@ -25,6 +32,8 @@ type WrapperOutputPort<T> = T & {
 export type HsNoteOutputPort = WrapperOutputPort<NotePort>;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
 export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
+export type HsAdditionalAudioOutputPort =
+  WrapperOutputPort<HsAdditionalAudioPort>;
 
 export type HsUnitInstance = {
   unitId: string;
@@ -38,6 +47,8 @@ export type HsUnitInstance = {
     noteOutput?: HsNoteOutputPort;
     automationOutput?: HsAutomationOutputPort;
   };
+  additionalAudioOutputs?: HsAdditionalAudioPort[];
+  additionalAudioInputs?: HsAdditionalAudioPort[];
   hostCallbacks?: HostCallbacks;
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;

@@ -78,6 +78,8 @@ export type UnitInterface = {
   noteOutputPort: NotePort;
   automationOutputPort: AutomationPort;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
+  createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
+  createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
