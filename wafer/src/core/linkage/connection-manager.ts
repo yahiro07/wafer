@@ -50,20 +50,20 @@ function updateConnectionCompositePortToOutput(
   bus: HostStateBus,
   srcOuts: CompositePort,
   operation: ConnectingOperation,
-): PortSubtype[] {
+): PortSubtype[] | undefined {
   const destPort = bus.audioDestinationVirtualInputPort;
   if (srcOuts.audioOutput) {
     srcOuts.audioOutput[operation](destPort);
     return ["audio"];
   }
-  return [];
+  return undefined;
 }
 
 function updateConnectionBetweenCompositePort(
   srcOuts: CompositePort,
   destIns: CompositePort,
   operation: "connectTo" | "disconnectTo",
-): PortSubtype[] {
+): PortSubtype[] | undefined {
   const portSubtypes: PortSubtype[] = [];
   if (srcOuts.audioOutput && destIns.audioInput) {
     srcOuts.audioOutput[operation](destIns.audioInput);
@@ -77,29 +77,29 @@ function updateConnectionBetweenCompositePort(
     srcOuts.automationOutput[operation](destIns.automationInput);
     portSubtypes.push("automation");
   }
-  return portSubtypes;
+  return portSubtypes.length > 0 ? portSubtypes : undefined;
 }
-
-let numConnections = 0;
 
 function getUnitOutputCompositePort(
   unit: HsUnitInstance,
   portId: string,
 ): CompositePort | undefined {
-  if (portId !== "$primary" && unit.additionalAudioOutputs?.[portId]) {
-    return { audioOutput: unit.additionalAudioOutputs?.[portId] };
+  if (portId === "$primary") {
+    return unit.outputPorts;
   }
-  return unit.outputPorts;
+  const port = unit.additionalAudioOutputs?.[portId];
+  return port ? { audioOutput: port } : undefined;
 }
 
 function getUnitInputCompositePort(
   unit: HsUnitInstance,
   portId: string,
 ): CompositePort | undefined {
-  if (portId !== "$primary" && unit.additionalAudioInputs?.[portId]) {
-    return { audioInput: unit.additionalAudioInputs?.[portId] };
+  if (portId === "$primary") {
+    return unit.inputPorts;
   }
-  return unit.inputPorts;
+  const port = unit.additionalAudioInputs?.[portId];
+  return port ? { audioInput: port } : undefined;
 }
 
 function callUnitConnectionCallback(
@@ -115,7 +115,27 @@ function callUnitConnectionCallback(
   }
 }
 
-function updateUnitConnectionToPort2(
+let numConnections = 0;
+
+function logConnectionChange(
+  from: UnitPortSpec,
+  to: UnitPortSpec,
+  operation: ConnectingOperation,
+) {
+  if (operation === "connectTo") {
+    console.log(
+      `connected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
+    );
+    numConnections++;
+  } else {
+    console.log(
+      `disconnected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
+    );
+    numConnections--;
+  }
+}
+
+function updateUnitConnectionToPort(
   bus: HostStateBus,
   from: UnitPortSpec,
   to: UnitPortSpec,
@@ -123,18 +143,6 @@ function updateUnitConnectionToPort2(
 ) {
   const srcUnit = bus.getUnit(from.unitId);
   if (!srcUnit) return;
-
-  if (operation === "connectTo") {
-    console.log(
-      `connecting ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
-    );
-    numConnections++;
-  } else {
-    console.log(
-      `disconnecting ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
-    );
-    numConnections--;
-  }
 
   if (to.unitId === "$output") {
     const srcCompositePort = getUnitOutputCompositePort(srcUnit, from.portId);
@@ -144,7 +152,15 @@ function updateUnitConnectionToPort2(
         srcCompositePort,
         operation,
       );
-      callUnitConnectionCallback(srcUnit, from.portId, operation, portSubtypes);
+      if (portSubtypes) {
+        callUnitConnectionCallback(
+          srcUnit,
+          from.portId,
+          operation,
+          portSubtypes,
+        );
+        logConnectionChange(from, to, operation);
+      }
     }
   } else {
     const destUnit = bus.getUnit(to.unitId);
@@ -157,12 +173,15 @@ function updateUnitConnectionToPort2(
           destCompositePort,
           operation,
         );
-        callUnitConnectionCallback(
-          srcUnit,
-          from.portId,
-          operation,
-          portSubtypes,
-        );
+        if (portSubtypes) {
+          callUnitConnectionCallback(
+            srcUnit,
+            from.portId,
+            operation,
+            portSubtypes,
+          );
+          logConnectionChange(from, to, operation);
+        }
       }
     }
   }
@@ -226,7 +245,8 @@ export function createUnitConnectionsManager(
           (entry) => !existingKeys.includes(entry.key),
         );
         connectionsToRemove = activeConnectionEntries.filter(
-          (entry) => !nextKeys.includes(entry.key),
+          (entry) =>
+            entry.from.unitId === srcUnitId && !nextKeys.includes(entry.key),
         );
       } else {
         connectionsToRemove = activeConnectionEntries.filter(
@@ -235,10 +255,10 @@ export function createUnitConnectionsManager(
       }
 
       for (const entry of connectionsToAdd) {
-        updateUnitConnectionToPort2(bus, entry.from, entry.to, "connectTo");
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "connectTo");
       }
       for (const entry of connectionsToRemove) {
-        updateUnitConnectionToPort2(bus, entry.from, entry.to, "disconnectTo");
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
       }
       activeConnectionEntries = [
         ...activeConnectionEntries,
@@ -253,7 +273,7 @@ export function createUnitConnectionsManager(
         return entry.from.unitId === unitId || entry.to.unitId === unitId;
       });
       for (const entry of connectionsToRemove) {
-        updateUnitConnectionToPort2(bus, entry.from, entry.to, "disconnectTo");
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
       }
       activeConnectionEntries = activeConnectionEntries.filter(
         (entry) => !connectionsToRemove.includes(entry),
