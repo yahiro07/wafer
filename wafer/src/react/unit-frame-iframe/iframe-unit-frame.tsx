@@ -19,7 +19,7 @@ type Props = {
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
 
-export const UnitFrame = ({
+export const IFrameUnitFrame = ({
   unitId,
   pageUrl,
   destSpec: destSpecInput,

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { HsUnitInstance } from "../../core";
+import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import {
   serializeUnitDestinationSpec,
   UnitDestinationSpec,
@@ -10,7 +11,6 @@ import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
-import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 
 type Props = {
   unitId: string;
