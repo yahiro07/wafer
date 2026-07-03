@@ -1,5 +1,6 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
 import { HsUnitInstance } from "../../core";
+import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
 import {
   serializeUnitDestinationSpec,
@@ -48,6 +49,8 @@ export const CustomElementUnitFrame = ({
 
   useEffect(() => {
     if (containerRef.current) {
+      checkUnitIdValidity(unitId);
+
       const container = containerRef.current;
       let createdElement: HTMLElement | undefined;
 

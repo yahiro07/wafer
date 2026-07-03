@@ -1,5 +1,6 @@
 import { AutomationPort, NotePort, UnitInterface } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
+import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
@@ -155,11 +156,13 @@ export function createUnitInterface(
     noteOutputPort,
     automationOutputPort,
     createAdditionalAudioOutputNode(id: string, label?: string) {
+      checkPortIdValidity(id);
       const port = createHsAdditionalAudioOutputPort(audioContext, id, label);
       additionalAudioOutputs[id] = port;
       return port.node;
     },
     createAdditionalAudioInputNode(id: string, label?: string) {
+      checkPortIdValidity(id);
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
       additionalAudioInputs[id] = port;
       return port.node;

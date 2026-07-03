@@ -10,6 +10,7 @@ import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
+import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 
 type Props = {
   unitId: string;
@@ -28,10 +29,10 @@ export const ReactUnitFrame = ({
 }: Props) => {
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
-  const unit = useMemo(
-    () => instantiateReactUnit(hostSystem, unitTemplateFn, unitId),
-    [unitTemplateFn, unitId, hostSystem],
-  );
+  const unit = useMemo(() => {
+    checkUnitIdValidity(unitId);
+    return instantiateReactUnit(hostSystem, unitTemplateFn, unitId);
+  }, [unitTemplateFn, unitId, hostSystem]);
   useEffect(() => {
     onUnitInstanceLoaded?.(unit);
     return hostSystem.registerUnitInstance(unit);

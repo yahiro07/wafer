@@ -8,6 +8,7 @@ import {
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
+import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 
 type Props = {
   unitId: string;
@@ -50,6 +51,7 @@ export const UnitFrame = ({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
+    checkUnitIdValidity(unitId);
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
       onUnitInstanceLoaded,
