@@ -3,7 +3,6 @@ import path from "node:path";
 import { UnitMetadata } from "../../unit-types";
 import { ResolvedUnitEntry } from "../common/internal-types";
 import { UnitInventoriesJson, UnitInventorySpec } from "../common/types";
-import { FrameSize, normalizeFrameSize } from "./frame-size";
 
 async function fetchUnitAssetText(
   resolvedUnitEntry: ResolvedUnitEntry,
@@ -100,7 +99,6 @@ function getUrlBaseForAssets(resolvedUnitEntry: ResolvedUnitEntry): string {
 function createUnitInventorySpec(
   resolvedUnitEntry: ResolvedUnitEntry,
   meta: UnitMetadata,
-  preferredSize: FrameSize,
   isModuleLibraryUnit: boolean,
   hasThumbnail: boolean,
   hasLicenseText: boolean,
@@ -117,7 +115,6 @@ function createUnitInventorySpec(
     name: meta.name,
     unitType: meta.unitType,
     category: meta.categoryHint,
-    preferredSize,
     outputSignalTypes: meta.outputSignalTypes,
     inputSignalTypes: meta.inputSignalTypes,
     unitTypesVersion: meta.unitTypesVersion,
@@ -150,13 +147,6 @@ export async function generateSummariesJson(
         resolvedUnitEntry,
         "LICENSE",
       );
-      const preferredSize = normalizeFrameSize(meta.preferredSize);
-      if (!preferredSize) {
-        console.log(meta);
-        throw new Error(
-          `Invalid preferred size for unit ${resolvedUnitEntry.catalogKey}`,
-        );
-      }
       const hasIndexHtml = await checkUnitAssetExists(
         resolvedUnitEntry,
         "index.html",
@@ -175,7 +165,6 @@ export async function generateSummariesJson(
       return createUnitInventorySpec(
         resolvedUnitEntry,
         meta,
-        preferredSize,
         isModuleLibraryUnit,
         hasThumbnail,
         hasLicenseText,
