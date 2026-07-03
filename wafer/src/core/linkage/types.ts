@@ -47,8 +47,8 @@ export type HsUnitInstance = {
     noteOutput?: HsNoteOutputPort;
     automationOutput?: HsAutomationOutputPort;
   };
-  additionalAudioOutputs?: HsAdditionalAudioPort[];
-  additionalAudioInputs?: HsAdditionalAudioPort[];
+  additionalAudioOutputs?: Record<string, HsAdditionalAudioOutputPort>;
+  additionalAudioInputs?: Record<string, HsAdditionalAudioPort>;
   hostCallbacks?: HostCallbacks;
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;
@@ -56,4 +56,13 @@ export type HsUnitInstance = {
   RenderUi?: () => ReactNode;
 };
 
+/*
+destSpec="unit1"        //self.primaryOutputPort --> unit1.primaryInputPort
+destSpec="unit1.port1"  //self.primaryOutputPort --> unit1.port1
+destSpec="unit1&unit2"  //self.primaryOutputPort --> unit1.primaryOutputPort, unit2.primaryOutputPort
+destSpec="port1:unit2"  //self.port1 --> unit2.primaryInputPort
+desSpec="unit1&unit2|port1:unit3.port2&unit4"
+//self.primaryOutputPort --> unit1.primaryOutputPort, unit2.primaryOutputPort
+//self.port1 --> unit3.port2, unit4.primaryInputPort
+*/
 export type DestinationCode = string;
