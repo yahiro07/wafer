@@ -38,6 +38,7 @@ export const CustomElementUnitFrame = ({
     hostSystem.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
     if (containerRef.current) {
       checkUnitIdValidity(unitId);
