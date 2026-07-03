@@ -1,9 +1,12 @@
 import { AutomationPort, NotePort, UnitInterface } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
+import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
+  HsAdditionalAudioInputPort,
+  HsAdditionalAudioOutputPort,
   HsAudioInputPort,
   HsAudioOutputPort,
   HsAutomationOutputPort,
@@ -78,11 +81,6 @@ function createHsAutomationOutputPort(
   };
 }
 
-function createHsAudioInputPort(audioContext: IAudioContext): HsAudioInputPort {
-  const node = audioContext.createGain();
-  return { node };
-}
-
 function createHsAudioOutputPort(
   audioContext: IAudioContext,
 ): HsAudioOutputPort {
@@ -96,6 +94,39 @@ function createHsAudioOutputPort(
       node.disconnect(port.node);
     },
   };
+}
+
+function createHsAudioInputPort(audioContext: IAudioContext): HsAudioInputPort {
+  const node = audioContext.createGain();
+  return { node };
+}
+
+function createHsAdditionalAudioOutputPort(
+  audioContext: IAudioContext,
+  id: string,
+  label?: string,
+): HsAdditionalAudioOutputPort {
+  const node = audioContext.createGain();
+  return {
+    id,
+    label,
+    node,
+    connectTo(port: AudioPort) {
+      node.connect(port.node);
+    },
+    disconnectTo(port: AudioPort) {
+      node.disconnect(port.node);
+    },
+  };
+}
+
+function createHsAdditionalAudioInputPort(
+  audioContext: IAudioContext,
+  id: string,
+  label?: string,
+): HsAdditionalAudioInputPort {
+  const node = audioContext.createGain();
+  return { node, id, label };
 }
 
 export function createUnitInterface(
@@ -114,12 +145,28 @@ export function createUnitInterface(
   const automationOutputPort = createHsAutomationOutputPort(
     hostSystem.actionScheduler,
   );
+  const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
+    {};
+  const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
+
   return {
     audioContext: audioContext as AudioContext,
     audioOutputNode: audioOutputPort.node,
     audioInputNode: audioInputPort.node,
     noteOutputPort,
     automationOutputPort,
+    createAdditionalAudioOutputNode(id: string, label?: string) {
+      checkPortIdValidity(id);
+      const port = createHsAdditionalAudioOutputPort(audioContext, id, label);
+      additionalAudioOutputs[id] = port;
+      return port.node;
+    },
+    createAdditionalAudioInputNode(id: string, label?: string) {
+      checkPortIdValidity(id);
+      const port = createHsAdditionalAudioInputPort(audioContext, id, label);
+      additionalAudioInputs[id] = port;
+      return port.node;
+    },
     emitMetaAttributes(metaAttrs) {
       hostSystem.emitMetaAttributes(metaAttrs);
     },
@@ -132,6 +179,15 @@ export function createUnitInterface(
         attrs.unitAspects.outputs?.includes("automation");
       const hasAutomationInput =
         attrs.unitAspects.inputs?.includes("automation");
+
+      const additionalAudioOutputsMap =
+        Object.keys(additionalAudioOutputs).length > 0
+          ? additionalAudioOutputs
+          : undefined;
+      const additionalAudioInputsMap =
+        Object.keys(additionalAudioInputs).length > 0
+          ? additionalAudioInputs
+          : undefined;
 
       createdCallback({
         unitId,
@@ -149,6 +205,8 @@ export function createUnitInterface(
             ? automationOutputPort
             : undefined,
         },
+        additionalAudioOutputs: additionalAudioOutputsMap,
+        additionalAudioInputs: additionalAudioInputsMap,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,

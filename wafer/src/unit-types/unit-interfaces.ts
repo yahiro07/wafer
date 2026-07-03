@@ -67,8 +67,8 @@ export type HostCallbacks = {
 };
 
 export type UnitCallbacks = {
-  onConnectedTo?(linkedPortSubtypes: PortSubtype[]): void;
-  onDisconnectedTo?(): void;
+  onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
+  onDisconnectedTo?(srcPortId: string): void;
 };
 
 export type UnitInterface = {
@@ -78,6 +78,8 @@ export type UnitInterface = {
   noteOutputPort: NotePort;
   automationOutputPort: AutomationPort;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
+  createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
+  createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
