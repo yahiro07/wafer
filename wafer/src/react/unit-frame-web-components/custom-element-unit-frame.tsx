@@ -1,11 +1,11 @@
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
-import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
 import {
   serializeUnitDestinationSpec,
   UnitDestinationSpec,
 } from "../destination-spec";
+
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { createUnitInstantiationPromise } from "./unit-element-loader";
@@ -15,8 +15,6 @@ type Props = {
   scriptUrl: string;
   destSpec?: UnitDestinationSpec;
   className?: string;
-  style?: CSSProperties;
-  frameSize?: { width: number; height: number };
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
@@ -26,8 +24,6 @@ export const CustomElementUnitFrame = ({
   scriptUrl,
   destSpec: destSpecInput,
   className,
-  style,
-  frameSize,
   inputNotes,
   onUnitInstanceLoaded,
 }: Props) => {
@@ -35,11 +31,6 @@ export const CustomElementUnitFrame = ({
   const unitInstanceRef = useRef<HsUnitInstance>(null);
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
-
-  const mergedStyle = useMemo(
-    () => mergeStyleWithFrameSize(style, frameSize),
-    [style, frameSize],
-  );
 
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
@@ -80,7 +71,7 @@ export const CustomElementUnitFrame = ({
         }
       };
     }
-  }, [scriptUrl, hostSystem, unitId, onUnitInstanceLoaded]);
+  }, [scriptUrl, hostSystem, unitId]);
 
   useEffect(() => {
     if (hostBpm) {
@@ -98,5 +89,5 @@ export const CustomElementUnitFrame = ({
 
   useUnitInputNotesAffecter(unitInstanceRef.current, inputNotes);
 
-  return <div ref={containerRef} className={className} style={mergedStyle} />;
+  return <div ref={containerRef} className={className} />;
 };

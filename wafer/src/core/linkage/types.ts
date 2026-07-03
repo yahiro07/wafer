@@ -37,6 +37,7 @@ export type HsAdditionalAudioOutputPort =
 
 export type HsUnitInstance = {
   unitId: string;
+  viewSize?: [number, number];
   inputPorts: {
     audioInput?: AudioPort;
     noteInput?: NotePort;

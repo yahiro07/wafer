@@ -16,7 +16,6 @@ export type UnitInventorySpec = {
   name: string;
   unitType: UnitType;
   category?: UnitCategoryHint;
-  preferredSize: { width: number; height: number };
   outputSignalTypes: string;
   inputSignalTypes: string;
   unitTypesVersion: string;

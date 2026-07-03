@@ -1,6 +1,6 @@
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
-import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
+import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import {
   serializeUnitDestinationSpec,
   UnitDestinationSpec,
@@ -8,15 +8,12 @@ import {
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
-import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 
 type Props = {
   unitId: string;
   pageUrl: string;
   destSpec?: UnitDestinationSpec;
   className?: string;
-  style?: CSSProperties;
-  frameSize?: { width: number; height: number };
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
@@ -27,8 +24,6 @@ export const UnitFrame = ({
   pageUrl,
   destSpec: destSpecInput,
   className,
-  style,
-  frameSize,
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
@@ -38,10 +33,7 @@ export const UnitFrame = ({
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
-  const mergedStyle = useMemo(
-    () => mergeStyleWithFrameSize(style, frameSize),
-    [style, frameSize],
-  );
+  const [size, setSize] = useState<[number, number] | undefined>();
 
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
@@ -52,9 +44,13 @@ export const UnitFrame = ({
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
     checkUnitIdValidity(unitId);
+    const handleLoaded = (unitInstance: HsUnitInstance) => {
+      setSize(unitInstance.viewSize);
+      onUnitInstanceLoaded?.(unitInstance);
+    };
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
-      onUnitInstanceLoaded,
+      onUnitInstanceLoaded: handleLoaded,
       unitInstanceRef,
     });
   }, [pageUrl, hostSystem, unitId, onIframeMounted, onUnitInstanceLoaded]);
@@ -79,7 +75,9 @@ export const UnitFrame = ({
     <iframe
       key={pageUrl}
       className={className}
-      style={mergedStyle}
+      style={
+        size ? { width: `${size[0]}px`, height: `${size[1]}px` } : undefined
+      }
       ref={iframeRef}
       src={pageUrl}
       title={unitId}
