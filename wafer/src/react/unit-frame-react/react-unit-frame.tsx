@@ -1,5 +1,9 @@
 import { useEffect, useMemo } from "react";
 import { HsUnitInstance } from "../../core";
+import {
+  serializeUnitDestinationSpec,
+  UnitDestinationSpec,
+} from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import {
@@ -10,7 +14,7 @@ import {
 type Props = {
   unitId: string;
   unitTemplateFn: ReactUnitTemplateFn;
-  destSpec?: string;
+  destSpec?: UnitDestinationSpec;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
@@ -18,7 +22,7 @@ type Props = {
 export const ReactUnitFrame = ({
   unitId,
   unitTemplateFn,
-  destSpec,
+  destSpec: destSpecInput,
   inputNotes,
   onUnitInstanceLoaded,
 }: Props) => {
@@ -32,6 +36,8 @@ export const ReactUnitFrame = ({
     onUnitInstanceLoaded?.(unit);
     return hostSystem.registerUnitInstance(unit);
   }, [unit, onUnitInstanceLoaded, hostSystem]);
+
+  const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
     hostSystem.reserveConnectionChange(unitId, destSpec);

@@ -1,6 +1,10 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
+import {
+  serializeUnitDestinationSpec,
+  UnitDestinationSpec,
+} from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
@@ -8,7 +12,7 @@ import { loadIframeUnitInstance } from "./iframe-unit-loader";
 type Props = {
   unitId: string;
   pageUrl: string;
-  destSpec?: string;
+  destSpec?: UnitDestinationSpec;
   className?: string;
   style?: CSSProperties;
   frameSize?: { width: number; height: number };
@@ -20,7 +24,7 @@ type Props = {
 export const UnitFrame = ({
   unitId,
   pageUrl,
-  destSpec,
+  destSpec: destSpecInput,
   className,
   style,
   frameSize,
@@ -38,10 +42,13 @@ export const UnitFrame = ({
     [style, frameSize],
   );
 
+  const destSpec = serializeUnitDestinationSpec(destSpecInput);
+
   useEffect(() => {
     hostSystem.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,

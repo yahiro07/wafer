@@ -1,6 +1,10 @@
 import { CSSProperties, useEffect, useMemo, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
+import {
+  serializeUnitDestinationSpec,
+  UnitDestinationSpec,
+} from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { createUnitInstantiationPromise } from "./unit-element-loader";
@@ -8,7 +12,7 @@ import { createUnitInstantiationPromise } from "./unit-element-loader";
 type Props = {
   unitId: string;
   scriptUrl: string;
-  destSpec?: string;
+  destSpec?: UnitDestinationSpec;
   className?: string;
   style?: CSSProperties;
   frameSize?: { width: number; height: number };
@@ -19,7 +23,7 @@ type Props = {
 export const CustomElementUnitFrame = ({
   unitId,
   scriptUrl,
-  destSpec,
+  destSpec: destSpecInput,
   className,
   style,
   frameSize,
@@ -35,6 +39,8 @@ export const CustomElementUnitFrame = ({
     () => mergeStyleWithFrameSize(style, frameSize),
     [style, frameSize],
   );
+
+  const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
     hostSystem.reserveConnectionChange(unitId, destSpec);
