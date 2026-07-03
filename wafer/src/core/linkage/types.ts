@@ -28,6 +28,7 @@ export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
 
 export type HsUnitInstance = {
   unitId: string;
+  viewSize?: [number, number];
   inputPorts: {
     audioInput?: AudioPort;
     noteInput?: NotePort;

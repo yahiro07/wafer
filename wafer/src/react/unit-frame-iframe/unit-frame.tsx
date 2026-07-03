@@ -1,6 +1,5 @@
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
-import { mergeStyleWithFrameSize } from "../../utils/frame-size-helper";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
@@ -10,8 +9,6 @@ type Props = {
   pageUrl: string;
   destSpec?: string;
   className?: string;
-  style?: CSSProperties;
-  frameSize?: { width: number; height: number };
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
@@ -22,8 +19,6 @@ export const UnitFrame = ({
   pageUrl,
   destSpec,
   className,
-  style,
-  frameSize,
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
@@ -33,19 +28,20 @@ export const UnitFrame = ({
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
-  const mergedStyle = useMemo(
-    () => mergeStyleWithFrameSize(style, frameSize),
-    [style, frameSize],
-  );
+  const [size, setSize] = useState<[number, number] | undefined>();
 
   useEffect(() => {
     hostSystem.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   useEffect(() => {
+    const handleLoaded = (unitInstance: HsUnitInstance) => {
+      setSize(unitInstance.viewSize);
+      onUnitInstanceLoaded?.(unitInstance);
+    };
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
-      onUnitInstanceLoaded,
+      onUnitInstanceLoaded: handleLoaded,
       unitInstanceRef,
     });
   }, [pageUrl, hostSystem, unitId, onIframeMounted, onUnitInstanceLoaded]);
@@ -70,7 +66,9 @@ export const UnitFrame = ({
     <iframe
       key={pageUrl}
       className={className}
-      style={mergedStyle}
+      style={
+        size ? { width: `${size[0]}px`, height: `${size[1]}px` } : undefined
+      }
       ref={iframeRef}
       src={pageUrl}
       title={unitId}

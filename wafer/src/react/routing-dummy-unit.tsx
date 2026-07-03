@@ -17,6 +17,7 @@ const routingDummyUnitTemplateFn: ReactUnitTemplateFn = (unitInterface) => {
       unitType: "effect",
       outputs: ["audio"],
       inputs: ["audio"],
+      viewSize: [100, 100],
     },
   });
   return {

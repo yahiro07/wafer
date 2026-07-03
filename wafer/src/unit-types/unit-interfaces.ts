@@ -56,6 +56,7 @@ export type UnitAspects = {
   categoryHint?: UnitCategoryHint;
   outputs?: PortSubtype[];
   inputs?: PortSubtype[];
+  viewSize?: [number, number];
 };
 
 export type MetaAttributes = Record<string, any>;

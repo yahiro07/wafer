@@ -135,6 +135,7 @@ export function createUnitInterface(
 
       createdCallback({
         unitId,
+        viewSize: attrs.unitAspects.viewSize,
         inputPorts: {
           audioInput: hasAudioInput ? audioInputPort : undefined,
           noteInput: hasNoteInput ? attrs.noteInput : undefined,
