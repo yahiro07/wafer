@@ -20,6 +20,7 @@ export function createCustomElementClass(
     cssTexts?: string[];
     //external stylesheet urls, e.g. web fonts, inserted into document head
     stylesheetUrls?: string[];
+    adoptedStyleSheets?: CSSStyleSheet[];
   },
 ): CustomElementConstructor {
   return class extends HTMLElement {
@@ -45,6 +46,9 @@ export function createCustomElementClass(
         style.dataset.unit1Styles = "true";
         style.textContent = options.cssTexts.join("\n");
         this.shadowRoot.appendChild(style);
+      }
+      if (options.adoptedStyleSheets) {
+        this.shadowRoot.adoptedStyleSheets = options.adoptedStyleSheets;
       }
 
       this.disposeRender = renderFn(this.shadowRoot);
@@ -72,6 +76,7 @@ export function createCustomElementSharableClass(
   options: {
     cssTexts?: string[];
     stylesheetUrls?: string[];
+    adoptedStyleSheets?: CSSStyleSheet[];
   },
 ): CustomElementConstructor {
   return class extends HTMLElement {
@@ -100,6 +105,9 @@ export function createCustomElementSharableClass(
         style.dataset.unit1Styles = "true";
         style.textContent = options.cssTexts.join("\n");
         this.shadowRoot.appendChild(style);
+      }
+      if (options.adoptedStyleSheets) {
+        this.shadowRoot.adoptedStyleSheets = options.adoptedStyleSheets;
       }
 
       this.disposeRender = setupFn(unitInterfaceProvider, this.shadowRoot);
