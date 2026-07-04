@@ -54,6 +54,7 @@ export type HsUnitInstance = {
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
+  cleanup?: () => void;
   RenderUi?: () => ReactNode;
 };
 

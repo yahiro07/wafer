@@ -50,7 +50,7 @@ export function createHostStateBus(audioContext: IAudioContext): HostStateBus {
       const unit = units.get(unitId);
       if (unit) {
         eventPort.emit({ type: "beforeRemoveUnit", unitInstance: unit });
-        unit.unitCallbacks?.cleanup?.();
+        unit.cleanup?.();
       }
       units.delete(unitId);
       eventPort.emit({ type: "unitRemoved", unitId });
