@@ -99,6 +99,7 @@ export type UnitInterfaceProvider = {
   unitInterface?: UnitInterface;
   //for iframe based units, typescript
   queryUnitInterface?(versionCode: string): UnitInterface | undefined;
+  iframeUnitUnloadingCallback?: () => void;
   //for web component units
   queryUnitInterfaceForModule?(
     versionCode: string,

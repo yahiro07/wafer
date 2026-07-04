@@ -66,5 +66,6 @@ export function loadIframeUnitInstance(
   return () => {
     unregisterUnit();
     cleanupIFrameCallback?.();
+    win.iframeUnitUnloadingCallback?.();
   };
 }

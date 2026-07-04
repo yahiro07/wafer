@@ -6,6 +6,7 @@ import {
   NotePort,
   Persistence,
   UnitCallbacks,
+  UnitInterface,
 } from "../../unit-types";
 
 export type AudioPort = { node: AudioNode };
@@ -68,3 +69,7 @@ desSpec="unit1&unit2|port1:unit3.port2&unit4"
 //self.port1 --> unit3.port2, unit4.primaryInputPort
 */
 export type DestinationCode = string;
+
+export type HsUnitInterface = UnitInterface & {
+  iframeUnloadingCallback?: () => void;
+};

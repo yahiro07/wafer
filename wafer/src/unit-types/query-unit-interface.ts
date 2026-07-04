@@ -16,3 +16,8 @@ export function queryUnitInterfaceForModule(
   const win = window as UnitInterfaceProvider;
   return win?.queryUnitInterfaceForModule?.(versionCode, importMetaUrl);
 }
+
+export function onIframeUnitUnloading(fn: () => void) {
+  const win = window as UnitInterfaceProvider;
+  win.iframeUnitUnloadingCallback = fn;
+}

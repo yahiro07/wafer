@@ -1,4 +1,4 @@
-import { AutomationPort, NotePort, UnitInterface } from "../../unit-types";
+import { AutomationPort, NotePort } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
@@ -12,6 +12,7 @@ import {
   HsAutomationOutputPort,
   HsNoteOutputPort,
   HsUnitInstance,
+  HsUnitInterface,
 } from "./types";
 
 function createHsNoteOutputPort(
@@ -133,7 +134,7 @@ export function createUnitInterface(
   hostSystem: HostSystem,
   unitId: string,
   createdCallback: (unitInstance: HsUnitInstance) => void,
-): UnitInterface {
+): HsUnitInterface {
   const { audioContext } = hostSystem;
   const audioOutputPort = createHsAudioOutputPort(audioContext);
   const audioInputPort = createHsAudioInputPort(audioContext);
@@ -148,6 +149,8 @@ export function createUnitInterface(
   const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
     {};
   const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
+
+  let iframeUnloadingCallback: (() => void) | undefined;
 
   return {
     audioContext: audioContext as AudioContext,
