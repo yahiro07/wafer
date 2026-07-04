@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import {
@@ -42,7 +42,7 @@ export const IFrameUnitFrame = ({
   }, [unitId, destSpec, hostSystem]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
-  useEffect(() => {
+  useLayoutEffect(() => {
     checkUnitIdValidity(unitId);
     const handleLoaded = (unitInstance: HsUnitInstance) => {
       setSize(unitInstance.viewSize);
@@ -53,7 +53,7 @@ export const IFrameUnitFrame = ({
       onUnitInstanceLoaded: handleLoaded,
       unitInstanceRef,
     });
-  }, [pageUrl, hostSystem, unitId, onIframeMounted, onUnitInstanceLoaded]);
+  }, [pageUrl, hostSystem, unitId]);
 
   useEffect(() => {
     if (hostBpm) {

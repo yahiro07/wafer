@@ -70,6 +70,7 @@ export type HostCallbacks = {
 export type UnitCallbacks = {
   onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
   onDisconnectedTo?(srcPortId: string): void;
+  cleanup?(): void;
 };
 
 export type UnitInterface = {
