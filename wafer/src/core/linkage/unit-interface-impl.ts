@@ -150,8 +150,6 @@ export function createUnitInterface(
     {};
   const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
 
-  let iframeUnloadingCallback: (() => void) | undefined;
-
   return {
     audioContext: audioContext as AudioContext,
     audioOutputNode: audioOutputPort.node,

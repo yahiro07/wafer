@@ -1,3 +1,4 @@
+export type { UnitDestinationSpec } from "./destination-spec";
 export * from "./host-app-context";
 export * from "./routing-dummy-unit";
 export * from "./sequencer-tick-driver-runner";
