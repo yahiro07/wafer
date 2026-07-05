@@ -60,13 +60,13 @@ export type HsUnitInstance = {
 };
 
 /*
-destSpec="unit1"        //self.primaryOutputPort --> unit1.primaryInputPort
-destSpec="unit1.port1"  //self.primaryOutputPort --> unit1.port1
-destSpec="unit1&unit2"  //self.primaryOutputPort --> unit1.primaryInputPort, unit2.primaryInputPort
-destSpec="port1:unit2"  //self.port1 --> unit2.primaryInputPort
+destSpec="unit1"        //self.primaryOutput --> unit1.primaryInput
+destSpec="unit1.port1"  //self.primaryOutput --> unit1.port1
+destSpec="unit1&unit2"  //self.primaryOutput --> unit1.primaryInput, unit2.primaryInput
+destSpec="port1:unit2"  //self.port1 --> unit2.primaryInput
 desSpec="unit1&unit2|port1:unit3.port2&unit4"
-//self.primaryOutputPort --> unit1.primaryInputPort, unit2.primaryInputPort
-//self.port1 --> unit3.port2, unit4.primaryInputPort
+//self.primaryOutput --> unit1.primaryInput, unit2.primaryInput
+//self.port1 --> unit3.port2, unit4.primaryInput
 */
 export type DestinationCode = string;
 

@@ -1,7 +1,10 @@
 import { MetaAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import { delayMs } from "../../utils/timer-utils";
-import { createUnitConnectionsManager } from "../linkage/connection-manager";
+import {
+  createUnitConnectionsManager,
+  createUnitConnectionsManagerSingle,
+} from "../linkage/connection-manager";
 import {
   DestinationCode,
   HsUnitInstance,
@@ -33,6 +36,11 @@ export type HostSystem = {
     unitId: string,
     unitInstancePromise: Promise<HsUnitInstance>,
   ): () => void;
+  reserveConnectionSingle(
+    source: string,
+    destination: string,
+    active: boolean,
+  ): void;
   reserveConnectionChange(
     srcUnitId: string,
     destSpec: DestinationCode | undefined,
@@ -60,6 +68,7 @@ export type HostSystem = {
 
 export function createHostSystem(audioContext: IAudioContext): HostSystem {
   const bus = createHostStateBus(audioContext);
+  const connectionManagerSingle = createUnitConnectionsManagerSingle(bus);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
@@ -80,6 +89,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
 
   const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
     if (e.type === "beforeRemoveUnit") {
+      connectionManagerSingle.onUnitRemoving(e.unitInstance.unitId);
       connectionManager.onUnitRemoving(e.unitInstance.unitId);
     }
   });
@@ -106,6 +116,17 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     },
     registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
       return internal.addUnitInstancePromise(unitId, unitInstancePromise);
+    },
+    reserveConnectionSingle(source, destination, active) {
+      loadingManager.reserveUnitOperation({
+        type: "connection",
+        op: () =>
+          connectionManagerSingle.setConnectionSingle(
+            source,
+            destination,
+            active,
+          ),
+      });
     },
     reserveConnectionChange(srcUnitId, destSpec) {
       loadingManager.reserveUnitOperation({

@@ -11,6 +11,15 @@ import {
   HsUnitInstance,
 } from "./types";
 
+export type ConnectionManagerSingle = {
+  setConnectionSingle(
+    source: string,
+    destination: string,
+    active: boolean,
+  ): void;
+  onUnitRemoving(unitId: string): void;
+};
+
 export type ConnectionManager = {
   setConnectionChange(srcUnitId: string, destSpec: DestinationCode): void;
   onUnitRemoving(unitId: string): void;
@@ -20,7 +29,7 @@ type ConnectingOperation = "connectTo" | "disconnectTo";
 
 type UnitPortSpec = {
   unitId: string | "$output";
-  portId: string | "$primary";
+  portId: string | "primaryOutput" | "primaryInput";
 };
 
 type UnitPortConnectionEntry = {
@@ -84,7 +93,7 @@ function getUnitOutputCompositePort(
   unit: HsUnitInstance,
   portId: string,
 ): CompositePort | undefined {
-  if (portId === "$primary") {
+  if (portId === "primaryOutput") {
     return unit.outputPorts;
   }
   const port = unit.additionalAudioOutputs?.[portId];
@@ -95,7 +104,7 @@ function getUnitInputCompositePort(
   unit: HsUnitInstance,
   portId: string,
 ): CompositePort | undefined {
-  if (portId === "$primary") {
+  if (portId === "primaryInput") {
     return unit.inputPorts;
   }
   const port = unit.additionalAudioInputs?.[portId];
@@ -187,12 +196,21 @@ function updateUnitConnectionToPort(
   }
 }
 
+function extractSingleSourceCode(code: string): UnitPortSpec {
+  const segments = code.split(".");
+  if (segments.length === 2) {
+    return { unitId: segments[0], portId: segments[1] };
+  } else {
+    return { unitId: code, portId: "primaryOutput" };
+  }
+}
+
 function extractSingleDestCode(code: string): UnitPortSpec {
   const segments = code.split(".");
   if (segments.length === 2) {
     return { unitId: segments[0], portId: segments[1] };
   } else {
-    return { unitId: code, portId: "$primary" };
+    return { unitId: code, portId: "primaryInput" };
   }
 }
 
@@ -212,12 +230,41 @@ function buildConnectionEntries(
       const tos = extractFanOutDestCode(segments[1]);
       return tos.map((to) => createUnitPortConnectionEntry(from, to));
     } else if (segments.length === 1) {
-      const from = { unitId: srcUnitId, portId: "$primary" };
+      const from = { unitId: srcUnitId, portId: "primaryOutput" };
       const tos = extractFanOutDestCode(segments[0]);
       return tos.map((to) => createUnitPortConnectionEntry(from, to));
     }
     return [];
   });
+}
+
+export function createUnitConnectionsManagerSingle(
+  bus: HostStateBus,
+): ConnectionManagerSingle {
+  const connectionCountMap = new Map<string, number>();
+  return {
+    setConnectionSingle(source: string, destination: string, active: boolean) {
+      const from = extractSingleSourceCode(source);
+      const to = extractSingleDestCode(destination);
+      const entry = createUnitPortConnectionEntry(from, to);
+      const key = entry.key;
+      const count = connectionCountMap.get(key) ?? 0;
+      const nextCount = active ? count + 1 : Math.max(count - 1, 0);
+      if (count === 0 && nextCount === 1) {
+        updateUnitConnectionToPort(bus, from, to, "connectTo");
+      } else if (count === 1 && nextCount === 0) {
+        updateUnitConnectionToPort(bus, from, to, "disconnectTo");
+      }
+      if (nextCount > 0) {
+        connectionCountMap.set(key, nextCount);
+      } else {
+        connectionCountMap.delete(key);
+      }
+    },
+    onUnitRemoving(_unitId: string) {
+      //implement later if needed
+    },
+  };
 }
 
 export function createUnitConnectionsManager(

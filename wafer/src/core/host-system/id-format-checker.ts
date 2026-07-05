@@ -5,7 +5,11 @@ export function checkUnitIdValidity(unitId: string) {
 }
 
 export function checkPortIdValidity(portId: string) {
-  if (!portId.match(/^[a-zA-Z0-9_-]+$/) || portId === "$primary") {
+  if (
+    !portId.match(/^[a-zA-Z0-9_-]+$/) ||
+    portId === "primaryOutput" ||
+    portId === "primaryInput"
+  ) {
     throw new Error(`Invalid port id: ${portId}`);
   }
 }
