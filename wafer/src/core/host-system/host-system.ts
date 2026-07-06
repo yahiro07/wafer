@@ -36,11 +36,8 @@ export type HostSystem = {
     unitId: string,
     unitInstancePromise: Promise<HsUnitInstance>,
   ): () => void;
-  reserveConnectionSingle(
-    source: string,
-    destination: string,
-    active: boolean,
-  ): void;
+  reserveConnectionSingle(source: string, destination: string): void;
+  removeConnectionSingle(source: string, destination: string): void;
   reserveConnectionChange(
     srcUnitId: string,
     destSpec: DestinationCode | undefined,
@@ -117,16 +114,19 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
       return internal.addUnitInstancePromise(unitId, unitInstancePromise);
     },
-    reserveConnectionSingle(source, destination, active) {
+    reserveConnectionSingle(source, destination) {
       loadingManager.reserveUnitOperation({
         type: "connection",
         op: () =>
           connectionManagerSingle.setConnectionSingle(
             source,
             destination,
-            active,
+            true,
           ),
       });
+    },
+    removeConnectionSingle(source, destination) {
+      connectionManagerSingle.setConnectionSingle(source, destination, false);
     },
     reserveConnectionChange(srcUnitId, destSpec) {
       loadingManager.reserveUnitOperation({

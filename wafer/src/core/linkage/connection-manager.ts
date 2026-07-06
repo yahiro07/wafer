@@ -125,6 +125,17 @@ function callUnitConnectionCallback(
 }
 
 let numConnections = 0;
+let reportingReserved = false;
+
+function reportNumConnections() {
+  if (!reportingReserved) {
+    reportingReserved = true;
+    setTimeout(() => {
+      console.log(`numConnections: ${numConnections}`);
+      reportingReserved = false;
+    }, 1);
+  }
+}
 
 function logConnectionChange(
   from: UnitPortSpec,
@@ -133,15 +144,20 @@ function logConnectionChange(
 ) {
   if (operation === "connectTo") {
     console.log(
-      `connected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
+      `connected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`
+        .replace(".primaryOutput", "")
+        .replace(".primaryInput", ""),
     );
     numConnections++;
   } else {
     console.log(
-      `disconnected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
+      `disconnected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`
+        .replace(".primaryOutput", "")
+        .replace(".primaryInput", ""),
     );
     numConnections--;
   }
+  reportNumConnections();
 }
 
 function updateUnitConnectionToPort(
@@ -241,28 +257,33 @@ function buildConnectionEntries(
 export function createUnitConnectionsManagerSingle(
   bus: HostStateBus,
 ): ConnectionManagerSingle {
-  const connectionCountMap = new Map<string, number>();
+  const connectionEntries = new Map<string, UnitPortConnectionEntry>();
   return {
-    setConnectionSingle(source: string, destination: string, active: boolean) {
+    setConnectionSingle(source: string, destination: string, enabled: boolean) {
       const from = extractSingleSourceCode(source);
       const to = extractSingleDestCode(destination);
       const entry = createUnitPortConnectionEntry(from, to);
       const key = entry.key;
-      const count = connectionCountMap.get(key) ?? 0;
-      const nextCount = active ? count + 1 : Math.max(count - 1, 0);
-      if (count === 0 && nextCount === 1) {
+      const existingEntry = connectionEntries.get(key);
+      if (!existingEntry && enabled) {
         updateUnitConnectionToPort(bus, from, to, "connectTo");
-      } else if (count === 1 && nextCount === 0) {
+        connectionEntries.set(key, entry);
+      } else if (existingEntry && !enabled) {
         updateUnitConnectionToPort(bus, from, to, "disconnectTo");
-      }
-      if (nextCount > 0) {
-        connectionCountMap.set(key, nextCount);
-      } else {
-        connectionCountMap.delete(key);
+        connectionEntries.delete(key);
       }
     },
-    onUnitRemoving(_unitId: string) {
-      //implement later if needed
+    onUnitRemoving(unitId: string) {
+      const removedEntries = connectionEntries
+        .entries()
+        .filter(
+          ([_, entry]) =>
+            entry.from.unitId === unitId || entry.to.unitId === unitId,
+        );
+      for (const [key, entry] of removedEntries) {
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
+        connectionEntries.delete(key);
+      }
     },
   };
 }
@@ -311,7 +332,7 @@ export function createUnitConnectionsManager(
         ...activeConnectionEntries,
         ...connectionsToAdd,
       ].filter((key) => !connectionsToRemove.includes(key));
-      console.log(`numConnections: ${numConnections}`);
+      reportNumConnections();
     },
     onUnitRemoving(unitId: string) {
       const unit = bus.getUnit(unitId);
@@ -325,7 +346,7 @@ export function createUnitConnectionsManager(
       activeConnectionEntries = activeConnectionEntries.filter(
         (entry) => !connectionsToRemove.includes(entry),
       );
-      console.log(`numConnections: ${numConnections}`);
+      reportNumConnections();
     },
   };
 }
