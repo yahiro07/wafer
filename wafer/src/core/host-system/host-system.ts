@@ -23,13 +23,8 @@ import {
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
 
-export type HostSystem = {
-  audioContext: IAudioContext;
+type LinkageApi = {
   actionScheduler: WebAudioActionScheduler;
-  setCustomActionScheduler(
-    customActionScheduler: WebAudioActionScheduler | "none",
-  ): void;
-  getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
   registerPendingUnitInstancePromise(
@@ -42,6 +37,16 @@ export type HostSystem = {
     srcUnitId: string,
     destSpec: DestinationCode | undefined,
   ): void;
+  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
+};
+
+//public api for host application
+export type HostSystem = {
+  audioContext: IAudioContext;
+  setCustomActionScheduler(
+    customActionScheduler: WebAudioActionScheduler | "none",
+  ): void;
+  getAllUnits(): HsUnitInstance[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
@@ -57,13 +62,13 @@ export type HostSystem = {
     velocity?: number;
   }): void;
   cleanup(): void;
-  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
   subscribeMessageFromUnits: (
     fn: (message: object, senderUnitId: string) => void,
   ) => () => void;
+  linkageApi: LinkageApi;
 };
 
 export function createHostSystem(audioContext: IAudioContext): HostSystem {
@@ -94,21 +99,10 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     }
   });
 
-  return {
-    audioContext,
+  const linkageApi: LinkageApi = {
     get actionScheduler() {
       return actionScheduler;
     },
-    setCustomActionScheduler(
-      customActionScheduler: WebAudioActionScheduler | "none",
-    ) {
-      if (customActionScheduler === "none") {
-        actionScheduler = createDummyActionScheduler();
-      } else {
-        actionScheduler = customActionScheduler;
-      }
-    },
-    getAllUnits: bus.getAllUnits,
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
       const promise = Promise.resolve(unit);
@@ -138,6 +132,25 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
           connectionManager.setConnectionChange(srcUnitId, destSpec ?? ""),
       });
     },
+    getUnitNoteOutputMonitor() {
+      return unitNoteOutputMonitorFn;
+    },
+  };
+
+  return {
+    audioContext,
+    linkageApi,
+    setCustomActionScheduler(
+      customActionScheduler: WebAudioActionScheduler | "none",
+    ) {
+      if (customActionScheduler === "none") {
+        actionScheduler = createDummyActionScheduler();
+      } else {
+        actionScheduler = customActionScheduler;
+      }
+    },
+    getAllUnits: bus.getAllUnits,
+
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
         gain,
@@ -197,9 +210,6 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     },
     cleanup() {
       unsubscribeInternalEvents();
-    },
-    getUnitNoteOutputMonitor() {
-      return unitNoteOutputMonitorFn;
     },
     setUnitNoteOutputMonitor(monitorFn) {
       unitNoteOutputMonitorFn = monitorFn;

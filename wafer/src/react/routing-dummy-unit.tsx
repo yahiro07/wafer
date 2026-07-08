@@ -34,11 +34,11 @@ export const RoutingDummyUnit = ({ unitId, destSpec }: Props) => {
   );
 
   useEffect(() => {
-    return hostSystem.registerUnitInstance(unit);
+    return hostSystem.linkageApi.registerUnitInstance(unit);
   }, [unit, hostSystem]);
 
   useEffect(() => {
-    hostSystem.reserveConnectionChange(unitId, destSpec);
+    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   return <unit.RenderUi />;

@@ -35,7 +35,7 @@ export const CustomElementUnitFrame = ({
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
-    hostSystem.reserveConnectionChange(unitId, destSpec);
+    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
@@ -61,10 +61,11 @@ export const CustomElementUnitFrame = ({
           },
         },
       );
-      const unregisterUnit = hostSystem.registerPendingUnitInstancePromise(
-        unitId,
-        unitInstantiationPromise,
-      );
+      const unregisterUnit =
+        hostSystem.linkageApi.registerPendingUnitInstancePromise(
+          unitId,
+          unitInstantiationPromise,
+        );
       return () => {
         unregisterUnit();
         if (createdElement) {

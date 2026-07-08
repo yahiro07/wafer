@@ -38,7 +38,7 @@ export const IFrameUnitFrame = ({
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
-    hostSystem.reserveConnectionChange(unitId, destSpec);
+    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management

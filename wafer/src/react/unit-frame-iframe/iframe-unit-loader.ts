@@ -59,10 +59,11 @@ export function loadIframeUnitInstance(
       }
     };
   });
-  const unregisterUnit = hostSystem.registerPendingUnitInstancePromise(
-    unitId,
-    unitInstantiationPromise,
-  );
+  const unregisterUnit =
+    hostSystem.linkageApi.registerPendingUnitInstancePromise(
+      unitId,
+      unitInstantiationPromise,
+    );
   return () => {
     unregisterUnit();
     cleanupIFrameCallback?.();

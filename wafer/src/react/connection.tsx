@@ -16,10 +16,10 @@ export const Connection = ({ source, destination }: Props) => {
     // they contain units or connections with the same IDs.
 
     // The actual connection is performed after all units have finished loading.
-    hostSystem.reserveConnectionSingle(source, destination);
+    hostSystem.linkageApi.reserveConnectionSingle(source, destination);
     return () => {
       // Remove the connection immediately.
-      hostSystem.removeConnectionSingle(source, destination);
+      hostSystem.linkageApi.removeConnectionSingle(source, destination);
     };
   }, [source, destination, hostSystem]);
   return null;

@@ -35,13 +35,13 @@ export const ReactUnitFrame = ({
   }, [unitTemplateFn, unitId, hostSystem]);
   useEffect(() => {
     onUnitInstanceLoaded?.(unit);
-    return hostSystem.registerUnitInstance(unit);
+    return hostSystem.linkageApi.registerUnitInstance(unit);
   }, [unit, onUnitInstanceLoaded, hostSystem]);
 
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
-    hostSystem.reserveConnectionChange(unitId, destSpec);
+    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   useEffect(() => {

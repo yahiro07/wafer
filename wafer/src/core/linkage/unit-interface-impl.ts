@@ -138,13 +138,14 @@ export function createUnitInterface(
   const { audioContext } = hostSystem;
   const audioOutputPort = createHsAudioOutputPort(audioContext);
   const audioInputPort = createHsAudioInputPort(audioContext);
+  const { linkageApi } = hostSystem;
   const noteOutputPort = createHsNoteOutputPort(
-    hostSystem.actionScheduler,
+    linkageApi.actionScheduler,
     unitId,
-    hostSystem.getUnitNoteOutputMonitor,
+    linkageApi.getUnitNoteOutputMonitor,
   );
   const automationOutputPort = createHsAutomationOutputPort(
-    hostSystem.actionScheduler,
+    linkageApi.actionScheduler,
   );
   const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
     {};
@@ -172,7 +173,7 @@ export function createUnitInterface(
       hostSystem.emitMetaAttributes(metaAttrs);
     },
     sendMessageToHost(message) {
-      hostSystem.eventPort.emit({
+      hostSystem.linkageApi.eventPort.emit({
         type: "messageFromUnit",
         message,
         senderUnitId: unitId,
