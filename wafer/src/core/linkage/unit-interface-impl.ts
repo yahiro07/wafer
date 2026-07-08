@@ -171,6 +171,13 @@ export function createUnitInterface(
     emitMetaAttributes(metaAttrs) {
       hostSystem.emitMetaAttributes(metaAttrs);
     },
+    sendMessageToHost(message) {
+      hostSystem.eventPort.emit({
+        type: "messageFromUnit",
+        message,
+        senderUnitId: unitId,
+      });
+    },
     completeSetup(attrs) {
       const hasAudioOutput = attrs.unitAspects.outputs?.includes("audio");
       const hasAudioInput = attrs.unitAspects.inputs?.includes("audio");

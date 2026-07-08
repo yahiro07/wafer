@@ -61,6 +61,9 @@ export type HostSystem = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
+  subscribeMessageFromUnits: (
+    fn: (message: object, senderUnitId: string) => void,
+  ) => () => void;
 };
 
 export function createHostSystem(audioContext: IAudioContext): HostSystem {
@@ -200,6 +203,13 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     },
     setUnitNoteOutputMonitor(monitorFn) {
       unitNoteOutputMonitorFn = monitorFn;
+    },
+    subscribeMessageFromUnits(fn) {
+      return bus.eventPort.subscribe((e) => {
+        if (e.type === "messageFromUnit") {
+          fn(e.message, e.senderUnitId);
+        }
+      });
     },
   };
 }

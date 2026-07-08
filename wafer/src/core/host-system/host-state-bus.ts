@@ -7,7 +7,8 @@ export type HostSystemEvent =
   | { type: "loadCompleted" }
   | { type: "unitAdded"; unitInstance: HsUnitInstance }
   | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
-  | { type: "unitRemoved"; unitId: string };
+  | { type: "unitRemoved"; unitId: string }
+  | { type: "messageFromUnit"; message: object; senderUnitId: string };
 // | { type: "unitsAdded"; units: HsUnitInstance[] }
 // | { type: "unitsRemoved"; unitIds: string[] };
 
