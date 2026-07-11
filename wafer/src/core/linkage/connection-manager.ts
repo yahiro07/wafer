@@ -94,7 +94,13 @@ function getUnitOutputCompositePort(
   portId: string,
 ): CompositePort | undefined {
   if (portId === "primaryOutput") {
-    return unit.outputPorts;
+    return unit.primaryOutputPorts;
+  } else if (portId === "audioOutput") {
+    return { audioOutput: unit.primaryOutputPorts.audioOutput };
+  } else if (portId === "noteOutput") {
+    return { noteOutput: unit.primaryOutputPorts.noteOutput };
+  } else if (portId === "automationOutput") {
+    return { automationOutput: unit.primaryOutputPorts.automationOutput };
   }
   const port = unit.additionalAudioOutputs?.[portId];
   return port ? { audioOutput: port } : undefined;
@@ -105,7 +111,13 @@ function getUnitInputCompositePort(
   portId: string,
 ): CompositePort | undefined {
   if (portId === "primaryInput") {
-    return unit.inputPorts;
+    return unit.primaryInputPorts;
+  } else if (portId === "audioInput") {
+    return { audioInput: unit.primaryInputPorts.audioInput };
+  } else if (portId === "noteInput") {
+    return { noteInput: unit.primaryInputPorts.noteInput };
+  } else if (portId === "automationInput") {
+    return { automationInput: unit.primaryInputPorts.automationInput };
   }
   const port = unit.additionalAudioInputs?.[portId];
   return port ? { audioInput: port } : undefined;

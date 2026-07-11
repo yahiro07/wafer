@@ -16,11 +16,11 @@ export function useUnitInputNotesAffecter(
         (note) => !inputNotes?.includes(note),
       );
       for (const note of notesToAdd) {
-        unitInstance.inputPorts.noteInput?.noteOn?.(note);
+        unitInstance.primaryInputPorts.noteInput?.noteOn?.(note);
         activeNotes.add(note);
       }
       for (const note of notesToRemove) {
-        unitInstance.inputPorts.noteInput?.noteOff?.(note);
+        unitInstance.primaryInputPorts.noteInput?.noteOff?.(note);
         activeNotes.delete(note);
       }
     }

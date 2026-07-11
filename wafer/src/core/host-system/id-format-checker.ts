@@ -4,12 +4,23 @@ export function checkUnitIdValidity(unitId: string) {
   }
 }
 
+const portIdsReserved = new Set<string>([
+  "primaryOutput",
+  "primaryInput",
+  //
+  "audioOutput",
+  "noteOutput",
+  "automationOutput",
+  "clockOutput",
+  //
+  "audioInput",
+  "noteInput",
+  "automationInput",
+  "clockInput",
+]);
+
 export function checkPortIdValidity(portId: string) {
-  if (
-    !portId.match(/^[a-zA-Z0-9_-]+$/) ||
-    portId === "primaryOutput" ||
-    portId === "primaryInput"
-  ) {
+  if (!portId.match(/^[a-zA-Z0-9_-]+$/) || portIdsReserved.has(portId)) {
     throw new Error(`Invalid port id: ${portId}`);
   }
 }

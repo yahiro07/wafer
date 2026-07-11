@@ -5,6 +5,7 @@ import {
   HostCallbacks,
   NotePort,
   Persistence,
+  PortSubtype,
   UnitCallbacks,
   UnitInterface,
 } from "../../unit-types";
@@ -36,15 +37,42 @@ export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
 export type HsAdditionalAudioOutputPort =
   WrapperOutputPort<HsAdditionalAudioPort>;
 
+export type HsPortDirection = "input" | "output";
+export type HsPortSubtype = PortSubtype;
+
+export type HsPortInfoPrimary = {
+  type: "primary";
+  direction: HsPortDirection;
+  subtypes: HsPortSubtype[];
+  portId: string;
+};
+export type HsPortInfoPrimaryInner = {
+  type: "primaryInner";
+  direction: HsPortDirection;
+  subtype: HsPortSubtype;
+  portId: string;
+};
+export type HsPortInfoAdditional = {
+  type: "additional";
+  direction: HsPortDirection;
+  subtype: HsPortSubtype;
+  portId: string;
+  label?: string;
+};
+export type HsPortInfo =
+  | HsPortInfoPrimary
+  | HsPortInfoPrimaryInner
+  | HsPortInfoAdditional;
+
 export type HsUnitInstance = {
   unitId: string;
   viewSize?: [number, number];
-  inputPorts: {
+  primaryInputPorts: {
     audioInput?: AudioPort;
     noteInput?: NotePort;
     automationInput?: AutomationPort;
   };
-  outputPorts: {
+  primaryOutputPorts: {
     audioOutput?: HsAudioOutputPort;
     noteOutput?: HsNoteOutputPort;
     automationOutput?: HsAutomationOutputPort;
@@ -55,6 +83,7 @@ export type HsUnitInstance = {
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
+  portInfos: HsPortInfo[];
   cleanup?: () => void;
   RenderUi?: () => ReactNode;
 };

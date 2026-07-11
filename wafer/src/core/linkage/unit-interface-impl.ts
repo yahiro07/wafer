@@ -1,4 +1,4 @@
-import { AutomationPort, NotePort } from "../../unit-types";
+import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
@@ -11,6 +11,7 @@ import {
   HsAudioOutputPort,
   HsAutomationOutputPort,
   HsNoteOutputPort,
+  HsPortInfo,
   HsUnitInstance,
   HsUnitInterface,
 } from "./types";
@@ -130,6 +131,96 @@ function createHsAdditionalAudioInputPort(
   return { node, id, label };
 }
 
+function buildPortInfos(
+  primaryInputPorts: HsUnitInstance["primaryInputPorts"],
+  primaryOutputPorts: HsUnitInstance["primaryOutputPorts"],
+  additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
+  additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
+): HsPortInfo[] {
+  const primaryOutputSubtypes = [
+    primaryOutputPorts.audioOutput && "audio",
+    primaryOutputPorts.noteOutput && "note",
+    primaryOutputPorts.automationOutput && "automation",
+  ].filter(Boolean) as PortSubtype[];
+  const primaryInputSubtypes = [
+    primaryInputPorts.audioInput && "audio",
+    primaryInputPorts.noteInput && "note",
+    primaryInputPorts.automationInput && "automation",
+  ].filter(Boolean) as PortSubtype[];
+  return [
+    primaryOutputSubtypes.length > 0
+      ? {
+          type: "primary",
+          direction: "output",
+          subtypes: primaryOutputSubtypes,
+          portId: "primaryOutput",
+        }
+      : undefined,
+    primaryInputSubtypes.length > 0
+      ? {
+          type: "primary",
+          direction: "input",
+          subtypes: primaryInputSubtypes,
+          portId: "primaryInput",
+        }
+      : undefined,
+    primaryOutputPorts.audioOutput && {
+      type: "primaryInner",
+      direction: "output",
+      subtype: "audio",
+      portId: "audioOutput",
+    },
+    primaryOutputPorts.noteOutput && {
+      type: "primaryInner",
+      direction: "output",
+      subtype: "note",
+      portId: "noteOutput",
+    },
+    primaryOutputPorts.automationOutput && {
+      type: "primaryInner",
+      direction: "output",
+      subtype: "automation",
+      portId: "automationOutput",
+    },
+    primaryInputPorts.audioInput && {
+      type: "primaryInner",
+      direction: "input",
+      subtype: "audio",
+      portId: "audioInput",
+    },
+    primaryInputPorts.noteInput && {
+      type: "primaryInner",
+      direction: "input",
+      subtype: "note",
+      portId: "noteInput",
+    },
+    primaryInputPorts.automationInput && {
+      type: "primaryInner",
+      direction: "input",
+      subtype: "automation",
+      portId: "automationInput",
+    },
+    ...(additionalAudioOutputs
+      ? Object.values(additionalAudioOutputs).map((port) => ({
+          type: "additional",
+          direction: "output",
+          subtype: "audio",
+          portId: port.id,
+          label: port.label,
+        }))
+      : []),
+    ...(additionalAudioInputs
+      ? Object.values(additionalAudioInputs).map((port) => ({
+          type: "additional",
+          direction: "input",
+          subtype: "audio",
+          portId: port.id,
+          label: port.label,
+        }))
+      : []),
+  ].filter(Boolean) as HsPortInfo[];
+}
+
 export function createUnitInterface(
   hostSystem: HostSystem,
   unitId: string,
@@ -198,29 +289,37 @@ export function createUnitInterface(
           ? additionalAudioInputs
           : undefined;
 
+      const primaryInputPorts = {
+        audioInput: hasAudioInput ? audioInputPort : undefined,
+        noteInput: hasNoteInput ? attrs.noteInput : undefined,
+        automationInput: hasAutomationInput ? attrs.automationInput : undefined,
+      };
+      const primaryOutputPorts = {
+        audioOutput: hasAudioOutput ? audioOutputPort : undefined,
+        noteOutput: hasNoteOutput ? noteOutputPort : undefined,
+        automationOutput: hasAutomationOutput
+          ? automationOutputPort
+          : undefined,
+      };
+      const portInfos = buildPortInfos(
+        primaryInputPorts,
+        primaryOutputPorts,
+        additionalAudioOutputsMap,
+        additionalAudioInputsMap,
+      );
+
       createdCallback({
         unitId,
         viewSize: attrs.unitAspects.viewSize,
-        inputPorts: {
-          audioInput: hasAudioInput ? audioInputPort : undefined,
-          noteInput: hasNoteInput ? attrs.noteInput : undefined,
-          automationInput: hasAutomationInput
-            ? attrs.automationInput
-            : undefined,
-        },
-        outputPorts: {
-          audioOutput: hasAudioOutput ? audioOutputPort : undefined,
-          noteOutput: hasNoteOutput ? noteOutputPort : undefined,
-          automationOutput: hasAutomationOutput
-            ? automationOutputPort
-            : undefined,
-        },
+        primaryInputPorts: primaryInputPorts,
+        primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs: additionalAudioOutputsMap,
         additionalAudioInputs: additionalAudioInputsMap,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
         unitCallbacks: attrs.unitCallbacks,
+        portInfos,
         cleanup: attrs.cleanup,
       });
     },

@@ -3,6 +3,12 @@ export * from "./host-system/types";
 export type { WebAudioActionScheduler } from "./host-system/webaudio-action-scheduler";
 export type {
   DestinationCode,
+  HsPortDirection,
+  HsPortInfo,
+  HsPortInfoAdditional,
+  HsPortInfoPrimary,
+  HsPortInfoPrimaryInner,
+  HsPortSubtype,
   HsUnitInstance,
   HsUnitStateData,
 } from "./linkage/types";

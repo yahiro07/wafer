@@ -188,7 +188,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
     deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
       if (isOn) {
         const unit = bus.getUnit(destUnitId);
-        const noteOnFn = unit?.inputPorts.noteInput?.noteOn;
+        const noteOnFn = unit?.primaryInputPorts.noteInput?.noteOn;
         if (noteOnFn) {
           actionScheduler.pushAction(
             () => noteOnFn(noteNumber, time, velocity),
@@ -200,7 +200,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
         const unitId = noteNumberToUnitIdMap.get(noteNumber);
         if (unitId) {
           const unit = bus.getUnit(unitId);
-          const noteOffFn = unit?.inputPorts.noteInput?.noteOff;
+          const noteOffFn = unit?.primaryInputPorts.noteInput?.noteOff;
           if (noteOffFn) {
             actionScheduler.pushAction(() => noteOffFn(noteNumber, time), time);
           }
