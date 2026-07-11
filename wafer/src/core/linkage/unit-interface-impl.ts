@@ -10,8 +10,6 @@ import {
   HsAudioInputPort,
   HsAudioOutputPort,
   HsAutomationOutputPort,
-  HsClockInputPort,
-  HsClockOutputPort,
   HsNoteOutputPort,
   HsPortInfo,
   HsUnitInstance,
@@ -133,45 +131,11 @@ function createHsAdditionalAudioInputPort(
   return { node, id, label };
 }
 
-function createHsClockOutputPort(): HsClockOutputPort {
-  const connectedInputPorts = new Set<HsClockInputPort>();
-  return {
-    connectTo(port: HsClockInputPort) {
-      connectedInputPorts.add(port);
-    },
-    disconnectTo(port: HsClockInputPort) {
-      connectedInputPorts.delete(port);
-    },
-    start() {
-      connectedInputPorts.forEach((connectedInputPort) => {
-        connectedInputPort.start?.();
-      });
-    },
-    stop() {
-      connectedInputPorts.forEach((connectedInputPort) => {
-        connectedInputPort.stop?.();
-      });
-    },
-    processScheduling(timeFrom, barFrom, barTo, bpm) {
-      connectedInputPorts.forEach((connectedInputPort) => {
-        connectedInputPort.processScheduling?.(timeFrom, barFrom, barTo, bpm);
-      });
-    },
-    processStep(stepIndex, time, unitDuration) {
-      connectedInputPorts.forEach((connectedInputPort) => {
-        connectedInputPort.processStep?.(stepIndex, time, unitDuration);
-      });
-    },
-  };
-}
-
 function buildPortInfos(
   primaryInputPorts: HsUnitInstance["primaryInputPorts"],
   primaryOutputPorts: HsUnitInstance["primaryOutputPorts"],
   additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
   additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
-  clockOutputPort: HsUnitInstance["clockOutputPort"],
-  clockHandlers: HsUnitInstance["clockHandlers"],
 ): HsPortInfo[] {
   const primaryOutputSubtypes = [
     primaryOutputPorts.audioOutput && "audio",
@@ -254,18 +218,6 @@ function buildPortInfos(
           label: port.label,
         }))
       : []),
-    clockOutputPort && {
-      type: "additional",
-      direction: "output",
-      subtype: "clock",
-      portId: "clockOutput",
-    },
-    clockHandlers && {
-      type: "additional",
-      direction: "input",
-      subtype: "clock",
-      portId: "clockInput",
-    },
   ].filter(Boolean) as HsPortInfo[];
 }
 
@@ -290,8 +242,6 @@ export function createUnitInterface(
     {};
   const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
 
-  let clockOutputPort: HsClockOutputPort | undefined;
-
   return {
     audioContext: audioContext as AudioContext,
     audioOutputNode: audioOutputPort.node,
@@ -309,11 +259,6 @@ export function createUnitInterface(
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
       additionalAudioInputs[id] = port;
       return port.node;
-    },
-    createClockOutputPort() {
-      const port = createHsClockOutputPort();
-      clockOutputPort = port;
-      return port;
     },
     emitMetaAttributes(metaAttrs) {
       hostSystem.emitMetaAttributes(metaAttrs);
@@ -361,8 +306,6 @@ export function createUnitInterface(
         primaryOutputPorts,
         additionalAudioOutputsMap,
         additionalAudioInputsMap,
-        clockOutputPort,
-        attrs.clockHandlers,
       );
 
       createdCallback({
@@ -372,7 +315,6 @@ export function createUnitInterface(
         primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs: additionalAudioOutputsMap,
         additionalAudioInputs: additionalAudioInputsMap,
-        clockOutputPort,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,

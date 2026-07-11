@@ -6,8 +6,6 @@ import {
   HsAudioOutputPort,
   HsAutomationInputPort,
   HsAutomationOutputPort,
-  HsClockInputPort,
-  HsClockOutputPort,
   HsNoteInputPort,
   HsNoteOutputPort,
   HsUnitInstance,
@@ -52,11 +50,9 @@ type CompositePort = {
   audioOutput?: HsAudioOutputPort;
   noteOutput?: HsNoteOutputPort;
   automationOutput?: HsAutomationOutputPort;
-  clockOutput?: HsClockOutputPort;
   audioInput?: HsAudioInputPort;
   noteInput?: HsNoteInputPort;
   automationInput?: HsAutomationInputPort;
-  clockInput?: HsClockInputPort;
 };
 
 function updateConnectionCompositePortToOutput(
@@ -105,8 +101,6 @@ function getUnitOutputCompositePort(
     return { noteOutput: unit.primaryOutputPorts.noteOutput };
   } else if (portId === "automationOutput") {
     return { automationOutput: unit.primaryOutputPorts.automationOutput };
-  } else if (portId === "clockOutput") {
-    return { clockOutput: unit.clockOutputPort };
   }
   const port = unit.additionalAudioOutputs?.[portId];
   return port ? { audioOutput: port } : undefined;
@@ -124,8 +118,6 @@ function getUnitInputCompositePort(
     return { noteInput: unit.primaryInputPorts.noteInput };
   } else if (portId === "automationInput") {
     return { automationInput: unit.primaryInputPorts.automationInput };
-  } else if (portId === "clockInput") {
-    return { clockInput: unit.clockHandlers };
   }
   const port = unit.additionalAudioInputs?.[portId];
   return port ? { audioInput: port } : undefined;

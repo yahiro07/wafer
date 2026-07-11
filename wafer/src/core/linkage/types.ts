@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import {
   AutomationPort,
   ClockHandlers,
-  ClockOutputPort,
   HostCallbacks,
   NotePort,
   Persistence,
@@ -27,25 +26,16 @@ export type HsAudioInputPort = AudioPort;
 export type HsNoteInputPort = NotePort;
 export type HsAutomationInputPort = AutomationPort;
 export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
-export type HsClockInputPort = ClockHandlers;
 
 type WrapperOutputPort<T> = T & {
   connectTo(port: T): void;
   disconnectTo(port: T): void;
-};
-type WrapperOutputPortEx<T, Q> = T & {
-  connectTo(port: Q): void;
-  disconnectTo(port: Q): void;
 };
 export type HsNoteOutputPort = WrapperOutputPort<NotePort>;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
 export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
 export type HsAdditionalAudioOutputPort =
   WrapperOutputPort<HsAdditionalAudioPort>;
-export type HsClockOutputPort = WrapperOutputPortEx<
-  ClockOutputPort,
-  ClockHandlers
->;
 
 export type HsPortDirection = "input" | "output";
 export type HsPortSubtype = PortSubtype;
@@ -89,7 +79,6 @@ export type HsUnitInstance = {
   };
   additionalAudioOutputs?: Record<string, HsAdditionalAudioOutputPort>;
   additionalAudioInputs?: Record<string, HsAdditionalAudioPort>;
-  clockOutputPort?: HsClockOutputPort;
   hostCallbacks?: HostCallbacks;
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;

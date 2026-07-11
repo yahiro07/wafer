@@ -8,7 +8,7 @@ export type UnitCategoryHint =
   | "drumMachine"
   | "keyboard";
 
-export type PortSubtype = "audio" | "note" | "automation" | "clock";
+export type PortSubtype = "audio" | "note" | "automation";
 
 export type NotePort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
@@ -51,18 +51,6 @@ export type ClockHandlers = {
   ): void;
 };
 
-export type ClockOutputPort = {
-  start(): void;
-  stop(): void;
-  processScheduling(
-    timeFrom: number,
-    barFrom: number,
-    barTo: number,
-    bpm: number,
-  ): void;
-  processStep(stepIndex: number, time: number, unitDuration: number): void;
-};
-
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
@@ -94,7 +82,6 @@ export type UnitInterface = {
   sendMessageToHost(message: object): void;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
-  createClockOutputPort(): ClockOutputPort;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
