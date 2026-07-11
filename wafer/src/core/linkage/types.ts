@@ -48,21 +48,31 @@ export type HsClockOutputPort = WrapperOutputPortEx<
 >;
 
 export type HsPortDirection = "input" | "output";
+export type HsPortSubtype = PortSubtype;
 
+export type HsPortInfoPrimary = {
+  type: "primary";
+  direction: HsPortDirection;
+  subtypes: HsPortSubtype[];
+  portId: string;
+};
+export type HsPortInfoPrimaryInner = {
+  type: "primaryInner";
+  direction: HsPortDirection;
+  subtypes: HsPortSubtype[];
+  portId: string;
+};
+export type HsPortInfoAdditional = {
+  type: "additional";
+  direction: HsPortDirection;
+  subtype: HsPortSubtype;
+  portId: string;
+  label?: string;
+};
 export type HsPortInfo =
-  | {
-      isPrimary: false;
-      direction: HsPortDirection;
-      subtype: PortSubtype;
-      portId: string;
-      label?: string;
-    }
-  | {
-      isPrimary: true;
-      direction: HsPortDirection;
-      subtypes: PortSubtype[];
-      portId: string;
-    };
+  | HsPortInfoPrimary
+  | HsPortInfoPrimaryInner
+  | HsPortInfoAdditional;
 
 export type HsUnitInstance = {
   unitId: string;

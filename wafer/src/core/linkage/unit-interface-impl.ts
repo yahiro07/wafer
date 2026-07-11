@@ -186,7 +186,7 @@ function buildPortInfos(
   return [
     primaryOutputSubtypes.length > 0
       ? {
-          isPrimary: true,
+          type: "primary",
           direction: "output",
           subtypes: primaryOutputSubtypes,
           portId: "primaryOutput",
@@ -194,51 +194,51 @@ function buildPortInfos(
       : undefined,
     primaryInputSubtypes.length > 0
       ? {
-          isPrimary: true,
+          type: "primary",
           direction: "input",
           subtypes: primaryInputSubtypes,
           portId: "primaryInput",
         }
       : undefined,
     primaryOutputPorts.audioOutput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "output",
       subtype: "audio",
       portId: "audioOutput",
     },
     primaryOutputPorts.noteOutput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "output",
       subtype: "note",
       portId: "noteOutput",
     },
     primaryOutputPorts.automationOutput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "output",
       subtype: "automation",
       portId: "automationOutput",
     },
     primaryInputPorts.audioInput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "input",
       subtype: "audio",
       portId: "audioInput",
     },
     primaryInputPorts.noteInput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "input",
       subtype: "note",
       portId: "noteInput",
     },
     primaryInputPorts.automationInput && {
-      isPrimary: false,
+      type: "primaryInner",
       direction: "input",
       subtype: "automation",
       portId: "automationInput",
     },
     ...(additionalAudioOutputs
       ? Object.values(additionalAudioOutputs).map((port) => ({
-          isPrimary: false,
+          type: "additional",
           direction: "output",
           subtype: "audio",
           portId: port.id,
@@ -247,7 +247,7 @@ function buildPortInfos(
       : []),
     ...(additionalAudioInputs
       ? Object.values(additionalAudioInputs).map((port) => ({
-          isPrimary: false,
+          type: "additional",
           direction: "input",
           subtype: "audio",
           portId: port.id,
@@ -255,13 +255,13 @@ function buildPortInfos(
         }))
       : []),
     clockOutputPort && {
-      isPrimary: false,
+      type: "additional",
       direction: "output",
       subtype: "clock",
       portId: "clockOutput",
     },
     clockHandlers && {
-      isPrimary: false,
+      type: "additional",
       direction: "input",
       subtype: "clock",
       portId: "clockInput",
