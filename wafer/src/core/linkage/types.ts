@@ -59,7 +59,7 @@ export type HsPortInfoPrimary = {
 export type HsPortInfoPrimaryInner = {
   type: "primaryInner";
   direction: HsPortDirection;
-  subtypes: HsPortSubtype[];
+  subtype: HsPortSubtype;
   portId: string;
 };
 export type HsPortInfoAdditional = {

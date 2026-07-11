@@ -7,6 +7,7 @@ export type {
   HsPortInfo,
   HsPortInfoAdditional,
   HsPortInfoPrimary,
+  HsPortInfoPrimaryInner,
   HsPortSubtype,
   HsUnitInstance,
   HsUnitStateData,
