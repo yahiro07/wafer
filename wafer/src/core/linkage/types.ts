@@ -6,6 +6,7 @@ import {
   HostCallbacks,
   NotePort,
   Persistence,
+  PortSubtype,
   UnitCallbacks,
   UnitInterface,
 } from "../../unit-types";
@@ -46,6 +47,15 @@ export type HsClockOutputPort = WrapperOutputPortEx<
   ClockHandlers
 >;
 
+export type HsPortDirection = "input" | "output";
+
+export type HsPortInfo = {
+  direction: HsPortDirection;
+  subtype: PortSubtype;
+  portId: string;
+  label?: string;
+};
+
 export type HsUnitInstance = {
   unitId: string;
   viewSize?: [number, number];
@@ -66,6 +76,7 @@ export type HsUnitInstance = {
   clockHandlers?: ClockHandlers;
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
+  portInfos: HsPortInfo[];
   cleanup?: () => void;
   RenderUi?: () => ReactNode;
 };

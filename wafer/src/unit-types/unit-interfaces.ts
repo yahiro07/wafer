@@ -8,7 +8,7 @@ export type UnitCategoryHint =
   | "drumMachine"
   | "keyboard";
 
-export type PortSubtype = "audio" | "note" | "automation";
+export type PortSubtype = "audio" | "note" | "automation" | "clock";
 
 export type NotePort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1

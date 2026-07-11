@@ -13,6 +13,7 @@ import {
   HsClockInputPort,
   HsClockOutputPort,
   HsNoteOutputPort,
+  HsPortInfo,
   HsUnitInstance,
   HsUnitInterface,
 } from "./types";
@@ -164,6 +165,74 @@ function createHsClockOutputPort(): HsClockOutputPort {
   };
 }
 
+function buildPortInfos(
+  inputPorts: HsUnitInstance["inputPorts"],
+  outputPorts: HsUnitInstance["outputPorts"],
+  additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
+  additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
+  clockOutputPort: HsUnitInstance["clockOutputPort"],
+  clockHandlers: HsUnitInstance["clockHandlers"],
+): HsPortInfo[] {
+  return [
+    inputPorts.audioInput && {
+      direction: "input",
+      subtype: "audio",
+      portId: "audioInput",
+    },
+    inputPorts.noteInput && {
+      direction: "input",
+      subtype: "note",
+      portId: "noteInput",
+    },
+    inputPorts.automationInput && {
+      direction: "input",
+      subtype: "automation",
+      portId: "automationInput",
+    },
+    outputPorts.audioOutput && {
+      direction: "output",
+      subtype: "audio",
+      portId: "audioOutput",
+    },
+    outputPorts.noteOutput && {
+      direction: "output",
+      subtype: "note",
+      portId: "noteOutput",
+    },
+    outputPorts.automationOutput && {
+      direction: "output",
+      subtype: "automation",
+      portId: "automationOutput",
+    },
+    ...(additionalAudioOutputs
+      ? Object.values(additionalAudioOutputs).map((port) => ({
+          direction: "output",
+          subtype: "audio",
+          portId: port.id,
+          label: port.label,
+        }))
+      : []),
+    ...(additionalAudioInputs
+      ? Object.values(additionalAudioInputs).map((port) => ({
+          direction: "input",
+          subtype: "audio",
+          portId: port.id,
+          label: port.label,
+        }))
+      : []),
+    clockOutputPort && {
+      direction: "output",
+      subtype: "clock",
+      portId: "clockOutput",
+    },
+    clockHandlers && {
+      direction: "input",
+      subtype: "clock",
+      portId: "clockInput",
+    },
+  ].filter(Boolean) as HsPortInfo[];
+}
+
 export function createUnitInterface(
   hostSystem: HostSystem,
   unitId: string,
@@ -239,23 +308,32 @@ export function createUnitInterface(
           ? additionalAudioInputs
           : undefined;
 
+      const inputPorts = {
+        audioInput: hasAudioInput ? audioInputPort : undefined,
+        noteInput: hasNoteInput ? attrs.noteInput : undefined,
+        automationInput: hasAutomationInput ? attrs.automationInput : undefined,
+      };
+      const outputPorts = {
+        audioOutput: hasAudioOutput ? audioOutputPort : undefined,
+        noteOutput: hasNoteOutput ? noteOutputPort : undefined,
+        automationOutput: hasAutomationOutput
+          ? automationOutputPort
+          : undefined,
+      };
+      const portInfos = buildPortInfos(
+        inputPorts,
+        outputPorts,
+        additionalAudioOutputsMap,
+        additionalAudioInputsMap,
+        clockOutputPort,
+        attrs.clockHandlers,
+      );
+
       createdCallback({
         unitId,
         viewSize: attrs.unitAspects.viewSize,
-        inputPorts: {
-          audioInput: hasAudioInput ? audioInputPort : undefined,
-          noteInput: hasNoteInput ? attrs.noteInput : undefined,
-          automationInput: hasAutomationInput
-            ? attrs.automationInput
-            : undefined,
-        },
-        outputPorts: {
-          audioOutput: hasAudioOutput ? audioOutputPort : undefined,
-          noteOutput: hasNoteOutput ? noteOutputPort : undefined,
-          automationOutput: hasAutomationOutput
-            ? automationOutputPort
-            : undefined,
-        },
+        inputPorts,
+        outputPorts,
         additionalAudioOutputs: additionalAudioOutputsMap,
         additionalAudioInputs: additionalAudioInputsMap,
         clockOutputPort,
@@ -263,6 +341,7 @@ export function createUnitInterface(
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
         unitCallbacks: attrs.unitCallbacks,
+        portInfos,
         cleanup: attrs.cleanup,
       });
     },
