@@ -1,4 +1,4 @@
-import { UnitCategoryHint, UnitType } from "wus-unit-types";
+import { UnitCategoryHint, UnitType } from "../../unit-types";
 
 export type UnitSourceUrls = Record<string, string>;
 
@@ -16,7 +16,6 @@ export type UnitInventorySpec = {
   name: string;
   unitType: UnitType;
   category?: UnitCategoryHint;
-  preferredSize: { width: number; height: number };
   outputSignalTypes: string;
   inputSignalTypes: string;
   unitTypesVersion: string;

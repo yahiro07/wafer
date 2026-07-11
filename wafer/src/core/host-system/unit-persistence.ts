@@ -2,7 +2,7 @@ import { base64Helper, isUint8ArrayLike } from "../../utils/binary-helper";
 import { HsUnitInstance, HsUnitStateData } from "../linkage/types";
 import { HostStateBus } from "./host-state-bus";
 
-const unitStateOperations = {
+export const unitStateOperations = {
   readStateFromUnit(unit: HsUnitInstance): HsUnitStateData | undefined {
     const stateInput = unit.persistence;
     const state = stateInput?.emitStateBytes?.() ?? stateInput?.emitState?.();
@@ -16,7 +16,8 @@ const unitStateOperations = {
         base64: base64Helper.encode(state),
       };
     } else {
-      return { unitId: unit.unitId, type: "json", json: state };
+      const stateCopied = structuredClone(state);
+      return { unitId: unit.unitId, type: "json", json: stateCopied };
     }
   },
   applyStateToUnit(unit: HsUnitInstance, stateData: HsUnitStateData) {
@@ -25,7 +26,8 @@ const unitStateOperations = {
       const bytes = base64Helper.decode(stateData.base64);
       stateInput.applyStateBytes(bytes);
     } else if (stateData.type === "json" && stateInput?.applyState) {
-      stateInput.applyState(stateData.json);
+      const data = structuredClone(stateData.json);
+      stateInput.applyState(data);
     }
   },
 };

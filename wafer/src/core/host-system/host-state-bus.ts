@@ -1,17 +1,20 @@
 import { createEventPort, EventPort } from "../../utils/event-port";
 import { HsAudioInputPort, HsUnitInstance } from "../linkage/types";
+import { IAudioContext } from "./types";
 
 export type HostSystemEvent =
   | { type: "loadStarted" }
-  | { type: "loadCompleted" };
-// | { type: "unitAdded"; unitInstance: HsUnitInstance }
-// | { type: "unitRemoved"; unitId: string };
+  | { type: "loadCompleted" }
+  | { type: "unitAdded"; unitInstance: HsUnitInstance }
+  | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
+  | { type: "unitRemoved"; unitId: string }
+  | { type: "messageFromUnit"; message: object; senderUnitId: string };
 // | { type: "unitsAdded"; units: HsUnitInstance[] }
 // | { type: "unitsRemoved"; unitIds: string[] };
 
 export type HostStateBus = {
   eventPort: EventPort<HostSystemEvent>;
-  audioContext: AudioContext;
+  audioContext: IAudioContext;
   masterGainNode: GainNode;
   audioDestinationVirtualInputPort: HsAudioInputPort;
   addUnit(unit: HsUnitInstance): void;
@@ -20,7 +23,7 @@ export type HostStateBus = {
   removeUnit(unitId: string): void;
 };
 
-export function createHostStateBus(audioContext: AudioContext): HostStateBus {
+export function createHostStateBus(audioContext: IAudioContext): HostStateBus {
   const eventPort = createEventPort<HostSystemEvent>();
   const masterGainNode = audioContext.createGain();
   masterGainNode.connect(audioContext.destination);
@@ -36,7 +39,7 @@ export function createHostStateBus(audioContext: AudioContext): HostStateBus {
     audioDestinationVirtualInputPort,
     addUnit(unit: HsUnitInstance) {
       units.set(unit.unitId, unit);
-      // eventPort.emit({ type: "unitAdded", unitInstance: unit });
+      eventPort.emit({ type: "unitAdded", unitInstance: unit });
     },
     getUnit(unitId: string) {
       return units.get(unitId);
@@ -45,8 +48,13 @@ export function createHostStateBus(audioContext: AudioContext): HostStateBus {
       return Array.from(units.values());
     },
     removeUnit(unitId: string) {
+      const unit = units.get(unitId);
+      if (unit) {
+        eventPort.emit({ type: "beforeRemoveUnit", unitInstance: unit });
+        unit.cleanup?.();
+      }
       units.delete(unitId);
-      // eventPort.emit({ type: "unitRemoved", unitId });
+      eventPort.emit({ type: "unitRemoved", unitId });
     },
   };
 }

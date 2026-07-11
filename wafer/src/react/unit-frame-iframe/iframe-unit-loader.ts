@@ -1,6 +1,5 @@
-import { HostSystem, HsUnitInstance } from "../core";
-import { createUnitInterface } from "../core/linkage/unit-interface-impl";
-import { UnitInterface, UnitInterfaceProvider } from "../unit-types";
+import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 export function loadIframeUnitInstance(
   hostSystem: HostSystem,
   unitId: string,
@@ -60,12 +59,14 @@ export function loadIframeUnitInstance(
       }
     };
   });
-  const unregisterUnit = hostSystem.registerPendingUnitInstancePromise(
-    unitId,
-    unitInstantiationPromise,
-  );
+  const unregisterUnit =
+    hostSystem.linkageApi.registerPendingUnitInstancePromise(
+      unitId,
+      unitInstantiationPromise,
+    );
   return () => {
     unregisterUnit();
     cleanupIFrameCallback?.();
+    win.iframeUnitUnloadingCallback?.();
   };
 }

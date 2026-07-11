@@ -1,61 +1,108 @@
 import { MetaAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
-import { createUnitConnectionsManager } from "../linkage/connection-manager";
+import { delayMs } from "../../utils/timer-utils";
+import {
+  createUnitConnectionsManager,
+  createUnitConnectionsManagerSingle,
+} from "../linkage/connection-manager";
 import {
   DestinationCode,
   HsUnitInstance,
   HsUnitStateData,
 } from "../linkage/types";
 import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
+import { IAudioContext, UnitNoteOutputMonitorFn } from "./types";
 import { createUnitsLoadingManager } from "./unit-loading-manager";
-import { createUnitPersistenceHandlers } from "./unit-persistence";
 import {
+  createUnitPersistenceHandlers,
+  unitStateOperations,
+} from "./unit-persistence";
+import {
+  createDummyActionScheduler,
   createWebAudioActionScheduler,
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
 
-export type HostSystem = {
-  audioContext: AudioContext;
+type LinkageApi = {
   actionScheduler: WebAudioActionScheduler;
-  getAllUnits(): HsUnitInstance[];
   eventPort: EventPort<HostSystemEvent>;
   registerUnitInstance(unit: HsUnitInstance): () => void;
   registerPendingUnitInstancePromise(
     unitId: string,
     unitInstancePromise: Promise<HsUnitInstance>,
   ): () => void;
+  reserveConnectionSingle(source: string, destination: string): void;
+  removeConnectionSingle(source: string, destination: string): void;
   reserveConnectionChange(
     srcUnitId: string,
     destSpec: DestinationCode | undefined,
   ): void;
-  setMasterGain(gain: number): void;
-  exportUnitStates(): HsUnitStateData[];
-  reserveImportUnitStates(unitStates: HsUnitStateData[]): void;
-  emitMetaAttributes(attributes: MetaAttributes): void;
+  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
 };
 
-export function createHostSystem(audioContext: AudioContext): HostSystem {
+//public api for host application
+export type HostSystem = {
+  audioContext: IAudioContext;
+  setCustomActionScheduler(
+    customActionScheduler: WebAudioActionScheduler | "none",
+  ): void;
+  getAllUnits(): HsUnitInstance[];
+  setMasterGain(gain: number): void;
+  emitMetaAttributes(attributes: MetaAttributes): void;
+  getUnitState(unitId: string): HsUnitStateData | undefined;
+  setUnitState(unitId: string, state: HsUnitStateData): void;
+  getAllUnitStates(): HsUnitStateData[];
+  setAllUnitStates(unitStates: HsUnitStateData[]): void;
+  waitUnitsLoaded(): Promise<void>;
+  deliverNote(args: {
+    destUnitId: string;
+    noteNumber: number;
+    isOn: boolean;
+    time?: number;
+    velocity?: number;
+  }): void;
+  cleanup(): void;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
+  subscribeMessageFromUnits: (
+    fn: (message: object, senderUnitId: string) => void,
+  ) => () => void;
+  linkageApi: LinkageApi;
+};
+
+export function createHostSystem(audioContext: IAudioContext): HostSystem {
   const bus = createHostStateBus(audioContext);
+  const connectionManagerSingle = createUnitConnectionsManagerSingle(bus);
   const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
   const loadingManager = createUnitsLoadingManager(bus);
-  const actionScheduler = createWebAudioActionScheduler(audioContext);
+  let actionScheduler: WebAudioActionScheduler =
+    createWebAudioActionScheduler(audioContext);
+  const noteNumberToUnitIdMap = new Map<number, string>();
+  let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
 
   const internal = {
     addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
       loadingManager.reserveLoadUnit(unitId, promise);
       return () => {
         loadingManager.cancelLoadUnit(promise);
-        connectionManager.removeConnectionsForUnit(unitId);
         bus.removeUnit(unitId);
       };
     },
   };
 
-  return {
-    audioContext,
-    actionScheduler,
-    getAllUnits: bus.getAllUnits,
+  const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
+    if (e.type === "beforeRemoveUnit") {
+      connectionManagerSingle.onUnitRemoving(e.unitInstance.unitId);
+      connectionManager.onUnitRemoving(e.unitInstance.unitId);
+    }
+  });
+
+  const linkageApi: LinkageApi = {
+    get actionScheduler() {
+      return actionScheduler;
+    },
     eventPort: bus.eventPort,
     registerUnitInstance(unit: HsUnitInstance) {
       const promise = Promise.resolve(unit);
@@ -64,28 +111,115 @@ export function createHostSystem(audioContext: AudioContext): HostSystem {
     registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
       return internal.addUnitInstancePromise(unitId, unitInstancePromise);
     },
-    reserveConnectionChange(srcUnitId, destSpec) {
-      const op = () =>
-        connectionManager.updateConnection(srcUnitId, destSpec ?? "");
-      loadingManager.reserveUnitOperation({ type: "connection", op });
+    reserveConnectionSingle(source, destination) {
+      loadingManager.reserveUnitOperation({
+        type: "connection",
+        op: () =>
+          connectionManagerSingle.setConnectionSingle(
+            source,
+            destination,
+            true,
+          ),
+      });
     },
+    removeConnectionSingle(source, destination) {
+      connectionManagerSingle.setConnectionSingle(source, destination, false);
+    },
+    reserveConnectionChange(srcUnitId, destSpec) {
+      loadingManager.reserveUnitOperation({
+        type: "connection",
+        op: () =>
+          connectionManager.setConnectionChange(srcUnitId, destSpec ?? ""),
+      });
+    },
+    getUnitNoteOutputMonitor() {
+      return unitNoteOutputMonitorFn;
+    },
+  };
+
+  return {
+    audioContext,
+    linkageApi,
+    setCustomActionScheduler(
+      customActionScheduler: WebAudioActionScheduler | "none",
+    ) {
+      if (customActionScheduler === "none") {
+        actionScheduler = createDummyActionScheduler();
+      } else {
+        actionScheduler = customActionScheduler;
+      }
+    },
+    getAllUnits: bus.getAllUnits,
+
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
         gain,
         audioContext.currentTime + 0.01,
       );
     },
-    exportUnitStates() {
+    getAllUnitStates() {
       return unitPersistenceHandlers.exportUnitStates();
     },
-    reserveImportUnitStates(unitStates) {
-      const op = () => unitPersistenceHandlers.importUnitStates(unitStates);
-      loadingManager.reserveUnitOperation({ type: "state", op });
+    setAllUnitStates(unitStates: HsUnitStateData[]) {
+      unitPersistenceHandlers.importUnitStates(unitStates);
     },
     emitMetaAttributes(attributes) {
       for (const unit of bus.getAllUnits()) {
         unit.hostCallbacks?.setMetaAttributes?.(attributes);
       }
+    },
+    getUnitState(unitId: string) {
+      const unit = bus.getUnit(unitId);
+      return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;
+    },
+    setUnitState(unitId: string, state: HsUnitStateData) {
+      const unit = bus.getUnit(unitId);
+      unit && unitStateOperations.applyStateToUnit(unit, state);
+    },
+    async waitUnitsLoaded() {
+      await delayMs(100); //wait for iframes to be mounted in dom
+      await new Promise<void>((resolve) => {
+        loadingManager.reserveUnitOperation({
+          type: "state",
+          op: () => resolve(),
+        });
+      });
+    },
+    deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
+      if (isOn) {
+        const unit = bus.getUnit(destUnitId);
+        const noteOnFn = unit?.primaryInputPorts.noteInput?.noteOn;
+        if (noteOnFn) {
+          actionScheduler.pushAction(
+            () => noteOnFn(noteNumber, time, velocity),
+            time,
+          );
+        }
+        noteNumberToUnitIdMap.set(noteNumber, destUnitId);
+      } else {
+        const unitId = noteNumberToUnitIdMap.get(noteNumber);
+        if (unitId) {
+          const unit = bus.getUnit(unitId);
+          const noteOffFn = unit?.primaryInputPorts.noteInput?.noteOff;
+          if (noteOffFn) {
+            actionScheduler.pushAction(() => noteOffFn(noteNumber, time), time);
+          }
+        }
+        noteNumberToUnitIdMap.delete(noteNumber);
+      }
+    },
+    cleanup() {
+      unsubscribeInternalEvents();
+    },
+    setUnitNoteOutputMonitor(monitorFn) {
+      unitNoteOutputMonitorFn = monitorFn;
+    },
+    subscribeMessageFromUnits(fn) {
+      return bus.eventPort.subscribe((e) => {
+        if (e.type === "messageFromUnit") {
+          fn(e.message, e.senderUnitId);
+        }
+      });
     },
   };
 }

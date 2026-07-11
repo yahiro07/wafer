@@ -1,17 +1,13 @@
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
-import { HsUnitInstance } from "../core/linkage/types";
-import { mergeStyleWithFrameSize } from "../utils/frame-size-helper";
-import { useHostAppContext } from "./host-app-context";
-import { loadIframeUnitInstance } from "./iframe-unit-loader";
-import { useUnitInputNotesAffecter } from "./use-unit-input-notes-affecter";
+import { HsUnitInstance } from "../core";
+import { UnitDestinationSpec } from "./destination-spec";
+import { IFrameUnitFrame } from "./unit-frame-iframe/iframe-unit-frame";
+import { CustomElementUnitFrame } from "./unit-frame-web-components/custom-element-unit-frame";
 
 type Props = {
   unitId: string;
-  pageUrl: string;
-  destSpec?: string;
+  unitUrl: string;
+  destSpec?: UnitDestinationSpec;
   className?: string;
-  style?: CSSProperties;
-  frameSize?: { width: number; height: number };
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
@@ -19,60 +15,35 @@ type Props = {
 
 export const UnitFrame = ({
   unitId,
-  pageUrl,
+  unitUrl,
   destSpec,
   className,
-  style,
-  frameSize,
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
 }: Props) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const unitInstanceRef = useRef<HsUnitInstance>(null);
-
-  const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
-
-  const mergedStyle = useMemo(
-    () => mergeStyleWithFrameSize(style, frameSize),
-    [style, frameSize],
-  );
-
-  useEffect(() => {
-    hostSystem.reserveConnectionChange(unitId, destSpec);
-  }, [unitId, destSpec, hostSystem]);
-
-  useEffect(() => {
-    return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
-      onIframeMounted,
-      onUnitInstanceLoaded,
-      unitInstanceRef,
-    });
-  }, [pageUrl, hostSystem, unitId, onIframeMounted, onUnitInstanceLoaded]);
-
-  useEffect(() => {
-    if (hostBpm) {
-      unitInstanceRef.current?.hostCallbacks?.setBpm?.(hostBpm);
-    }
-  }, [hostBpm]);
-
-  useEffect(() => {
-    const unit = unitInstanceRef.current;
-    if (hostPlaying && unit) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
-    }
-  }, [hostPlaying]);
-
-  useUnitInputNotesAffecter(unitInstanceRef.current, inputNotes);
-
-  return (
-    <iframe
-      className={className}
-      style={mergedStyle}
-      ref={iframeRef}
-      src={pageUrl}
-      title={unitId}
-    />
-  );
+  if (unitUrl.endsWith("/index.js")) {
+    return (
+      <CustomElementUnitFrame
+        unitId={unitId}
+        scriptUrl={unitUrl}
+        destSpec={destSpec}
+        className={className}
+        inputNotes={inputNotes}
+        onUnitInstanceLoaded={onUnitInstanceLoaded}
+      />
+    );
+  } else {
+    return (
+      <IFrameUnitFrame
+        unitId={unitId}
+        pageUrl={unitUrl}
+        destSpec={destSpec}
+        className={className}
+        inputNotes={inputNotes}
+        onIframeMounted={onIframeMounted}
+        onUnitInstanceLoaded={onUnitInstanceLoaded}
+      />
+    );
+  }
 };

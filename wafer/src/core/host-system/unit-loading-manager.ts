@@ -11,6 +11,7 @@ type UnitLoadingJob = {
 type PendingUnitOperationItem = {
   type: "connection" | "state";
   op: () => void;
+  debugMetadata?: string;
 };
 
 function awaitPromiseWithTimeout<T>(
@@ -77,15 +78,20 @@ export function createUnitsLoadingManager(bus: HostStateBus) {
         }
 
         //connect units, apply persist states
-        pendingUnitOperationItems.sort((a) =>
-          a.type === "connection" ? -1 : 1,
-        );
+        pendingUnitOperationItems.sort((a, b) => {
+          if (a.type === b.type) return 0;
+          return a.type === "connection" ? -1 : 1;
+        });
+
         for (const item of pendingUnitOperationItems) {
           item.op();
         }
         pendingUnitOperationItems.length = 0;
 
         bus.eventPort.emit({ type: "loadCompleted" });
+        if (newUnits.length > 0) {
+          console.log(`${newUnits.length} units loaded`);
+        }
         isProcessing = false;
         if (
           unitLoadingJobs.length > 0 ||

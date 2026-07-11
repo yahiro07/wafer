@@ -1,104 +1,364 @@
+import { PortSubtype } from "../../unit-types";
 import { HostStateBus } from "../host-system/host-state-bus";
-import { DestinationCode, HsUnitInstance } from "./types";
+import {
+  DestinationCode,
+  HsAudioInputPort,
+  HsAudioOutputPort,
+  HsAutomationInputPort,
+  HsAutomationOutputPort,
+  HsNoteInputPort,
+  HsNoteOutputPort,
+  HsUnitInstance,
+} from "./types";
 
-export type ConnectionManager = {
-  updateConnections(newConnectionCodeMap: Map<string, DestinationCode>): void;
-  removeConnectionsForUnit(unitId: string): void;
+export type ConnectionManagerSingle = {
+  setConnectionSingle(
+    source: string,
+    destination: string,
+    active: boolean,
+  ): void;
+  onUnitRemoving(unitId: string): void;
 };
 
-type ConnectingOperation = "connect" | "disconnect";
+export type ConnectionManager = {
+  setConnectionChange(srcUnitId: string, destSpec: DestinationCode): void;
+  onUnitRemoving(unitId: string): void;
+};
 
-function updateConnectionToUnit(
-  srcUnit: HsUnitInstance,
-  destUnit: HsUnitInstance,
+type ConnectingOperation = "connectTo" | "disconnectTo";
+
+type UnitPortSpec = {
+  unitId: string | "$output";
+  portId: string | "primaryOutput" | "primaryInput";
+};
+
+type UnitPortConnectionEntry = {
+  key: string;
+  from: UnitPortSpec;
+  to: UnitPortSpec;
+};
+
+function createUnitPortConnectionEntry(
+  from: UnitPortSpec,
+  to: UnitPortSpec,
+): UnitPortConnectionEntry {
+  const key = `${from.unitId}.${from.portId}>${to.unitId}.${to.portId}`;
+  return { key, from, to };
+}
+
+type CompositePort = {
+  audioOutput?: HsAudioOutputPort;
+  noteOutput?: HsNoteOutputPort;
+  automationOutput?: HsAutomationOutputPort;
+  audioInput?: HsAudioInputPort;
+  noteInput?: HsNoteInputPort;
+  automationInput?: HsAutomationInputPort;
+};
+
+function updateConnectionCompositePortToOutput(
+  bus: HostStateBus,
+  srcOuts: CompositePort,
+  operation: ConnectingOperation,
+): PortSubtype[] | undefined {
+  const destPort = bus.audioDestinationVirtualInputPort;
+  if (srcOuts.audioOutput) {
+    srcOuts.audioOutput[operation](destPort);
+    return ["audio"];
+  }
+  return undefined;
+}
+
+function updateConnectionBetweenCompositePort(
+  srcOuts: CompositePort,
+  destIns: CompositePort,
   operation: "connectTo" | "disconnectTo",
-) {
-  const srcOuts = srcUnit.outputPorts;
-  const destIns = destUnit.inputPorts;
+): PortSubtype[] | undefined {
+  const portSubtypes: PortSubtype[] = [];
   if (srcOuts.audioOutput && destIns.audioInput) {
     srcOuts.audioOutput[operation](destIns.audioInput);
+    portSubtypes.push("audio");
   }
   if (srcOuts.noteOutput && destIns.noteInput) {
     srcOuts.noteOutput[operation](destIns.noteInput);
+    portSubtypes.push("note");
   }
+  if (srcOuts.automationOutput && destIns.automationInput) {
+    srcOuts.automationOutput[operation](destIns.automationInput);
+    portSubtypes.push("automation");
+  }
+  return portSubtypes.length > 0 ? portSubtypes : undefined;
+}
+
+function getUnitOutputCompositePort(
+  unit: HsUnitInstance,
+  portId: string,
+): CompositePort | undefined {
+  if (portId === "primaryOutput") {
+    return unit.primaryOutputPorts;
+  } else if (portId === "audioOutput") {
+    return { audioOutput: unit.primaryOutputPorts.audioOutput };
+  } else if (portId === "noteOutput") {
+    return { noteOutput: unit.primaryOutputPorts.noteOutput };
+  } else if (portId === "automationOutput") {
+    return { automationOutput: unit.primaryOutputPorts.automationOutput };
+  }
+  const port = unit.additionalAudioOutputs?.[portId];
+  return port ? { audioOutput: port } : undefined;
+}
+
+function getUnitInputCompositePort(
+  unit: HsUnitInstance,
+  portId: string,
+): CompositePort | undefined {
+  if (portId === "primaryInput") {
+    return unit.primaryInputPorts;
+  } else if (portId === "audioInput") {
+    return { audioInput: unit.primaryInputPorts.audioInput };
+  } else if (portId === "noteInput") {
+    return { noteInput: unit.primaryInputPorts.noteInput };
+  } else if (portId === "automationInput") {
+    return { automationInput: unit.primaryInputPorts.automationInput };
+  }
+  const port = unit.additionalAudioInputs?.[portId];
+  return port ? { audioInput: port } : undefined;
+}
+
+function callUnitConnectionCallback(
+  srcUnit: HsUnitInstance,
+  portId: string,
+  operation: ConnectingOperation,
+  portSubtypes: PortSubtype[],
+) {
+  if (operation === "connectTo") {
+    srcUnit.unitCallbacks?.onConnectedTo?.(portId, portSubtypes);
+  } else {
+    srcUnit.unitCallbacks?.onDisconnectedTo?.(portId);
+  }
+}
+
+let numConnections = 0;
+let reportingReserved = false;
+
+function reportNumConnections() {
+  if (!reportingReserved) {
+    reportingReserved = true;
+    setTimeout(() => {
+      console.log(`numConnections: ${numConnections}`);
+      reportingReserved = false;
+    }, 1);
+  }
+}
+
+function logConnectionChange(
+  from: UnitPortSpec,
+  to: UnitPortSpec,
+  operation: ConnectingOperation,
+) {
+  if (operation === "connectTo") {
+    console.log(
+      `connected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`
+        .replace(".primaryOutput", "")
+        .replace(".primaryInput", ""),
+    );
+    numConnections++;
+  } else {
+    console.log(
+      `disconnected ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`
+        .replace(".primaryOutput", "")
+        .replace(".primaryInput", ""),
+    );
+    numConnections--;
+  }
+  reportNumConnections();
 }
 
 function updateUnitConnectionToPort(
   bus: HostStateBus,
-  srcUnit: HsUnitInstance,
-  destSpec: string,
+  from: UnitPortSpec,
+  to: UnitPortSpec,
   operation: ConnectingOperation,
 ) {
-  const srcSpec = srcUnit.unitId;
-  if (destSpec === "$output") {
-    if (srcUnit.outputPorts.audioOutput) {
-      const destPort = bus.audioDestinationVirtualInputPort;
-      if (operation === "connect") {
-        console.log(`connecting ${srcSpec} --> ${destSpec}`);
-        srcUnit.outputPorts.audioOutput.connectTo(destPort);
-      } else if (operation === "disconnect") {
-        console.log(`disconnecting ${srcSpec} --> ${destSpec}`);
-        srcUnit.outputPorts.audioOutput.disconnectTo(destPort);
+  const srcUnit = bus.getUnit(from.unitId);
+  if (!srcUnit) return;
+
+  if (to.unitId === "$output") {
+    const srcCompositePort = getUnitOutputCompositePort(srcUnit, from.portId);
+    if (srcCompositePort) {
+      const portSubtypes = updateConnectionCompositePortToOutput(
+        bus,
+        srcCompositePort,
+        operation,
+      );
+      if (portSubtypes) {
+        callUnitConnectionCallback(
+          srcUnit,
+          from.portId,
+          operation,
+          portSubtypes,
+        );
+        logConnectionChange(from, to, operation);
       }
     }
   } else {
-    const destUnit = bus.getUnit(destSpec);
+    const destUnit = bus.getUnit(to.unitId);
     if (srcUnit && destUnit) {
-      if (operation === "connect") {
-        console.log(`connecting ${srcSpec} --> ${destSpec}`);
-        updateConnectionToUnit(srcUnit, destUnit, "connectTo");
-      } else if (operation === "disconnect") {
-        console.log(`disconnecting ${srcSpec} --> ${destSpec}`);
-        updateConnectionToUnit(srcUnit, destUnit, "disconnectTo");
+      const srcCompositePort = getUnitOutputCompositePort(srcUnit, from.portId);
+      const destCompositePort = getUnitInputCompositePort(destUnit, to.portId);
+      if (srcCompositePort && destCompositePort) {
+        const portSubtypes = updateConnectionBetweenCompositePort(
+          srcCompositePort,
+          destCompositePort,
+          operation,
+        );
+        if (portSubtypes) {
+          callUnitConnectionCallback(
+            srcUnit,
+            from.portId,
+            operation,
+            portSubtypes,
+          );
+          logConnectionChange(from, to, operation);
+        }
       }
     }
   }
 }
 
-function updateUnitConnectionForSingleOutputPortWithFanOut(
-  bus: HostStateBus,
-  unit: HsUnitInstance,
-  curr: DestinationCode,
-  next: DestinationCode,
-) {
-  const currs = curr?.split("&").filter(Boolean) ?? [];
-  const nexts = next?.split("&").filter(Boolean) ?? [];
-  const toConnect = nexts.filter((dest) => !currs.includes(dest));
-  const toDisconnect = currs.filter((dest) => !nexts.includes(dest));
-  for (const destSpec of toDisconnect) {
-    updateUnitConnectionToPort(bus, unit, destSpec, "disconnect");
-  }
-  for (const destSpec of toConnect) {
-    updateUnitConnectionToPort(bus, unit, destSpec, "connect");
+function extractSingleSourceCode(code: string): UnitPortSpec {
+  const segments = code.split(".");
+  if (segments.length === 2) {
+    return { unitId: segments[0], portId: segments[1] };
+  } else {
+    return { unitId: code, portId: "primaryOutput" };
   }
 }
 
-export function createUnitConnectionsManager(bus: HostStateBus) {
-  const connectionCodeMap: Map<string, DestinationCode> = new Map();
+function extractSingleDestCode(code: string): UnitPortSpec {
+  const segments = code.split(".");
+  if (segments.length === 2) {
+    return { unitId: segments[0], portId: segments[1] };
+  } else {
+    return { unitId: code, portId: "primaryInput" };
+  }
+}
+
+function extractFanOutDestCode(code: string): UnitPortSpec[] {
+  const segments = code.split("&");
+  return segments.map((segment) => extractSingleDestCode(segment));
+}
+
+function buildConnectionEntries(
+  srcUnitId: string,
+  destSpec: DestinationCode,
+): UnitPortConnectionEntry[] {
+  return destSpec.split("|").flatMap((part) => {
+    const segments = part.split(":");
+    if (segments.length === 2) {
+      const from = { unitId: srcUnitId, portId: segments[0] };
+      const tos = extractFanOutDestCode(segments[1]);
+      return tos.map((to) => createUnitPortConnectionEntry(from, to));
+    } else if (segments.length === 1) {
+      const from = { unitId: srcUnitId, portId: "primaryOutput" };
+      const tos = extractFanOutDestCode(segments[0]);
+      return tos.map((to) => createUnitPortConnectionEntry(from, to));
+    }
+    return [];
+  });
+}
+
+export function createUnitConnectionsManagerSingle(
+  bus: HostStateBus,
+): ConnectionManagerSingle {
+  const connectionEntries = new Map<string, UnitPortConnectionEntry>();
   return {
-    updateConnection(unitId: string, newConnectionCode: DestinationCode) {
-      const unit = bus.getUnit(unitId);
-      if (unit) {
-        const curr = connectionCodeMap.get(unit.unitId);
-        const next = newConnectionCode;
-        if (next !== undefined && next !== curr) {
-          updateUnitConnectionForSingleOutputPortWithFanOut(
-            bus,
-            unit,
-            curr ?? "",
-            next,
-          );
-          connectionCodeMap.set(unit.unitId, next);
-        }
+    setConnectionSingle(source: string, destination: string, enabled: boolean) {
+      const from = extractSingleSourceCode(source);
+      const to = extractSingleDestCode(destination);
+      const entry = createUnitPortConnectionEntry(from, to);
+      const key = entry.key;
+      const existingEntry = connectionEntries.get(key);
+      if (!existingEntry && enabled) {
+        updateUnitConnectionToPort(bus, from, to, "connectTo");
+        connectionEntries.set(key, entry);
+      } else if (existingEntry && !enabled) {
+        updateUnitConnectionToPort(bus, from, to, "disconnectTo");
+        connectionEntries.delete(key);
       }
     },
-    removeConnectionsForUnit(unitId: string) {
-      const unit = bus.getUnit(unitId);
-      const curr = connectionCodeMap.get(unitId);
-      if (unit && curr) {
-        updateUnitConnectionForSingleOutputPortWithFanOut(bus, unit, curr, "");
-        connectionCodeMap.delete(unitId);
+    onUnitRemoving(unitId: string) {
+      const removedEntries = connectionEntries
+        .entries()
+        .filter(
+          ([_, entry]) =>
+            entry.from.unitId === unitId || entry.to.unitId === unitId,
+        );
+      for (const [key, entry] of removedEntries) {
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
+        connectionEntries.delete(key);
       }
+    },
+  };
+}
+
+export function createUnitConnectionsManager(
+  bus: HostStateBus,
+): ConnectionManager {
+  let activeConnectionEntries: UnitPortConnectionEntry[] = [];
+
+  return {
+    setConnectionChange(srcUnitId: string, destSpec: DestinationCode) {
+      const unit = bus.getUnit(srcUnitId);
+      if (!unit) return;
+
+      let connectionsToAdd: UnitPortConnectionEntry[] = [];
+      let connectionsToRemove: UnitPortConnectionEntry[] = [];
+
+      if (destSpec) {
+        const existingKeys = activeConnectionEntries
+          .filter((entry) => entry.from.unitId === srcUnitId)
+          .map((entry) => entry.key);
+
+        const entries = buildConnectionEntries(srcUnitId, destSpec);
+        const nextKeys = entries.map((entry) => entry.key);
+
+        connectionsToAdd = entries.filter(
+          (entry) => !existingKeys.includes(entry.key),
+        );
+        connectionsToRemove = activeConnectionEntries.filter(
+          (entry) =>
+            entry.from.unitId === srcUnitId && !nextKeys.includes(entry.key),
+        );
+      } else {
+        connectionsToRemove = activeConnectionEntries.filter(
+          (entry) => entry.from.unitId === srcUnitId,
+        );
+      }
+
+      for (const entry of connectionsToAdd) {
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "connectTo");
+      }
+      for (const entry of connectionsToRemove) {
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
+      }
+      activeConnectionEntries = [
+        ...activeConnectionEntries,
+        ...connectionsToAdd,
+      ].filter((key) => !connectionsToRemove.includes(key));
+      reportNumConnections();
+    },
+    onUnitRemoving(unitId: string) {
+      const unit = bus.getUnit(unitId);
+      if (!unit) return;
+      const connectionsToRemove = activeConnectionEntries.filter((entry) => {
+        return entry.from.unitId === unitId || entry.to.unitId === unitId;
+      });
+      for (const entry of connectionsToRemove) {
+        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
+      }
+      activeConnectionEntries = activeConnectionEntries.filter(
+        (entry) => !connectionsToRemove.includes(entry),
+      );
+      reportNumConnections();
     },
   };
 }

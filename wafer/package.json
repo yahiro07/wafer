@@ -1,7 +1,7 @@
 {
   "name": "wafer-host",
   "type": "module",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "WebAudio host framework for the browser based DAW.",
   "author": "yahiro",
   "license": "MIT",
@@ -49,7 +49,8 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc"
   },
   "peerDependencies": {
     "react": "^19.2.6",

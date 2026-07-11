@@ -1,81 +1,68 @@
-export type SequencerCallbacks = {
-  //480ppq based
+import { IAudioContext } from "../host-system/types";
+
+export type SequencerTickDriverCoreCallbacks = {
   processScheduling(
-    startTime: number,
-    ppqFrom: number,
-    ppqTo: number,
+    timeFrom: number, //absolute time based on AudioContext.currentTime
+    barFrom: number, //decimal bar position in song
+    barTo: number, //decimal bar position in song
     bpm: number,
   ): void;
 };
 
-export type SequencerTickDriver = {
+export type SequencerTickDriverCore = {
   setBpm(bpm: number): void;
-  start(sequencer: SequencerCallbacks): void;
+  start(sequencer: SequencerTickDriverCoreCallbacks): void;
   stop(): void;
 };
 
-function mapTimeToPpq(timeSec: number, bpm: number): number {
+function mapTimeToBar(timeSec: number, bpm: number): number {
   const minutes = timeSec / 60;
   const beats = minutes * bpm;
-  const ppq = beats * 480;
-  return ppq;
-}
-
-function callSequencerScheduling(
-  sequencer: SequencerCallbacks,
-  startTime: number,
-  timeFrom: number,
-  timeTo: number,
-  bpm: number,
-) {
-  const ppqFrom = mapTimeToPpq(timeFrom, bpm);
-  const ppqTo = mapTimeToPpq(timeTo, bpm);
-  sequencer.processScheduling(startTime, ppqFrom, ppqTo, bpm);
+  return beats / 4;
 }
 
 export function createSequencerTickDriverCore(
-  audioContext: AudioContext,
+  audioContext: IAudioContext,
   intervalMs: number = 25,
   lookaheadMs: number = 100,
-): SequencerTickDriver {
-  const state = { bpm: 120 };
+  bpmOptions?: {
+    min?: number;
+    max?: number;
+    default?: number;
+  },
+): SequencerTickDriverCore {
+  const state = { bpm: bpmOptions?.default ?? 120 };
   const lookaheadSec = lookaheadMs / 1000;
 
   let timerId: NodeJS.Timeout | null = null;
 
   return {
     setBpm(bpm: number) {
-      state.bpm = bpm;
-    },
-    start(sequencer: SequencerCallbacks) {
-      const startTime = audioContext.currentTime;
-      // sequencer.handleStart?.();
-
-      const getRelativeTime = () => audioContext.currentTime - startTime;
-
-      let timePos = 0;
-      {
-        const timePosNext = lookaheadSec;
-        callSequencerScheduling(
-          sequencer,
-          startTime,
-          timePos,
-          timePosNext,
-          state.bpm,
-        );
-        timePos = timePosNext;
+      const lowerBound = bpmOptions?.min ?? 10;
+      const upperBound = bpmOptions?.max ?? 400;
+      if (lowerBound <= bpm && bpm <= upperBound) {
+        state.bpm = bpm;
       }
+    },
+    start(sequencer: SequencerTickDriverCoreCallbacks) {
+      let scheduledUntil = audioContext.currentTime;
+      let barPos = 0;
+
+      function scheduleUntil(timeTo: number) {
+        const timeFrom = scheduledUntil;
+        const duration = timeTo - timeFrom;
+
+        const barPosNext = barPos + mapTimeToBar(duration, state.bpm);
+        sequencer.processScheduling(timeFrom, barPos, barPosNext, state.bpm);
+
+        scheduledUntil = timeTo;
+        barPos = barPosNext;
+      }
+
+      scheduleUntil(audioContext.currentTime + lookaheadSec);
+
       timerId = setInterval(() => {
-        const relativeTime = getRelativeTime();
-        const timePosNext = relativeTime + lookaheadSec;
-        callSequencerScheduling(
-          sequencer,
-          startTime,
-          timePos,
-          timePosNext,
-          state.bpm,
-        );
-        timePos = timePosNext;
+        scheduleUntil(audioContext.currentTime + lookaheadSec);
       }, intervalMs);
     },
     stop() {

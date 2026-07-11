@@ -7,6 +7,7 @@ import {
 } from "react";
 import { HostSystem } from "../core";
 import { createSequencerTickDriver } from "../core/sequencer-tick-driver/sequencer-tick-driver";
+import { useSequencerTickDriverRunner } from "./sequencer-tick-driver-runner";
 
 type HostAppContextValue = {
   hostSystem: HostSystem;
@@ -21,42 +22,53 @@ export function useHostAppContext() {
   return useContext(hostAppContext);
 }
 
-function useHostAppDrivers({
+/*
+usage with manual clocking (for advanced host):
+const audioContext = new AudioContext();
+const hostSystem = createHostSystem(audioContext)
+const sequencerTickDriver = createSequencerTickDriver(hostSystem)
+//in component:
+useSequencerTickDriverRunner({ sequencerTickDriver, playing, bpm });
+<HostAppPlainProvider hostSystem={hostSystem}>
+  <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
+</HostAppPlainProvider>
+*/
+export const HostAppPlainProvider = ({
   hostSystem,
   playing = false,
   bpm,
   masterGain,
+  children,
 }: {
   hostSystem: HostSystem;
   playing?: boolean;
   bpm?: number;
   masterGain?: number;
-}) {
-  const sequencerTickDriver = useMemo(
-    () => createSequencerTickDriver(hostSystem),
-    [hostSystem],
-  );
-  // useEffect(hostSystem.setupLifecycle, []);
+  children: ReactNode;
+}) => {
   useEffect(() => {
     if (masterGain !== undefined) {
       hostSystem.setMasterGain(masterGain);
     }
   }, [hostSystem, masterGain]);
-  useEffect(() => {
-    if (bpm) {
-      sequencerTickDriver.setBpm(bpm);
-    }
-  }, [sequencerTickDriver, bpm]);
-  useEffect(() => {
-    if (playing) {
-      sequencerTickDriver.start();
-      return () => sequencerTickDriver.stop();
-    } else {
-      sequencerTickDriver.stop();
-    }
-  }, [sequencerTickDriver, playing]);
-}
+  return (
+    <hostAppContext.Provider
+      value={{ hostSystem, hostBpm: bpm, hostPlaying: playing, masterGain }}
+    >
+      {children}
+    </hostAppContext.Provider>
+  );
+};
 
+/*
+usage with built-in clocking (for simple host):
+const audioContext = new AudioContext();
+const hostSystem = createHostSystem(audioContext)
+//in component:
+<HostAppPlainProvider hostSystem={hostSystem} playing={playing} bpm={bpm}>
+  <UnitFrame unitId="unit1" pageUrl="/path/to/unit.html" />
+</HostAppPlainProvider>
+*/
 export const HostAppProvider = ({
   hostSystem,
   playing = false,
@@ -70,12 +82,24 @@ export const HostAppProvider = ({
   masterGain?: number;
   children: ReactNode;
 }) => {
-  useHostAppDrivers({ hostSystem, playing, bpm, masterGain });
+  const sequencerTickDriver = useMemo(
+    () => createSequencerTickDriver(hostSystem),
+    [hostSystem],
+  );
+  useSequencerTickDriverRunner({
+    sequencerTickDriver,
+    playing,
+    bpm,
+  });
+
   return (
-    <hostAppContext.Provider
-      value={{ hostSystem, hostBpm: bpm, hostPlaying: playing, masterGain }}
+    <HostAppPlainProvider
+      hostSystem={hostSystem}
+      playing={playing}
+      bpm={bpm}
+      masterGain={masterGain}
     >
       {children}
-    </hostAppContext.Provider>
+    </HostAppPlainProvider>
   );
 };
