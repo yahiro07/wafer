@@ -10,6 +10,8 @@ import {
   HsAudioInputPort,
   HsAudioOutputPort,
   HsAutomationOutputPort,
+  HsClockInputPort,
+  HsClockOutputPort,
   HsNoteOutputPort,
   HsUnitInstance,
   HsUnitInterface,
@@ -130,6 +132,38 @@ function createHsAdditionalAudioInputPort(
   return { node, id, label };
 }
 
+function createHsClockOutputPort(): HsClockOutputPort {
+  const connectedInputPorts = new Set<HsClockInputPort>();
+  return {
+    connectTo(port: HsClockInputPort) {
+      connectedInputPorts.add(port);
+    },
+    disconnectTo(port: HsClockInputPort) {
+      connectedInputPorts.delete(port);
+    },
+    start() {
+      connectedInputPorts.forEach((connectedInputPort) => {
+        connectedInputPort.start?.();
+      });
+    },
+    stop() {
+      connectedInputPorts.forEach((connectedInputPort) => {
+        connectedInputPort.stop?.();
+      });
+    },
+    processScheduling(timeFrom, barFrom, barTo, bpm) {
+      connectedInputPorts.forEach((connectedInputPort) => {
+        connectedInputPort.processScheduling?.(timeFrom, barFrom, barTo, bpm);
+      });
+    },
+    processStep(stepIndex, time, unitDuration) {
+      connectedInputPorts.forEach((connectedInputPort) => {
+        connectedInputPort.processStep?.(stepIndex, time, unitDuration);
+      });
+    },
+  };
+}
+
 export function createUnitInterface(
   hostSystem: HostSystem,
   unitId: string,
@@ -151,6 +185,8 @@ export function createUnitInterface(
     {};
   const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
 
+  let clockOutputPort: HsClockOutputPort | undefined;
+
   return {
     audioContext: audioContext as AudioContext,
     audioOutputNode: audioOutputPort.node,
@@ -168,6 +204,11 @@ export function createUnitInterface(
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
       additionalAudioInputs[id] = port;
       return port.node;
+    },
+    createClockOutputPort() {
+      const port = createHsClockOutputPort();
+      clockOutputPort = port;
+      return port;
     },
     emitMetaAttributes(metaAttrs) {
       hostSystem.emitMetaAttributes(metaAttrs);
@@ -217,6 +258,7 @@ export function createUnitInterface(
         },
         additionalAudioOutputs: additionalAudioOutputsMap,
         additionalAudioInputs: additionalAudioInputsMap,
+        clockOutputPort,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
