@@ -1,4 +1,4 @@
-import { AutomationPort, NotePort } from "../../unit-types";
+import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
 import { HostSystem } from "../host-system/host-system";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
@@ -173,39 +173,72 @@ function buildPortInfos(
   clockOutputPort: HsUnitInstance["clockOutputPort"],
   clockHandlers: HsUnitInstance["clockHandlers"],
 ): HsPortInfo[] {
+  const primaryOutputSubtypes = [
+    primaryOutputPorts.audioOutput && "audio",
+    primaryOutputPorts.noteOutput && "note",
+    primaryOutputPorts.automationOutput && "automation",
+  ].filter(Boolean) as PortSubtype[];
+  const primaryInputSubtypes = [
+    primaryInputPorts.audioInput && "audio",
+    primaryInputPorts.noteInput && "note",
+    primaryInputPorts.automationInput && "automation",
+  ].filter(Boolean) as PortSubtype[];
   return [
-    primaryInputPorts.audioInput && {
-      direction: "input",
-      subtype: "audio",
-      portId: "audioInput",
-    },
-    primaryInputPorts.noteInput && {
-      direction: "input",
-      subtype: "note",
-      portId: "noteInput",
-    },
-    primaryInputPorts.automationInput && {
-      direction: "input",
-      subtype: "automation",
-      portId: "automationInput",
-    },
+    primaryOutputSubtypes.length > 0
+      ? {
+          isPrimary: true,
+          direction: "output",
+          subtypes: primaryOutputSubtypes,
+          portId: "primaryOutput",
+        }
+      : undefined,
+    primaryInputSubtypes.length > 0
+      ? {
+          isPrimary: true,
+          direction: "input",
+          subtypes: primaryInputSubtypes,
+          portId: "primaryInput",
+        }
+      : undefined,
     primaryOutputPorts.audioOutput && {
+      isPrimary: false,
       direction: "output",
       subtype: "audio",
       portId: "audioOutput",
     },
     primaryOutputPorts.noteOutput && {
+      isPrimary: false,
       direction: "output",
       subtype: "note",
       portId: "noteOutput",
     },
     primaryOutputPorts.automationOutput && {
+      isPrimary: false,
       direction: "output",
       subtype: "automation",
       portId: "automationOutput",
     },
+    primaryInputPorts.audioInput && {
+      isPrimary: false,
+      direction: "input",
+      subtype: "audio",
+      portId: "audioInput",
+    },
+    primaryInputPorts.noteInput && {
+      isPrimary: false,
+      direction: "input",
+      subtype: "note",
+      portId: "noteInput",
+    },
+    primaryInputPorts.automationInput && {
+      isPrimary: false,
+      direction: "input",
+      subtype: "automation",
+      portId: "automationInput",
+    },
     ...(additionalAudioOutputs
       ? Object.values(additionalAudioOutputs).map((port) => ({
+          isPrimary: false,
           direction: "output",
           subtype: "audio",
           portId: port.id,
@@ -214,6 +247,7 @@ function buildPortInfos(
       : []),
     ...(additionalAudioInputs
       ? Object.values(additionalAudioInputs).map((port) => ({
+          isPrimary: false,
           direction: "input",
           subtype: "audio",
           portId: port.id,
@@ -221,11 +255,13 @@ function buildPortInfos(
         }))
       : []),
     clockOutputPort && {
+      isPrimary: false,
       direction: "output",
       subtype: "clock",
       portId: "clockOutput",
     },
     clockHandlers && {
+      isPrimary: false,
       direction: "input",
       subtype: "clock",
       portId: "clockInput",
