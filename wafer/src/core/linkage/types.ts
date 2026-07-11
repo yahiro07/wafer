@@ -59,12 +59,12 @@ export type HsPortInfo = {
 export type HsUnitInstance = {
   unitId: string;
   viewSize?: [number, number];
-  inputPorts: {
+  primaryInputPorts: {
     audioInput?: AudioPort;
     noteInput?: NotePort;
     automationInput?: AutomationPort;
   };
-  outputPorts: {
+  primaryOutputPorts: {
     audioOutput?: HsAudioOutputPort;
     noteOutput?: HsNoteOutputPort;
     automationOutput?: HsAutomationOutputPort;

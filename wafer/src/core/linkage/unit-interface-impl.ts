@@ -166,40 +166,40 @@ function createHsClockOutputPort(): HsClockOutputPort {
 }
 
 function buildPortInfos(
-  inputPorts: HsUnitInstance["inputPorts"],
-  outputPorts: HsUnitInstance["outputPorts"],
+  primaryInputPorts: HsUnitInstance["primaryInputPorts"],
+  primaryOutputPorts: HsUnitInstance["primaryOutputPorts"],
   additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
   additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
   clockOutputPort: HsUnitInstance["clockOutputPort"],
   clockHandlers: HsUnitInstance["clockHandlers"],
 ): HsPortInfo[] {
   return [
-    inputPorts.audioInput && {
+    primaryInputPorts.audioInput && {
       direction: "input",
       subtype: "audio",
       portId: "audioInput",
     },
-    inputPorts.noteInput && {
+    primaryInputPorts.noteInput && {
       direction: "input",
       subtype: "note",
       portId: "noteInput",
     },
-    inputPorts.automationInput && {
+    primaryInputPorts.automationInput && {
       direction: "input",
       subtype: "automation",
       portId: "automationInput",
     },
-    outputPorts.audioOutput && {
+    primaryOutputPorts.audioOutput && {
       direction: "output",
       subtype: "audio",
       portId: "audioOutput",
     },
-    outputPorts.noteOutput && {
+    primaryOutputPorts.noteOutput && {
       direction: "output",
       subtype: "note",
       portId: "noteOutput",
     },
-    outputPorts.automationOutput && {
+    primaryOutputPorts.automationOutput && {
       direction: "output",
       subtype: "automation",
       portId: "automationOutput",
@@ -308,12 +308,12 @@ export function createUnitInterface(
           ? additionalAudioInputs
           : undefined;
 
-      const inputPorts = {
+      const primaryInputPorts = {
         audioInput: hasAudioInput ? audioInputPort : undefined,
         noteInput: hasNoteInput ? attrs.noteInput : undefined,
         automationInput: hasAutomationInput ? attrs.automationInput : undefined,
       };
-      const outputPorts = {
+      const primaryOutputPorts = {
         audioOutput: hasAudioOutput ? audioOutputPort : undefined,
         noteOutput: hasNoteOutput ? noteOutputPort : undefined,
         automationOutput: hasAutomationOutput
@@ -321,8 +321,8 @@ export function createUnitInterface(
           : undefined,
       };
       const portInfos = buildPortInfos(
-        inputPorts,
-        outputPorts,
+        primaryInputPorts,
+        primaryOutputPorts,
         additionalAudioOutputsMap,
         additionalAudioInputsMap,
         clockOutputPort,
@@ -332,8 +332,8 @@ export function createUnitInterface(
       createdCallback({
         unitId,
         viewSize: attrs.unitAspects.viewSize,
-        inputPorts,
-        outputPorts,
+        primaryInputPorts: primaryInputPorts,
+        primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs: additionalAudioOutputsMap,
         additionalAudioInputs: additionalAudioInputsMap,
         clockOutputPort,

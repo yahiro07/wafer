@@ -94,7 +94,7 @@ function getUnitOutputCompositePort(
   portId: string,
 ): CompositePort | undefined {
   if (portId === "primaryOutput") {
-    return unit.outputPorts;
+    return unit.primaryOutputPorts;
   }
   const port = unit.additionalAudioOutputs?.[portId];
   return port ? { audioOutput: port } : undefined;
@@ -105,7 +105,7 @@ function getUnitInputCompositePort(
   portId: string,
 ): CompositePort | undefined {
   if (portId === "primaryInput") {
-    return unit.inputPorts;
+    return unit.primaryInputPorts;
   }
   const port = unit.additionalAudioInputs?.[portId];
   return port ? { audioInput: port } : undefined;
