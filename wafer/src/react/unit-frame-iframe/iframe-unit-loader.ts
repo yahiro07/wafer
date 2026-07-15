@@ -28,34 +28,12 @@ export function loadIframeUnitInstance(
     );
     win.unitInterface = unitInterface;
     win.queryUnitInterface = (versionCode: string) => {
-      // console.log("iframe queryUnitInterface", { unitId, versionCode });
-      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
+      if (versionCode === "wafer-v01") {
         return unitInterface;
-      }
-      // else if (versionCode === "wus-v01") {
-      //   return unitInterfaceV01 as any;
-      // }
-      else {
+      } else {
         throw new Error(
           `incompatible unit interface version: ${versionCode} for ${unitId}`,
         );
-      }
-    };
-    win.checkUnitInterfaceCompatibility = (versionCode: string) => {
-      // console.log("iframe checkUnitInterfaceCompatibility", {
-      //   unitId,
-      //   versionCode,
-      // });
-      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
-      }
-      // else if (versionCode === "wafer-v01") {
-      //   // win.unitInterface = unitInterfaceV01 as any;
-      // }
-      else {
-        console.warn(
-          `incompatible unit interface version: ${versionCode} for ${unitId}`,
-        );
-        win.unitInterface = undefined;
       }
     };
   });

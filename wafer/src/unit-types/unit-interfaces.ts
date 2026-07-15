@@ -95,10 +95,7 @@ export type UnitInterface = {
 };
 
 export type UnitInterfaceProvider = {
-  //for iframe based units, legacy js
-  checkUnitInterfaceCompatibility?(versionCode: string): void;
-  unitInterface?: UnitInterface;
-  //for iframe based units, typescript
+  //for iframe based units
   queryUnitInterface?(versionCode: string): UnitInterface | undefined;
   iframeUnitUnloadingCallback?: () => void;
   //for web component units
