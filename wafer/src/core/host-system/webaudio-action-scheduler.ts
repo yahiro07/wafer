@@ -60,7 +60,11 @@ export function createWebAudioActionScheduler(
       const thresholdTime = now + aheadTimeSec;
 
       if (scheduledTime <= thresholdTime) {
-        action();
+        if (0) {
+          queueMicrotask(action);
+        } else {
+          action();
+        }
         return;
       }
 
