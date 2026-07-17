@@ -25,6 +25,7 @@ function createHsNoteOutputPort(
   getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
 ): HsNoteOutputPort {
   const connectedInputPorts = new Set<NotePort>();
+  let emitting = false;
   return {
     connectTo(port: NotePort) {
       connectedInputPorts.add(port);
@@ -38,11 +39,14 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: true, time, velocity });
       }
+      if (emitting) return; //avoid recursive call
+      emitting = true;
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOn(noteNumber, time, velocity);
         });
       }, time);
+      emitting = false;
     },
     noteOff(noteNumber, time) {
       const monitorFn = getUnitNoteOutputMonitor();
@@ -50,11 +54,14 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: false, time });
       }
+      if (emitting) return; //avoid recursive call
+      emitting = true;
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOff(noteNumber, time);
         });
       }, time);
+      emitting = false;
     },
   };
 }
