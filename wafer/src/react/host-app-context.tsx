@@ -1,5 +1,11 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
-import { HostSystem } from "../core";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
+import { createSequencerTickDriver, HostSystem } from "../core";
 import { useSequencerTickDriverRunner } from "./sequencer-tick-driver-runner";
 
 type HostAppContextValue = {
@@ -21,23 +27,25 @@ export const HostAppProvider = ({
   bpm,
   masterGain,
   children,
+  manualClocking,
 }: {
   hostSystem: HostSystem;
   playing?: boolean;
   bpm?: number;
   masterGain?: number;
   children: ReactNode;
+  manualClocking?: boolean;
 }) => {
   useEffect(() => {
     if (masterGain !== undefined) {
       hostSystem.setMasterGain(masterGain);
     }
   }, [hostSystem, masterGain]);
-  useSequencerTickDriverRunner({
-    sequencerTickDriver: hostSystem.sequencerTickDriver,
-    playing,
-    bpm,
-  });
+  const sequencerTickDriver = useMemo(
+    () => (manualClocking ? undefined : createSequencerTickDriver(hostSystem)),
+    [manualClocking, hostSystem],
+  );
+  useSequencerTickDriverRunner({ sequencerTickDriver, playing, bpm });
   return (
     <hostAppContext.Provider
       value={{ hostSystem, hostBpm: bpm, hostPlaying: playing, masterGain }}

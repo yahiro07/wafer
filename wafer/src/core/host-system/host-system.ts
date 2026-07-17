@@ -1,10 +1,6 @@
 import { delayMs } from "../../utils/timer-utils";
 import { HsUnitStateData } from "../linkage/types";
 import { createUnitLinkageManager } from "../linkage/unit-linkage-manager";
-import {
-  createSequencerTickDriver,
-  ISequencerTickDriver,
-} from "../sequencer-tick-driver/sequencer-tick-driver";
 import { createHostSystemCore } from "./host-system-core";
 import {
   HostSystem,
@@ -22,15 +18,14 @@ import {
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
 
-export function createHostSystem(options?: {
-  audioContext?: IAudioContext;
-  hostSystemCore?: HostSystemCore;
-  customActionScheduler?: WebAudioActionScheduler | "none";
-  linkageManager?: UnitLinkageManager;
-  sequencerTickDriver?: ISequencerTickDriver;
-}): HostSystem {
-  const audioContext = options?.audioContext ?? new AudioContext();
-
+export function createHostSystem(
+  audioContext: IAudioContext,
+  options?: {
+    hostSystemCore?: HostSystemCore;
+    customActionScheduler?: WebAudioActionScheduler | "none";
+    linkageManager?: UnitLinkageManager;
+  },
+): HostSystem {
   let actionScheduler: WebAudioActionScheduler;
   if (options?.customActionScheduler === "none") {
     actionScheduler = createDummyActionScheduler();
@@ -48,9 +43,6 @@ export function createHostSystem(options?: {
 
   const linkageManager =
     options?.linkageManager ?? createUnitLinkageManager(hostSystemCore);
-
-  const sequencerTickDriver =
-    options?.sequencerTickDriver ?? createSequencerTickDriver(hostSystemCore);
 
   const noteNumberToUnitIdMap = new Map<number, string>();
 
@@ -132,6 +124,5 @@ export function createHostSystem(options?: {
       });
     },
     linkageApi: linkageManager,
-    sequencerTickDriver,
   };
 }

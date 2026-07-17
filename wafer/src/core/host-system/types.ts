@@ -7,7 +7,6 @@ import {
   HsUnitInterface,
   HsUnitStateData,
 } from "../linkage/types";
-import { ISequencerTickDriver } from "../sequencer-tick-driver/sequencer-tick-driver";
 import { WebAudioActionScheduler } from "./webaudio-action-scheduler";
 
 export type IAudioContext = AudioContext | OfflineAudioContext;
@@ -111,5 +110,4 @@ export type HostSystem = {
     fn: (message: object, senderUnitId: string) => void,
   ) => () => void;
   linkageApi: UnitLinkageManager;
-  sequencerTickDriver: ISequencerTickDriver;
 };
