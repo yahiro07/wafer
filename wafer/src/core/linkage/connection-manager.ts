@@ -1,5 +1,5 @@
 import { PortSubtype } from "../../unit-types";
-import { HostStateBus } from "../host-system/host-state-bus";
+import { HostStateBus } from "../host-system/types";
 import {
   DestinationCode,
   HsAudioInputPort,

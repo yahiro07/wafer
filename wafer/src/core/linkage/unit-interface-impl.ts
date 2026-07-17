@@ -1,7 +1,10 @@
 import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
-import { HostSystem } from "../host-system/host-system";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
-import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
+import {
+  HostSystemCore,
+  IAudioContext,
+  UnitNoteOutputMonitorFn,
+} from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
@@ -222,21 +225,20 @@ function buildPortInfos(
 }
 
 export function createUnitInterface(
-  hostSystem: HostSystem,
+  hostSystemCore: HostSystemCore,
   unitId: string,
   createdCallback: (unitInstance: HsUnitInstance) => void,
 ): HsUnitInterface {
-  const { audioContext } = hostSystem;
+  const { audioContext } = hostSystemCore;
   const audioOutputPort = createHsAudioOutputPort(audioContext);
   const audioInputPort = createHsAudioInputPort(audioContext);
-  const { linkageApi } = hostSystem;
   const noteOutputPort = createHsNoteOutputPort(
-    linkageApi.actionScheduler,
+    hostSystemCore.actionScheduler,
     unitId,
-    linkageApi.getUnitNoteOutputMonitor,
+    hostSystemCore.getUnitNoteOutputMonitor,
   );
   const automationOutputPort = createHsAutomationOutputPort(
-    linkageApi.actionScheduler,
+    hostSystemCore.actionScheduler,
   );
   const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
     {};
@@ -261,10 +263,10 @@ export function createUnitInterface(
       return port.node;
     },
     emitMetaAttributes(metaAttrs) {
-      hostSystem.emitMetaAttributes(metaAttrs);
+      hostSystemCore.emitMetaAttributes(metaAttrs);
     },
     sendMessageToHost(message) {
-      hostSystem.linkageApi.eventPort.emit({
+      hostSystemCore.bus.eventPort.emit({
         type: "messageFromUnit",
         message,
         senderUnitId: unitId,

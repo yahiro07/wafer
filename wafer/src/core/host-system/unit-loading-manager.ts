@@ -1,17 +1,15 @@
 import { HsUnitInstance } from "../linkage/types";
-import { HostStateBus } from "./host-state-bus";
+import {
+  HostStateBus,
+  PendingUnitOperationItem,
+  UnitLoadingManager,
+} from "./types";
 
 type UnitLoadingJob = {
   unitId: string;
   promise: Promise<HsUnitInstance>;
   cancelled?: boolean;
   resolvedUnitInstance?: HsUnitInstance;
-};
-
-type PendingUnitOperationItem = {
-  type: "connection" | "state";
-  op: () => void;
-  debugMetadata?: string;
 };
 
 function awaitPromiseWithTimeout<T>(
@@ -34,7 +32,9 @@ function awaitPromiseWithTimeout<T>(
   });
 }
 
-export function createUnitsLoadingManager(bus: HostStateBus) {
+export function createUnitLoadingManager(
+  bus: HostStateBus,
+): UnitLoadingManager {
   const unitLoadingJobs: UnitLoadingJob[] = [];
   const pendingUnitOperationItems: PendingUnitOperationItem[] = [];
 

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { HostSystem, HsUnitInstance } from "../../core";
 import { UnitInterface } from "../../unit-types";
 
 type PlainComponentFn = () => ReactNode;
@@ -18,9 +18,12 @@ export function instantiateReactUnit(
   unitId: string,
 ): ReactUnitInstance {
   let unitInstance: HsUnitInstance | undefined;
-  const unitInterface = createUnitInterface(hostSystem, unitId, (instance) => {
-    unitInstance = instance;
-  });
+  const unitInterface = hostSystem.linkageApi.createUnitInterface(
+    unitId,
+    (instance) => {
+      unitInstance = instance;
+    },
+  );
   const { RenderUi } = templateFn(unitInterface);
   if (!unitInstance) {
     throw new Error("Unit instance was not created");

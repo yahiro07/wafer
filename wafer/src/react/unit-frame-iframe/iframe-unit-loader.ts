@@ -1,4 +1,4 @@
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { HostSystem, HsUnitInstance } from "../../core";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 export function loadIframeUnitInstance(
   hostSystem: HostSystem,
@@ -17,8 +17,7 @@ export function loadIframeUnitInstance(
   };
 
   const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
-    const unitInterface = createUnitInterface(
-      hostSystem,
+    const unitInterface = hostSystem.linkageApi.createUnitInterface(
       unitId,
       (unitInstance) => {
         sideEffects.unitInstanceRef.current = unitInstance;

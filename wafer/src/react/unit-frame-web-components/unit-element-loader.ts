@@ -1,4 +1,4 @@
-import { createUnitInterface, HostSystem, HsUnitInstance } from "../../core";
+import { HostSystem, HsUnitInstance } from "../../core";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 
 type UnitSetupContextItem = {
@@ -178,8 +178,7 @@ export function createUnitInstantiationPromise(
   return new Promise<HsUnitInstance>(
     // biome-ignore lint/suspicious/noAsyncPromiseExecutor: rough impl
     async (resolve) => {
-      const unitInterface = createUnitInterface(
-        hostSystem,
+      const unitInterface = hostSystem.linkageApi.createUnitInterface(
         unitId,
         (unitInstance) => {
           callbacks.onInstanceLoaded(unitInstance);

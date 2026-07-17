@@ -1,18 +1,17 @@
-import { MetaAttributes } from "../../unit-types";
-import { EventPort } from "../../utils/event-port";
 import { delayMs } from "../../utils/timer-utils";
+import { HsUnitStateData } from "../linkage/types";
+import { createUnitLinkageManager } from "../linkage/unit-linkage-manager";
 import {
-  createUnitConnectionsManager,
-  createUnitConnectionsManagerSingle,
-} from "../linkage/connection-manager";
+  createSequencerTickDriver,
+  ISequencerTickDriver,
+} from "../sequencer-tick-driver/sequencer-tick-driver";
+import { createHostSystemCore } from "./host-system-core";
 import {
-  DestinationCode,
-  HsUnitInstance,
-  HsUnitStateData,
-} from "../linkage/types";
-import { createHostStateBus, HostSystemEvent } from "./host-state-bus";
-import { IAudioContext, UnitNoteOutputMonitorFn } from "./types";
-import { createUnitsLoadingManager } from "./unit-loading-manager";
+  HostSystem,
+  HostSystemCore,
+  IAudioContext,
+  UnitLinkageManager,
+} from "./types";
 import {
   createUnitPersistenceHandlers,
   unitStateOperations,
@@ -23,134 +22,47 @@ import {
   WebAudioActionScheduler,
 } from "./webaudio-action-scheduler";
 
-type LinkageApi = {
-  actionScheduler: WebAudioActionScheduler;
-  eventPort: EventPort<HostSystemEvent>;
-  registerUnitInstance(unit: HsUnitInstance): () => void;
-  registerPendingUnitInstancePromise(
-    unitId: string,
-    unitInstancePromise: Promise<HsUnitInstance>,
-  ): () => void;
-  reserveConnectionSingle(source: string, destination: string): void;
-  removeConnectionSingle(source: string, destination: string): void;
-  reserveConnectionChange(
-    srcUnitId: string,
-    destSpec: DestinationCode | undefined,
-  ): void;
-  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
-};
+export function createHostSystem(options?: {
+  audioContext?: IAudioContext;
+  hostSystemCore?: HostSystemCore;
+  customActionScheduler?: WebAudioActionScheduler | "none";
+  linkageManager?: UnitLinkageManager;
+  sequencerTickDriver?: ISequencerTickDriver;
+}): HostSystem {
+  const audioContext = options?.audioContext ?? new AudioContext();
 
-//public api for host application
-export type HostSystem = {
-  audioContext: IAudioContext;
-  setCustomActionScheduler(
-    customActionScheduler: WebAudioActionScheduler | "none",
-  ): void;
-  getAllUnits(): HsUnitInstance[];
-  setMasterGain(gain: number): void;
-  emitMetaAttributes(attributes: MetaAttributes): void;
-  getUnitState(unitId: string): HsUnitStateData | undefined;
-  setUnitState(unitId: string, state: HsUnitStateData): void;
-  getAllUnitStates(): HsUnitStateData[];
-  setAllUnitStates(unitStates: HsUnitStateData[]): void;
-  waitUnitsLoaded(): Promise<void>;
-  deliverNote(args: {
-    destUnitId: string;
-    noteNumber: number;
-    isOn: boolean;
-    time?: number;
-    velocity?: number;
-  }): void;
-  cleanup(): void;
-  setUnitNoteOutputMonitor(
-    monitorFn: UnitNoteOutputMonitorFn | undefined,
-  ): void;
-  subscribeMessageFromUnits: (
-    fn: (message: object, senderUnitId: string) => void,
-  ) => () => void;
-  linkageApi: LinkageApi;
-};
+  let actionScheduler: WebAudioActionScheduler;
+  if (options?.customActionScheduler === "none") {
+    actionScheduler = createDummyActionScheduler();
+  } else if (options?.customActionScheduler) {
+    actionScheduler = options.customActionScheduler;
+  } else {
+    actionScheduler = createWebAudioActionScheduler(audioContext);
+  }
+  const hostSystemCore =
+    options?.hostSystemCore ??
+    createHostSystemCore(audioContext, actionScheduler);
+  const { bus, loadingManager } = hostSystemCore;
 
-export function createHostSystem(audioContext: IAudioContext): HostSystem {
-  const bus = createHostStateBus(audioContext);
-  const connectionManagerSingle = createUnitConnectionsManagerSingle(bus);
-  const connectionManager = createUnitConnectionsManager(bus);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
-  const loadingManager = createUnitsLoadingManager(bus);
-  let actionScheduler: WebAudioActionScheduler =
-    createWebAudioActionScheduler(audioContext);
-  const noteNumberToUnitIdMap = new Map<number, string>();
-  let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
 
-  const internal = {
-    addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
-      loadingManager.reserveLoadUnit(unitId, promise);
-      return () => {
-        loadingManager.cancelLoadUnit(promise);
-        bus.removeUnit(unitId);
-      };
-    },
-  };
+  const linkageManager =
+    options?.linkageManager ?? createUnitLinkageManager(hostSystemCore);
+
+  const sequencerTickDriver =
+    options?.sequencerTickDriver ?? createSequencerTickDriver(hostSystemCore);
+
+  const noteNumberToUnitIdMap = new Map<number, string>();
 
   const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
     if (e.type === "beforeRemoveUnit") {
-      connectionManagerSingle.onUnitRemoving(e.unitInstance.unitId);
-      connectionManager.onUnitRemoving(e.unitInstance.unitId);
+      linkageManager.onUnitRemoving(e.unitInstance.unitId);
     }
   });
 
-  const linkageApi: LinkageApi = {
-    get actionScheduler() {
-      return actionScheduler;
-    },
-    eventPort: bus.eventPort,
-    registerUnitInstance(unit: HsUnitInstance) {
-      const promise = Promise.resolve(unit);
-      return internal.addUnitInstancePromise(unit.unitId, promise);
-    },
-    registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
-      return internal.addUnitInstancePromise(unitId, unitInstancePromise);
-    },
-    reserveConnectionSingle(source, destination) {
-      loadingManager.reserveUnitOperation({
-        type: "connection",
-        op: () =>
-          connectionManagerSingle.setConnectionSingle(
-            source,
-            destination,
-            true,
-          ),
-      });
-    },
-    removeConnectionSingle(source, destination) {
-      connectionManagerSingle.setConnectionSingle(source, destination, false);
-    },
-    reserveConnectionChange(srcUnitId, destSpec) {
-      loadingManager.reserveUnitOperation({
-        type: "connection",
-        op: () =>
-          connectionManager.setConnectionChange(srcUnitId, destSpec ?? ""),
-      });
-    },
-    getUnitNoteOutputMonitor() {
-      return unitNoteOutputMonitorFn;
-    },
-  };
-
   return {
     audioContext,
-    linkageApi,
-    setCustomActionScheduler(
-      customActionScheduler: WebAudioActionScheduler | "none",
-    ) {
-      if (customActionScheduler === "none") {
-        actionScheduler = createDummyActionScheduler();
-      } else {
-        actionScheduler = customActionScheduler;
-      }
-    },
     getAllUnits: bus.getAllUnits,
-
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
         gain,
@@ -164,9 +76,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
       unitPersistenceHandlers.importUnitStates(unitStates);
     },
     emitMetaAttributes(attributes) {
-      for (const unit of bus.getAllUnits()) {
-        unit.hostCallbacks?.setMetaAttributes?.(attributes);
-      }
+      hostSystemCore.emitMetaAttributes(attributes);
     },
     getUnitState(unitId: string) {
       const unit = bus.getUnit(unitId);
@@ -212,7 +122,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
       unsubscribeInternalEvents();
     },
     setUnitNoteOutputMonitor(monitorFn) {
-      unitNoteOutputMonitorFn = monitorFn;
+      hostSystemCore.setUnitNoteOutputMonitor(monitorFn);
     },
     subscribeMessageFromUnits(fn) {
       return bus.eventPort.subscribe((e) => {
@@ -221,5 +131,7 @@ export function createHostSystem(audioContext: IAudioContext): HostSystem {
         }
       });
     },
+    linkageApi: linkageManager,
+    sequencerTickDriver,
   };
 }
