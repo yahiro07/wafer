@@ -60,8 +60,14 @@ export function createWebAudioActionScheduler(
     },
   };
 
+  const fixInputTime = (time: number | undefined) => {
+    const valid = Number.isFinite(time) && time !== undefined && time >= 0;
+    return valid ? time : 0;
+  };
+
   return {
-    pushAction(action: () => void, time?: number) {
+    pushAction(action: () => void, inputTime?: number) {
+      const time = fixInputTime(inputTime);
       const now = audioContext.currentTime;
       const scheduledTime = time ?? now;
       const thresholdTime = now + aheadTimeSec;
