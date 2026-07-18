@@ -1,3 +1,4 @@
+import { oxLogger } from "./orchestration-logger";
 import { IAudioContext } from "./types";
 
 export type WebAudioActionScheduler = {
@@ -17,6 +18,8 @@ export function createWebAudioActionScheduler(
   const aheadTimeSec = aheadTimeMs / 1000;
 
   let timerId: ReturnType<typeof setTimeout> | null = null;
+
+  let flashTaskIndex = 0;
 
   const internal = {
     scheduleTimer() {
@@ -42,10 +45,14 @@ export function createWebAudioActionScheduler(
       const now = audioContext.currentTime;
       const thresholdTime = now + aheadTimeSec;
 
+      oxLogger.deliveryTaskStart(flashTaskIndex);
+
       while (queue.length > 0 && queue[0].time <= thresholdTime) {
         const scheduledAction = queue.shift();
         scheduledAction?.action();
       }
+      oxLogger.deliveryTaskEnd(flashTaskIndex);
+      flashTaskIndex += 1;
 
       if (queue.length > 0) {
         internal.scheduleTimer();

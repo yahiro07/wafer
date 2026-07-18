@@ -1,4 +1,5 @@
 export * from "./host-system/host-system";
+export * from "./host-system/orchestration-logger";
 export * from "./host-system/types";
 export type { WebAudioActionScheduler } from "./host-system/webaudio-action-scheduler";
 export type {

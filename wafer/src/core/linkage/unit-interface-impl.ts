@@ -1,5 +1,6 @@
 import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
+import { oxLogger } from "../host-system/orchestration-logger";
 import {
   HostSystemCore,
   IAudioContext,
@@ -19,13 +20,16 @@ import {
   HsUnitInterface,
 } from "./types";
 
+let seqNoteId = 0;
+
 function createHsNoteOutputPort(
   actionScheduler: WebAudioActionScheduler,
   unitId: string,
   getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
 ): HsNoteOutputPort {
   const connectedInputPorts = new Set<NotePort>();
-  let emitting = false;
+  const noteIdsMap = new Map<number, string>();
+  // let emitting = false;
   return {
     connectTo(port: NotePort) {
       connectedInputPorts.add(port);
@@ -39,8 +43,18 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: true, time, velocity });
       }
+      const noteId = `n${(seqNoteId++).toString().padStart(3, "0")}`;
       // if (emitting) return; //avoid recursive call
       // emitting = true;
+      oxLogger.noteEmit({
+        unitIdFrom: unitId,
+        unitIdTo: "??",
+        noteNumber,
+        isOn: true,
+        time,
+        noteId,
+      });
+      noteIdsMap.set(noteNumber, noteId);
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOn(noteNumber, time, velocity);
@@ -54,8 +68,18 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: false, time });
       }
+      const noteId = noteIdsMap.get(noteNumber);
       // if (emitting) return; //avoid recursive call
       // emitting = true;
+      oxLogger.noteEmit({
+        unitIdFrom: unitId,
+        unitIdTo: "??",
+        noteNumber,
+        isOn: false,
+        time,
+        noteId: noteId ?? "??",
+      });
+      noteIdsMap.delete(noteNumber);
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOff(noteNumber, time);
@@ -139,6 +163,33 @@ function createHsAdditionalAudioInputPort(
 ): HsAdditionalAudioInputPort {
   const node = audioContext.createGain();
   return { node, id, label };
+}
+
+function createNoteInputWrapper(noteInput: NotePort, unitId: string): NotePort {
+  return {
+    noteOn(noteNumber, time, velocity) {
+      oxLogger.noteReceived({
+        unitIdFrom: "??",
+        unitIdTo: unitId,
+        noteNumber,
+        isOn: true,
+        time,
+        noteId: "??",
+      });
+      noteInput.noteOn(noteNumber, time, velocity);
+    },
+    noteOff(noteNumber, time) {
+      oxLogger.noteReceived({
+        unitIdFrom: "??",
+        unitIdTo: unitId,
+        noteNumber,
+        isOn: false,
+        time,
+        noteId: "??",
+      });
+      noteInput.noteOff(noteNumber, time);
+    },
+  };
 }
 
 function buildPortInfos(
@@ -300,8 +351,14 @@ export function createUnitInterface(
 
       const primaryInputPorts = {
         audioInput: hasAudioInput ? audioInputPort : undefined,
-        noteInput: hasNoteInput ? attrs.noteInput : undefined,
-        automationInput: hasAutomationInput ? attrs.automationInput : undefined,
+        noteInput:
+          hasNoteInput && attrs.noteInput
+            ? createNoteInputWrapper(attrs.noteInput, unitId)
+            : undefined,
+        automationInput:
+          hasAutomationInput && attrs.automationInput
+            ? attrs.automationInput
+            : undefined,
       };
       const primaryOutputPorts = {
         audioOutput: hasAudioOutput ? audioOutputPort : undefined,
