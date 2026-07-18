@@ -65,11 +65,13 @@ export type HostCallbacks = {
   setBpm?(bpm: number): void;
   setPlayState?(playing: boolean): void;
   setMetaAttributes?(metaAttrs: MetaAttributes): void;
+  setKey?(key: string): void;
 };
 
 export type UnitCallbacks = {
   onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
   onDisconnectedTo?(srcPortId: string): void;
+  // onMessageFromSourceUnit?(message: object): void;
 };
 
 export type UnitInterface = {
@@ -78,8 +80,9 @@ export type UnitInterface = {
   audioInputNode: AudioNode;
   noteOutputPort: NotePort;
   automationOutputPort: AutomationPort;
-  emitMetaAttributes(metaAttrs: MetaAttributes): void;
   sendMessageToHost(message: object): void;
+  emitMetaAttributes(metaAttrs: MetaAttributes): void;
+  // sendMessageToDestinationUnits(message: object): void;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   completeSetup(attrs: {
