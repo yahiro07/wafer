@@ -54,8 +54,6 @@ export type ClockHandlers = {
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
-  outputs?: PortSubtype[];
-  inputs?: PortSubtype[];
   viewSize?: [number, number];
 };
 
@@ -78,13 +76,13 @@ export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
-  noteOutputPort: NotePort;
-  automationOutputPort: AutomationPort;
+  createNoteOutputPort(): NotePort;
+  createAutomationOutputPort(): AutomationPort;
+  createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
+  createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   sendMessageToHost(message: object): void;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
   // sendMessageToDestinationUnits(message: object): void;
-  createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
-  createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;

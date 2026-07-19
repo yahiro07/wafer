@@ -288,35 +288,52 @@ export function createUnitInterface(
   createdCallback: (unitInstance: HsUnitInstance) => void,
 ): HsUnitInterface {
   const { audioContext } = hostSystemCore;
-  const audioOutputPort = createHsAudioOutputPort(audioContext);
-  const audioInputPort = createHsAudioInputPort(audioContext);
-  const noteOutputPort = createHsNoteOutputPort(
-    hostSystemCore.actionScheduler,
-    unitId,
-    hostSystemCore.getUnitNoteOutputMonitor,
-  );
-  const automationOutputPort = createHsAutomationOutputPort(
-    hostSystemCore.actionScheduler,
-  );
-  const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
-    {};
-  const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
+  let audioOutputPort: HsAudioOutputPort | undefined;
+  let audioInputPort: HsAudioInputPort | undefined;
+  let noteOutputPort: HsNoteOutputPort | undefined;
+  let automationOutputPort: HsAutomationOutputPort | undefined;
+  let additionalAudioOutputs:
+    | Record<string, HsAdditionalAudioOutputPort>
+    | undefined;
+  let additionalAudioInputs:
+    | Record<string, HsAdditionalAudioInputPort>
+    | undefined;
 
   return {
     audioContext: audioContext as AudioContext,
-    audioOutputNode: audioOutputPort.node,
-    audioInputNode: audioInputPort.node,
-    noteOutputPort,
-    automationOutputPort,
+    get audioOutputNode() {
+      audioOutputPort ??= createHsAudioOutputPort(audioContext);
+      return audioOutputPort.node;
+    },
+    get audioInputNode() {
+      audioInputPort ??= createHsAudioInputPort(audioContext);
+      return audioInputPort.node;
+    },
+    createNoteOutputPort() {
+      noteOutputPort = createHsNoteOutputPort(
+        hostSystemCore.actionScheduler,
+        unitId,
+        hostSystemCore.getUnitNoteOutputMonitor,
+      );
+      return noteOutputPort;
+    },
+    createAutomationOutputPort() {
+      automationOutputPort = createHsAutomationOutputPort(
+        hostSystemCore.actionScheduler,
+      );
+      return automationOutputPort;
+    },
     createAdditionalAudioOutputNode(id: string, label?: string) {
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioOutputPort(audioContext, id, label);
+      additionalAudioOutputs ??= {};
       additionalAudioOutputs[id] = port;
       return port.node;
     },
     createAdditionalAudioInputNode(id: string, label?: string) {
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
+      additionalAudioInputs ??= {};
       additionalAudioInputs[id] = port;
       return port.node;
     },
@@ -331,47 +348,23 @@ export function createUnitInterface(
       });
     },
     completeSetup(attrs) {
-      const hasAudioOutput = attrs.unitAspects.outputs?.includes("audio");
-      const hasAudioInput = attrs.unitAspects.inputs?.includes("audio");
-      const hasNoteOutput = attrs.unitAspects.outputs?.includes("note");
-      const hasNoteInput = attrs.unitAspects.inputs?.includes("note");
-      const hasAutomationOutput =
-        attrs.unitAspects.outputs?.includes("automation");
-      const hasAutomationInput =
-        attrs.unitAspects.inputs?.includes("automation");
-
-      const additionalAudioOutputsMap =
-        Object.keys(additionalAudioOutputs).length > 0
-          ? additionalAudioOutputs
-          : undefined;
-      const additionalAudioInputsMap =
-        Object.keys(additionalAudioInputs).length > 0
-          ? additionalAudioInputs
-          : undefined;
-
       const primaryInputPorts = {
-        audioInput: hasAudioInput ? audioInputPort : undefined,
-        noteInput:
-          hasNoteInput && attrs.noteInput
-            ? createNoteInputWrapper(attrs.noteInput, unitId)
-            : undefined,
-        automationInput:
-          hasAutomationInput && attrs.automationInput
-            ? attrs.automationInput
-            : undefined,
+        audioInput: audioInputPort,
+        noteInput: attrs.noteInput
+          ? createNoteInputWrapper(attrs.noteInput, unitId)
+          : undefined,
+        automationInput: attrs.automationInput,
       };
       const primaryOutputPorts = {
-        audioOutput: hasAudioOutput ? audioOutputPort : undefined,
-        noteOutput: hasNoteOutput ? noteOutputPort : undefined,
-        automationOutput: hasAutomationOutput
-          ? automationOutputPort
-          : undefined,
+        audioOutput: audioOutputPort,
+        noteOutput: noteOutputPort,
+        automationOutput: automationOutputPort,
       };
       const portInfos = buildPortInfos(
         primaryInputPorts,
         primaryOutputPorts,
-        additionalAudioOutputsMap,
-        additionalAudioInputsMap,
+        additionalAudioOutputs,
+        additionalAudioInputs,
       );
 
       createdCallback({
@@ -379,8 +372,8 @@ export function createUnitInterface(
         viewSize: attrs.unitAspects.viewSize,
         primaryInputPorts: primaryInputPorts,
         primaryOutputPorts: primaryOutputPorts,
-        additionalAudioOutputs: additionalAudioOutputsMap,
-        additionalAudioInputs: additionalAudioInputsMap,
+        additionalAudioOutputs,
+        additionalAudioInputs,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
