@@ -298,18 +298,39 @@ export function createUnitInterface(
   let additionalAudioInputs:
     | Record<string, HsAdditionalAudioInputPort>
     | undefined;
+  let portsFixed = false;
+
+  function raiseIfInvalidPortsAccess(message: string) {
+    if (portsFixed) {
+      // throw new Error(message);
+      console.warn(message);
+    }
+  }
 
   return {
     audioContext: audioContext as AudioContext,
     get audioOutputNode() {
-      audioOutputPort ??= createHsAudioOutputPort(audioContext);
+      if (!audioOutputPort) {
+        raiseIfInvalidPortsAccess(
+          `unitInterface.audioOutputNode accessed first time after completeSetup, please call it before completeSetup`,
+        );
+        audioOutputPort = createHsAudioOutputPort(audioContext);
+      }
       return audioOutputPort.node;
     },
     get audioInputNode() {
-      audioInputPort ??= createHsAudioInputPort(audioContext);
+      if (!audioInputPort) {
+        raiseIfInvalidPortsAccess(
+          `unitInterface.audioInputNode accessed first time after completeSetup, please call it before completeSetup`,
+        );
+        audioInputPort = createHsAudioInputPort(audioContext);
+      }
       return audioInputPort.node;
     },
     createNoteOutputPort() {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createNoteOutputPort cannot be called after completeSetup",
+      );
       noteOutputPort = createHsNoteOutputPort(
         hostSystemCore.actionScheduler,
         unitId,
@@ -318,6 +339,9 @@ export function createUnitInterface(
       return noteOutputPort;
     },
     createAutomationOutputPort() {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
+      );
       automationOutputPort = createHsAutomationOutputPort(
         hostSystemCore.actionScheduler,
       );
@@ -381,6 +405,7 @@ export function createUnitInterface(
         portInfos,
         cleanup: attrs.cleanup,
       });
+      portsFixed = true;
     },
   };
 }
