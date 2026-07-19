@@ -54,6 +54,7 @@ export function createHostSystem(
 
   return {
     audioContext,
+    eventPort: bus.eventPort,
     getAllUnits: bus.getAllUnits,
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
@@ -115,13 +116,6 @@ export function createHostSystem(
     },
     setUnitNoteOutputMonitor(monitorFn) {
       hostSystemCore.setUnitNoteOutputMonitor(monitorFn);
-    },
-    subscribeMessageFromUnits(fn) {
-      return bus.eventPort.subscribe((e) => {
-        if (e.type === "messageFromUnit") {
-          fn(e.message, e.senderUnitId);
-        }
-      });
     },
     linkageApi: linkageManager,
   };

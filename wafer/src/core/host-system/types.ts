@@ -18,8 +18,6 @@ export type HostSystemEvent =
   | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
   | { type: "unitRemoved"; unitId: string }
   | { type: "messageFromUnit"; message: object; senderUnitId: string };
-// | { type: "unitsAdded"; units: HsUnitInstance[] }
-// | { type: "unitsRemoved"; unitIds: string[] };
 
 export type HostStateBus = {
   eventPort: EventPort<HostSystemEvent>;
@@ -87,6 +85,7 @@ export type UnitNoteOutputMonitorFn = (args: {
 //public api for host application
 export type HostSystem = {
   audioContext: IAudioContext;
+  eventPort: EventPort<HostSystemEvent>;
   getAllUnits(): HsUnitInstance[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
@@ -106,8 +105,5 @@ export type HostSystem = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
-  subscribeMessageFromUnits: (
-    fn: (message: object, senderUnitId: string) => void,
-  ) => () => void;
   linkageApi: UnitLinkageManager;
 };
