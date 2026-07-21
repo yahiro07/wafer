@@ -1,7 +1,11 @@
 import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
-import { HostSystem } from "../host-system/host-system";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
-import { IAudioContext, UnitNoteOutputMonitorFn } from "../host-system/types";
+import { oxLogger } from "../host-system/orchestration-logger";
+import {
+  HostSystemCore,
+  IAudioContext,
+  UnitNoteOutputMonitorFn,
+} from "../host-system/types";
 import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
@@ -16,12 +20,16 @@ import {
   HsUnitInterface,
 } from "./types";
 
+let seqNoteId = 0;
+
 function createHsNoteOutputPort(
   actionScheduler: WebAudioActionScheduler,
   unitId: string,
   getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
 ): HsNoteOutputPort {
   const connectedInputPorts = new Set<NotePort>();
+  const noteIdsMap = new Map<number, string>();
+  // let emitting = false;
   return {
     connectTo(port: NotePort) {
       connectedInputPorts.add(port);
@@ -35,11 +43,24 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: true, time, velocity });
       }
+      const noteId = `n${(seqNoteId++).toString().padStart(3, "0")}`;
+      // if (emitting) return; //avoid recursive call
+      // emitting = true;
+      oxLogger.noteEmit({
+        unitIdFrom: unitId,
+        unitIdTo: "??",
+        noteNumber,
+        isOn: true,
+        time,
+        noteId,
+      });
+      noteIdsMap.set(noteNumber, noteId);
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOn(noteNumber, time, velocity);
         });
       }, time);
+      // emitting = false;
     },
     noteOff(noteNumber, time) {
       const monitorFn = getUnitNoteOutputMonitor();
@@ -47,11 +68,24 @@ function createHsNoteOutputPort(
         const sourceUnitId = unitId;
         monitorFn({ sourceUnitId, noteNumber, isOn: false, time });
       }
+      const noteId = noteIdsMap.get(noteNumber);
+      // if (emitting) return; //avoid recursive call
+      // emitting = true;
+      oxLogger.noteEmit({
+        unitIdFrom: unitId,
+        unitIdTo: "??",
+        noteNumber,
+        isOn: false,
+        time,
+        noteId: noteId ?? "??",
+      });
+      noteIdsMap.delete(noteNumber);
       actionScheduler.pushAction(() => {
         connectedInputPorts.forEach((connectedInputPort) => {
           connectedInputPort.noteOff(noteNumber, time);
         });
       }, time);
+      // emitting = false;
     },
   };
 }
@@ -129,6 +163,33 @@ function createHsAdditionalAudioInputPort(
 ): HsAdditionalAudioInputPort {
   const node = audioContext.createGain();
   return { node, id, label };
+}
+
+function createNoteInputWrapper(noteInput: NotePort, unitId: string): NotePort {
+  return {
+    noteOn(noteNumber, time, velocity) {
+      oxLogger.noteReceived({
+        unitIdFrom: "??",
+        unitIdTo: unitId,
+        noteNumber,
+        isOn: true,
+        time,
+        noteId: "??",
+      });
+      noteInput.noteOn(noteNumber, time, velocity);
+    },
+    noteOff(noteNumber, time) {
+      oxLogger.noteReceived({
+        unitIdFrom: "??",
+        unitIdTo: unitId,
+        noteNumber,
+        isOn: false,
+        time,
+        noteId: "??",
+      });
+      noteInput.noteOff(noteNumber, time);
+    },
+  };
 }
 
 function buildPortInfos(
@@ -222,90 +283,112 @@ function buildPortInfos(
 }
 
 export function createUnitInterface(
-  hostSystem: HostSystem,
+  hostSystemCore: HostSystemCore,
   unitId: string,
   createdCallback: (unitInstance: HsUnitInstance) => void,
 ): HsUnitInterface {
-  const { audioContext } = hostSystem;
-  const audioOutputPort = createHsAudioOutputPort(audioContext);
-  const audioInputPort = createHsAudioInputPort(audioContext);
-  const { linkageApi } = hostSystem;
-  const noteOutputPort = createHsNoteOutputPort(
-    linkageApi.actionScheduler,
-    unitId,
-    linkageApi.getUnitNoteOutputMonitor,
-  );
-  const automationOutputPort = createHsAutomationOutputPort(
-    linkageApi.actionScheduler,
-  );
-  const additionalAudioOutputs: Record<string, HsAdditionalAudioOutputPort> =
-    {};
-  const additionalAudioInputs: Record<string, HsAdditionalAudioInputPort> = {};
+  const { audioContext } = hostSystemCore;
+  let audioOutputPort: HsAudioOutputPort | undefined;
+  let audioInputPort: HsAudioInputPort | undefined;
+  let noteOutputPort: HsNoteOutputPort | undefined;
+  let automationOutputPort: HsAutomationOutputPort | undefined;
+  let additionalAudioOutputs:
+    | Record<string, HsAdditionalAudioOutputPort>
+    | undefined;
+  let additionalAudioInputs:
+    | Record<string, HsAdditionalAudioInputPort>
+    | undefined;
+  let portsFixed = false;
+
+  function raiseIfInvalidPortsAccess(message: string) {
+    if (portsFixed) {
+      // throw new Error(message);
+      console.warn(message);
+    }
+  }
 
   return {
     audioContext: audioContext as AudioContext,
-    audioOutputNode: audioOutputPort.node,
-    audioInputNode: audioInputPort.node,
-    noteOutputPort,
-    automationOutputPort,
+    get audioOutputNode() {
+      if (!audioOutputPort) {
+        raiseIfInvalidPortsAccess(
+          `unitInterface.audioOutputNode accessed first time after completeSetup, please call it before completeSetup`,
+        );
+        audioOutputPort = createHsAudioOutputPort(audioContext);
+      }
+      return audioOutputPort.node;
+    },
+    get audioInputNode() {
+      if (!audioInputPort) {
+        raiseIfInvalidPortsAccess(
+          `unitInterface.audioInputNode accessed first time after completeSetup, please call it before completeSetup`,
+        );
+        audioInputPort = createHsAudioInputPort(audioContext);
+      }
+      return audioInputPort.node;
+    },
+    createNoteOutputPort() {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createNoteOutputPort cannot be called after completeSetup",
+      );
+      noteOutputPort = createHsNoteOutputPort(
+        hostSystemCore.actionScheduler,
+        unitId,
+        hostSystemCore.getUnitNoteOutputMonitor,
+      );
+      return noteOutputPort;
+    },
+    createAutomationOutputPort() {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
+      );
+      automationOutputPort = createHsAutomationOutputPort(
+        hostSystemCore.actionScheduler,
+      );
+      return automationOutputPort;
+    },
     createAdditionalAudioOutputNode(id: string, label?: string) {
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioOutputPort(audioContext, id, label);
+      additionalAudioOutputs ??= {};
       additionalAudioOutputs[id] = port;
       return port.node;
     },
     createAdditionalAudioInputNode(id: string, label?: string) {
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
+      additionalAudioInputs ??= {};
       additionalAudioInputs[id] = port;
       return port.node;
     },
     emitMetaAttributes(metaAttrs) {
-      hostSystem.emitMetaAttributes(metaAttrs);
+      hostSystemCore.emitMetaAttributes(metaAttrs);
     },
     sendMessageToHost(message) {
-      hostSystem.linkageApi.eventPort.emit({
+      hostSystemCore.bus.eventPort.emit({
         type: "messageFromUnit",
         message,
         senderUnitId: unitId,
       });
     },
     completeSetup(attrs) {
-      const hasAudioOutput = attrs.unitAspects.outputs?.includes("audio");
-      const hasAudioInput = attrs.unitAspects.inputs?.includes("audio");
-      const hasNoteOutput = attrs.unitAspects.outputs?.includes("note");
-      const hasNoteInput = attrs.unitAspects.inputs?.includes("note");
-      const hasAutomationOutput =
-        attrs.unitAspects.outputs?.includes("automation");
-      const hasAutomationInput =
-        attrs.unitAspects.inputs?.includes("automation");
-
-      const additionalAudioOutputsMap =
-        Object.keys(additionalAudioOutputs).length > 0
-          ? additionalAudioOutputs
-          : undefined;
-      const additionalAudioInputsMap =
-        Object.keys(additionalAudioInputs).length > 0
-          ? additionalAudioInputs
-          : undefined;
-
       const primaryInputPorts = {
-        audioInput: hasAudioInput ? audioInputPort : undefined,
-        noteInput: hasNoteInput ? attrs.noteInput : undefined,
-        automationInput: hasAutomationInput ? attrs.automationInput : undefined,
+        audioInput: audioInputPort,
+        noteInput: attrs.noteInput
+          ? createNoteInputWrapper(attrs.noteInput, unitId)
+          : undefined,
+        automationInput: attrs.automationInput,
       };
       const primaryOutputPorts = {
-        audioOutput: hasAudioOutput ? audioOutputPort : undefined,
-        noteOutput: hasNoteOutput ? noteOutputPort : undefined,
-        automationOutput: hasAutomationOutput
-          ? automationOutputPort
-          : undefined,
+        audioOutput: audioOutputPort,
+        noteOutput: noteOutputPort,
+        automationOutput: automationOutputPort,
       };
       const portInfos = buildPortInfos(
         primaryInputPorts,
         primaryOutputPorts,
-        additionalAudioOutputsMap,
-        additionalAudioInputsMap,
+        additionalAudioOutputs,
+        additionalAudioInputs,
       );
 
       createdCallback({
@@ -313,8 +396,8 @@ export function createUnitInterface(
         viewSize: attrs.unitAspects.viewSize,
         primaryInputPorts: primaryInputPorts,
         primaryOutputPorts: primaryOutputPorts,
-        additionalAudioOutputs: additionalAudioOutputsMap,
-        additionalAudioInputs: additionalAudioInputsMap,
+        additionalAudioOutputs,
+        additionalAudioInputs,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
@@ -322,6 +405,7 @@ export function createUnitInterface(
         portInfos,
         cleanup: attrs.cleanup,
       });
+      portsFixed = true;
     },
   };
 }

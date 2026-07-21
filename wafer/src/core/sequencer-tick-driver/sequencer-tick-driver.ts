@@ -1,4 +1,5 @@
-import { HostSystem } from "../host-system/host-system";
+import { oxLogger } from "../host-system/orchestration-logger";
+import { HostSystem } from "../host-system/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 import { sequencerTickDriverHelper } from "./sequencer-tick-driver-helper";
 
@@ -16,26 +17,28 @@ export function createSequencerTickDriver(
   const { processUnitsStartStop, processUnitsScheduling } =
     sequencerTickDriverHelper;
   const core = createSequencerTickDriverCore(hostSystem.audioContext, 25, 100);
+  const getAllUnits = hostSystem.getAllUnits;
+  let frameIndex = 0;
 
   return {
     setBpm: core.setBpm,
     start() {
-      processUnitsStartStop(hostSystem.getAllUnits(), "start");
+      oxLogger.clockingStart();
+      frameIndex = 0;
+      processUnitsStartStop(getAllUnits(), "start");
       core.start({
         processScheduling(timeFrom, barFrom, barTo, bpm) {
-          processUnitsScheduling(
-            hostSystem.getAllUnits(),
-            timeFrom,
-            barFrom,
-            barTo,
-            bpm,
-          );
+          oxLogger.clockingFrameStart(frameIndex);
+          processUnitsScheduling(getAllUnits(), timeFrom, barFrom, barTo, bpm);
+          oxLogger.clockingFrameEnd(frameIndex);
+          frameIndex += 1;
         },
       });
     },
     stop() {
       core.stop();
-      processUnitsStartStop(hostSystem.getAllUnits(), "stop");
+      processUnitsStartStop(getAllUnits(), "stop");
+      oxLogger.clockingStop();
     },
   };
 }

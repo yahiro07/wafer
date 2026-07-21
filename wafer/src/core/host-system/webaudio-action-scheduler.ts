@@ -1,3 +1,4 @@
+import { oxLogger } from "./orchestration-logger";
 import { IAudioContext } from "./types";
 
 export type WebAudioActionScheduler = {
@@ -17,6 +18,8 @@ export function createWebAudioActionScheduler(
   const aheadTimeSec = aheadTimeMs / 1000;
 
   let timerId: ReturnType<typeof setTimeout> | null = null;
+
+  let flashTaskIndex = 0;
 
   const internal = {
     scheduleTimer() {
@@ -42,10 +45,14 @@ export function createWebAudioActionScheduler(
       const now = audioContext.currentTime;
       const thresholdTime = now + aheadTimeSec;
 
+      oxLogger.deliveryTaskStart(flashTaskIndex);
+
       while (queue.length > 0 && queue[0].time <= thresholdTime) {
         const scheduledAction = queue.shift();
         scheduledAction?.action();
       }
+      oxLogger.deliveryTaskEnd(flashTaskIndex);
+      flashTaskIndex += 1;
 
       if (queue.length > 0) {
         internal.scheduleTimer();
@@ -53,14 +60,24 @@ export function createWebAudioActionScheduler(
     },
   };
 
+  const fixInputTime = (time: number | undefined) => {
+    const valid = Number.isFinite(time) && time !== undefined && time >= 0;
+    return valid ? time : 0;
+  };
+
   return {
-    pushAction(action: () => void, time?: number) {
+    pushAction(action: () => void, inputTime?: number) {
+      const time = fixInputTime(inputTime);
       const now = audioContext.currentTime;
       const scheduledTime = time ?? now;
       const thresholdTime = now + aheadTimeSec;
 
       if (scheduledTime <= thresholdTime) {
-        action();
+        if (0) {
+          queueMicrotask(action);
+        } else {
+          action();
+        }
         return;
       }
 

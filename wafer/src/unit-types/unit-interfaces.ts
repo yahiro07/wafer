@@ -54,8 +54,6 @@ export type ClockHandlers = {
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
-  outputs?: PortSubtype[];
-  inputs?: PortSubtype[];
   viewSize?: [number, number];
 };
 
@@ -65,23 +63,26 @@ export type HostCallbacks = {
   setBpm?(bpm: number): void;
   setPlayState?(playing: boolean): void;
   setMetaAttributes?(metaAttrs: MetaAttributes): void;
+  setKey?(key: string): void;
 };
 
 export type UnitCallbacks = {
   onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
   onDisconnectedTo?(srcPortId: string): void;
+  // onMessageFromSourceUnit?(message: object): void;
 };
 
 export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
-  noteOutputPort: NotePort;
-  automationOutputPort: AutomationPort;
-  emitMetaAttributes(metaAttrs: MetaAttributes): void;
-  sendMessageToHost(message: object): void;
+  createNoteOutputPort(): NotePort;
+  createAutomationOutputPort(): AutomationPort;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
+  sendMessageToHost(message: object): void;
+  emitMetaAttributes(metaAttrs: MetaAttributes): void;
+  // sendMessageToDestinationUnits(message: object): void;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
@@ -95,10 +96,7 @@ export type UnitInterface = {
 };
 
 export type UnitInterfaceProvider = {
-  //for iframe based units, legacy js
-  checkUnitInterfaceCompatibility?(versionCode: string): void;
-  unitInterface?: UnitInterface;
-  //for iframe based units, typescript
+  //for iframe based units
   queryUnitInterface?(versionCode: string): UnitInterface | undefined;
   iframeUnitUnloadingCallback?: () => void;
   //for web component units

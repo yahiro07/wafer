@@ -1,3 +1,4 @@
+import { oxLogger } from "../host-system/orchestration-logger";
 import { HsUnitInstance } from "../linkage/types";
 
 type CrossingStepInfo = {
@@ -37,15 +38,23 @@ function processUnitsSchedulingCore(
   const unitStepDurationSec = 60 / bpm / 4;
   for (const crossingStepIndex of crossingStepInfos) {
     for (const unit of units) {
-      unit.clockHandlers?.processStep?.(
-        crossingStepIndex.stepIndex,
-        crossingStepIndex.time,
-        unitStepDurationSec,
-      );
+      const processStepFn = unit.clockHandlers?.processStep;
+      if (processStepFn) {
+        oxLogger.unitClockingFrameCall(unit.unitId);
+        processStepFn(
+          crossingStepIndex.stepIndex,
+          crossingStepIndex.time,
+          unitStepDurationSec,
+        );
+      }
     }
   }
   for (const unit of units) {
-    unit.clockHandlers?.processScheduling?.(timeFrom, barFrom, barTo, bpm);
+    const processSchedulingFn = unit.clockHandlers?.processScheduling;
+    if (processSchedulingFn) {
+      oxLogger.unitClockingFrameCall(unit.unitId);
+      processSchedulingFn(timeFrom, barFrom, barTo, bpm);
+    }
   }
 }
 

@@ -6,21 +6,21 @@ export function useSequencerTickDriverRunner({
   playing = false,
   bpm,
 }: {
-  sequencerTickDriver: ISequencerTickDriver;
+  sequencerTickDriver: ISequencerTickDriver | undefined;
   playing?: boolean;
   bpm?: number;
 }) {
   useEffect(() => {
     if (bpm) {
-      sequencerTickDriver.setBpm(bpm);
+      sequencerTickDriver?.setBpm(bpm);
     }
   }, [sequencerTickDriver, bpm]);
   useEffect(() => {
     if (playing) {
-      sequencerTickDriver.start();
-      return () => sequencerTickDriver.stop();
+      sequencerTickDriver?.start();
+      return () => sequencerTickDriver?.stop();
     } else {
-      sequencerTickDriver.stop();
+      sequencerTickDriver?.stop();
     }
   }, [sequencerTickDriver, playing]);
 }

@@ -1,6 +1,6 @@
 import { base64Helper, isUint8ArrayLike } from "../../utils/binary-helper";
 import { HsUnitInstance, HsUnitStateData } from "../linkage/types";
-import { HostStateBus } from "./host-state-bus";
+import { HostStateBus } from "./types";
 
 export const unitStateOperations = {
   readStateFromUnit(unit: HsUnitInstance): HsUnitStateData | undefined {

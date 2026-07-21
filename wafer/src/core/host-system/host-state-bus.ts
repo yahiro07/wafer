@@ -1,27 +1,6 @@
-import { createEventPort, EventPort } from "../../utils/event-port";
+import { createEventPort } from "../../utils/event-port";
 import { HsAudioInputPort, HsUnitInstance } from "../linkage/types";
-import { IAudioContext } from "./types";
-
-export type HostSystemEvent =
-  | { type: "loadStarted" }
-  | { type: "loadCompleted" }
-  | { type: "unitAdded"; unitInstance: HsUnitInstance }
-  | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
-  | { type: "unitRemoved"; unitId: string }
-  | { type: "messageFromUnit"; message: object; senderUnitId: string };
-// | { type: "unitsAdded"; units: HsUnitInstance[] }
-// | { type: "unitsRemoved"; unitIds: string[] };
-
-export type HostStateBus = {
-  eventPort: EventPort<HostSystemEvent>;
-  audioContext: IAudioContext;
-  masterGainNode: GainNode;
-  audioDestinationVirtualInputPort: HsAudioInputPort;
-  addUnit(unit: HsUnitInstance): void;
-  getUnit(unitId: string): HsUnitInstance | undefined;
-  getAllUnits(): HsUnitInstance[];
-  removeUnit(unitId: string): void;
-};
+import { HostStateBus, HostSystemEvent, IAudioContext } from "./types";
 
 export function createHostStateBus(audioContext: IAudioContext): HostStateBus {
   const eventPort = createEventPort<HostSystemEvent>();
