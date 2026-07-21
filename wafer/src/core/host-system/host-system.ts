@@ -80,7 +80,7 @@ export function createHostSystem(
       unit && unitStateOperations.applyStateToUnit(unit, state);
     },
     async waitUnitsLoaded() {
-      await delayMs(100); //wait for iframes to be mounted in dom
+      await delayMs(200); //wait for iframes to be mounted in dom
       await new Promise<void>((resolve) => {
         loadingManager.reserveUnitOperation({
           type: "state",

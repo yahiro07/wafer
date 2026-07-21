@@ -48,7 +48,7 @@ export function createUnitLoadingManager(
         try {
           job.resolvedUnitInstance = await awaitPromiseWithTimeout(
             job.promise,
-            1000,
+            10000,
           );
         } catch (e) {
           console.error("Failed to load unit instance", job.unitId, e);
