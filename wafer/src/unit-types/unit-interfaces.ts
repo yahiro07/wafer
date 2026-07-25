@@ -63,7 +63,8 @@ export type HostCallbacks = {
   setBpm?(bpm: number): void;
   setPlayState?(playing: boolean): void;
   setMetaAttributes?(metaAttrs: MetaAttributes): void;
-  setKey?(key: string): void;
+  setKey?(key: string): void; //C, Am, Bb, F#m, ...etc, [CDEFGAB][#b?][m?]
+  setKeyTranspose?(transpose: number): void; //0 for C/Am, 2 for D/Bm, -3 for A/F#m, ...etc
 };
 
 export type UnitCallbacks = {
