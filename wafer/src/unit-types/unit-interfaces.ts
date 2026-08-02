@@ -54,7 +54,7 @@ export type ClockHandlers = {
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
-  viewSize?: [number, number];
+  viewSize: [number, number];
 };
 
 export type MetaAttributes = Record<string, any>;
