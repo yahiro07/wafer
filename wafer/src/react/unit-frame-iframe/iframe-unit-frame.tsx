@@ -8,6 +8,7 @@ import {
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
+import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
 
 type Props = {
   unitId: string;
@@ -49,18 +50,10 @@ export const IFrameUnitFrame = ({
     const handleLoaded = (unitInstance: HsUnitInstance) => {
       const { viewSize } = unitInstance;
       if (viewSize) {
-        if (frameAspectRatio) {
-          let [w, h] = viewSize;
-          const originalAsr = w / h;
-          if (frameAspectRatio > originalAsr) {
-            w = h * frameAspectRatio;
-          } else {
-            h = w / frameAspectRatio;
-          }
-          setSize([w, h]);
-        } else {
-          setSize(viewSize);
-        }
+        const sz = frameAspectRatio
+          ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
+          : viewSize;
+        setSize(sz);
       }
       onUnitInstanceLoaded?.(unitInstance);
     };

@@ -33,6 +33,7 @@ export const UnitFrame = ({
         className={className}
         inputNotes={inputNotes}
         onUnitInstanceLoaded={onUnitInstanceLoaded}
+        frameAspectRatio={frameAspectRatio}
       />
     );
   } else {
