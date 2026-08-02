@@ -17,6 +17,7 @@ type Props = {
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  baseAspectRatio?: number;
 };
 
 export const IFrameUnitFrame = ({
@@ -27,6 +28,7 @@ export const IFrameUnitFrame = ({
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
+  baseAspectRatio,
 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -45,7 +47,21 @@ export const IFrameUnitFrame = ({
   useLayoutEffect(() => {
     checkUnitIdValidity(unitId);
     const handleLoaded = (unitInstance: HsUnitInstance) => {
-      setSize(unitInstance.viewSize);
+      const { viewSize } = unitInstance;
+      if (viewSize) {
+        if (baseAspectRatio) {
+          let [w, h] = viewSize;
+          const originalAsr = w / h;
+          if (baseAspectRatio > originalAsr) {
+            w = h * baseAspectRatio;
+          } else {
+            h = w / baseAspectRatio;
+          }
+          setSize([w, h]);
+        } else {
+          setSize(viewSize);
+        }
+      }
       onUnitInstanceLoaded?.(unitInstance);
     };
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
