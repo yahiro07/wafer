@@ -36,7 +36,7 @@ function createOrchestrationLogger(): OrchestrationLogger {
     clockingFrameStart(frameIndex) {
       log(`◇clock frame ${frameIndex}`);
     },
-    clockingFrameEnd(frameIndex) {
+    clockingFrameEnd(_frameIndex) {
       // log(`◇clock frame ${frameIndex} end`);
     },
     unitClockingFrameCall(unitId) {
@@ -57,7 +57,7 @@ function createOrchestrationLogger(): OrchestrationLogger {
     deliveryTaskStart(taskIndex) {
       log(`◇delivery task ${taskIndex}`);
     },
-    deliveryTaskEnd(taskIndex) {
+    deliveryTaskEnd(_taskIndex) {
       // log(`◇delivery task ${taskIndex} end`);
     },
   };

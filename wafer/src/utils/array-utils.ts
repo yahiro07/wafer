@@ -1,5 +1,7 @@
 export function seqNumbers(n: number): number[] {
-  return new Array(n).fill(0).map((_, i) => i);
+  return Array.from({ length: n })
+    .fill(0)
+    .map((_, i) => i);
 }
 
 export function removeArrayItem<T>(items: T[], item: T) {
