@@ -28,7 +28,9 @@ export type ConnectionManager = {
 type ConnectingOperation = "connectTo" | "disconnectTo";
 
 type UnitPortSpec = {
+  // oxlint-disable-next-line no-redundant-type-constituents
   unitId: string | "$output";
+  // oxlint-disable-next-line no-redundant-type-constituents
   portId: string | "primaryOutput" | "primaryInput";
 };
 

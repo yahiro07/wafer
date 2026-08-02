@@ -77,7 +77,9 @@ export function createHostSystem(
     },
     setUnitState(unitId: string, state: HsUnitStateData) {
       const unit = bus.getUnit(unitId);
-      unit && unitStateOperations.applyStateToUnit(unit, state);
+      if (unit) {
+        unitStateOperations.applyStateToUnit(unit, state);
+      }
     },
     async waitUnitsLoaded() {
       await delayMs(200); //wait for iframes to be mounted in dom

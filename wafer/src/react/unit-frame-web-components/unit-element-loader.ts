@@ -176,7 +176,7 @@ export function createUnitInstantiationPromise(
   },
 ) {
   return new Promise<HsUnitInstance>(
-    // biome-ignore lint/suspicious/noAsyncPromiseExecutor: rough impl
+    // oxlint-disable-next-line no-async-promise-executor
     async (resolve) => {
       const unitInterface = hostSystem.linkageApi.createUnitInterface(
         unitId,
