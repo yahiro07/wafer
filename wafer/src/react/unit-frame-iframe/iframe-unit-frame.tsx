@@ -50,9 +50,10 @@ export const IFrameUnitFrame = ({
     const handleLoaded = (unitInstance: HsUnitInstance) => {
       const { viewSize } = unitInstance;
       if (viewSize) {
-        const sz = frameAspectRatio
-          ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
-          : viewSize;
+        const sz =
+          frameAspectRatio && !unitInstance.preferJustSize
+            ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
+            : viewSize;
         setSize(sz);
       }
       onUnitInstanceLoaded?.(unitInstance);

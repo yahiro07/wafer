@@ -64,9 +64,10 @@ export const CustomElementUnitFrame = ({
           onInstanceLoaded(instance) {
             const { viewSize } = instance;
             if (viewSize) {
-              const sz = frameAspectRatio
-                ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
-                : viewSize;
+              const sz =
+                frameAspectRatio && !instance.preferJustSize
+                  ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
+                  : viewSize;
               setSize(sz);
             }
             unitInstanceRef.current = instance;

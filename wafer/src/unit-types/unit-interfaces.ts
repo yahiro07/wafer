@@ -55,6 +55,7 @@ export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
   viewSize: [number, number];
+  preferJustSize?: boolean;
 };
 
 export type MetaAttributes = Record<string, any>;

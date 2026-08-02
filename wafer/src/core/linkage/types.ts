@@ -67,6 +67,7 @@ export type HsPortInfo =
 export type HsUnitInstance = {
   unitId: string;
   viewSize?: [number, number];
+  preferJustSize?: boolean;
   primaryInputPorts: {
     audioInput?: AudioPort;
     noteInput?: NotePort;
