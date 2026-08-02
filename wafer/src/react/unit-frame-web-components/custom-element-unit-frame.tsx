@@ -57,6 +57,8 @@ export const CustomElementUnitFrame = ({
         {
           onElementCreated(element) {
             createdElement = element;
+            element.style.width = "100%";
+            element.style.height = "100%";
             container.appendChild(element);
           },
           onInstanceLoaded(instance) {
