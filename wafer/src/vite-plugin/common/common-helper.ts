@@ -30,6 +30,7 @@ export function normalizeCasing(
         .map((part) => part.toLowerCase())
         .join("-");
     default:
+      // oxlint-disable-next-line restrict-template-expressions
       throw new Error(`Unsupported catalog key format: ${format}`);
   }
 }

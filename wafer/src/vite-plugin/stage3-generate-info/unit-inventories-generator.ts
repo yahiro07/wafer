@@ -17,7 +17,7 @@ async function fetchUnitAssetText(
     // console.log(`Reading file from ${fullPath}`);
     try {
       return await fs.promises.readFile(fullPath, "utf8");
-    } catch (_) {
+    } catch {
       throw new Error(`Failed to read file from ${fullPath}`);
     }
   } else if (resolvedUnitEntry.kind === "direct") {
@@ -30,7 +30,7 @@ async function fetchUnitAssetText(
         throw new Error(`Failed to fetch from ${url}`);
       }
       return await res.text();
-    } catch (_) {
+    } catch {
       throw new Error(`Failed to fetch from ${url}`);
     }
   }
@@ -50,7 +50,7 @@ async function checkUnitAssetExists(
     try {
       const stat = await fs.promises.stat(fullPath);
       return stat.isFile();
-    } catch (_) {
+    } catch {
       return false;
     }
   } else if (resolvedUnitEntry.kind === "direct") {
@@ -59,7 +59,7 @@ async function checkUnitAssetExists(
     try {
       const res = await fetch(url, { method: "HEAD" });
       return res.ok;
-    } catch (_) {
+    } catch {
       return false;
     }
   }
@@ -72,7 +72,7 @@ async function fetchUnitMeta(
   const text = await fetchUnitAssetText(resolvedUnitEntry, "unit-meta.json");
   try {
     return JSON.parse(text);
-  } catch (_) {
+  } catch {
     throw new Error(`Failed to parse unit-meta.json: ${text}`);
   }
 }
@@ -189,6 +189,7 @@ export async function readSummariesJsonFromFile(
       return undefined;
     }
     throw new Error(
+      // oxlint-disable-next-line restrict-template-expressions
       `Failed to read summaries JSON from file ${filePath}: ${error}`,
     );
   }

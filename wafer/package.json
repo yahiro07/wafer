@@ -1,10 +1,30 @@
 {
   "name": "wafer-host",
-  "type": "module",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "WebAudio host framework for the browser based DAW.",
-  "author": "yahiro",
+  "keywords": [
+    "daw",
+    "framework",
+    "host",
+    "plugin",
+    "wafer",
+    "webaudio"
+  ],
+  "homepage": "https://github.com/yahiro07/wafer#readme",
+  "bugs": {
+    "url": "https://github.com/yahiro07/wafer/issues"
+  },
   "license": "MIT",
+  "author": "yahiro",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yahiro07/wafer.git"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
   "exports": {
     "./core": {
       "types": "./dist/core/index.d.ts",
@@ -27,30 +47,23 @@
       "default": "./dist/vite-plugin/index.mjs"
     }
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yahiro07/wafer.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yahiro07/wafer/issues"
-  },
-  "homepage": "https://github.com/yahiro07/wafer#readme",
-  "keywords": [
-    "webaudio",
-    "plugin",
-    "framework",
-    "wafer",
-    "host",
-    "daw"
-  ],
   "scripts": {
     "build": "tsdown",
     "prepublishOnly": "npm run build",
-    "typecheck": "tsc"
+    "lint": "oxlint --type-aware"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.76.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tsdown": "^0.22.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   },
   "peerDependencies": {
     "react": "^19.2.6",
@@ -63,15 +76,5 @@
     "react-dom": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "@types/node": "^25.9.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "tsdown": "^0.22.2",
-    "typescript": "~6.0.3",
-    "vite": "^8.0.16"
   }
 }

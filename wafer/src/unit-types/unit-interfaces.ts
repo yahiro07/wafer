@@ -54,16 +54,23 @@ export type ClockHandlers = {
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
-  viewSize?: [number, number];
+  viewSize: [number, number];
+  preferJustSize?: boolean;
 };
 
 export type MetaAttributes = Record<string, any>;
+
+export type SongKeySpec = {
+  mode: "major" | "minor";
+  root: number; //0 for C/Cm, 1 for C#/C#m, 2 for D/Dm, -1 for B/Bm, ...etc
+  keyTranspose: number; //0 for C/Am, 1 for C#/A#m, 2 for D/Bm, -1 for B/G#m, ...etc
+};
 
 export type HostCallbacks = {
   setBpm?(bpm: number): void;
   setPlayState?(playing: boolean): void;
   setMetaAttributes?(metaAttrs: MetaAttributes): void;
-  setKey?(key: string): void;
+  setKey?(keySpec: SongKeySpec): void;
 };
 
 export type UnitCallbacks = {

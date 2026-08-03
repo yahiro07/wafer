@@ -394,6 +394,7 @@ export function createUnitInterface(
       createdCallback({
         unitId,
         viewSize: attrs.unitAspects.viewSize,
+        preferJustSize: attrs.unitAspects.preferJustSize,
         primaryInputPorts: primaryInputPorts,
         primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs,

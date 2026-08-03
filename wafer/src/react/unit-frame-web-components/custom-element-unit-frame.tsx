@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import {
@@ -9,6 +9,7 @@ import {
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { createUnitInstantiationPromise } from "./unit-element-loader";
+import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
 
 type Props = {
   unitId: string;
@@ -17,6 +18,7 @@ type Props = {
   className?: string;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  frameAspectRatio?: number;
 };
 
 export const CustomElementUnitFrame = ({
@@ -26,9 +28,11 @@ export const CustomElementUnitFrame = ({
   className,
   inputNotes,
   onUnitInstanceLoaded,
+  frameAspectRatio,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
+  const [size, setSize] = useState<[number, number] | undefined>();
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
@@ -53,9 +57,19 @@ export const CustomElementUnitFrame = ({
         {
           onElementCreated(element) {
             createdElement = element;
+            element.style.width = "100%";
+            element.style.height = "100%";
             container.appendChild(element);
           },
           onInstanceLoaded(instance) {
+            const { viewSize } = instance;
+            if (viewSize) {
+              const sz =
+                frameAspectRatio && !instance.preferJustSize
+                  ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
+                  : viewSize;
+              setSize(sz);
+            }
             unitInstanceRef.current = instance;
             onUnitInstanceLoaded?.(instance);
           },
@@ -91,5 +105,13 @@ export const CustomElementUnitFrame = ({
 
   useUnitInputNotesAffecter(unitInstanceRef.current, inputNotes);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={
+        size ? { width: `${size[0]}px`, height: `${size[1]}px` } : undefined
+      }
+    />
+  );
 };
