@@ -1,16 +1,14 @@
 import { useEffect, useMemo } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
-import {
-  serializeUnitDestinationSpec,
-  UnitDestinationSpec,
-} from "../destination-spec";
+import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
+import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
   unitId: string;
@@ -23,7 +21,7 @@ type Props = {
 export const ReactUnitFrame = ({
   unitId,
   unitTemplateFn,
-  destSpec: destSpecInput,
+  destSpec,
   inputNotes,
   onUnitInstanceLoaded,
 }: Props) => {
@@ -38,11 +36,7 @@ export const ReactUnitFrame = ({
     return hostSystem.linkageApi.registerUnitInstance(unit);
   }, [unit, onUnitInstanceLoaded, hostSystem]);
 
-  const destSpec = serializeUnitDestinationSpec(destSpecInput);
-
-  useEffect(() => {
-    // hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
-  }, [unitId, destSpec, hostSystem]);
+  useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 
   useEffect(() => {
     if (hostBpm) {

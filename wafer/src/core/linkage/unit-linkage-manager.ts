@@ -5,8 +5,11 @@ export function createUnitLinkageManager(
 ): UnitLinkageManager {
   const unsubscribeInternalEvents =
     hostSystemCore.bus.internalEventPort.subscribe((event) => {
+      console.log(event);
       if (event.type === "unitAdded") {
       } else if (event.type === "connectionRulesChanged") {
+        const conns = hostSystemCore.bus.getConnectionRules();
+        console.log(conns);
       }
     });
   return {

@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
-import {
-  serializeUnitDestinationSpec,
-  UnitDestinationSpec,
-} from "../destination-spec";
+import { UnitDestinationSpec } from "../destination-spec";
 
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { createUnitInstantiationPromise } from "./unit-element-loader";
 import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
+import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
   unitId: string;
@@ -24,7 +22,7 @@ type Props = {
 export const CustomElementUnitFrame = ({
   unitId,
   scriptUrl,
-  destSpec: destSpecInput,
+  destSpec,
   className,
   inputNotes,
   onUnitInstanceLoaded,
@@ -36,11 +34,7 @@ export const CustomElementUnitFrame = ({
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
-  const destSpec = serializeUnitDestinationSpec(destSpecInput);
-
-  useEffect(() => {
-    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
-  }, [unitId, destSpec, hostSystem]);
+  useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {

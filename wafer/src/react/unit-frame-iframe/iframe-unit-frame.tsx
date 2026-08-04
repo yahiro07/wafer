@@ -1,14 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
-import {
-  serializeUnitDestinationSpec,
-  UnitDestinationSpec,
-} from "../destination-spec";
+import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
 import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
+import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
   unitId: string;
@@ -24,7 +22,7 @@ type Props = {
 export const IFrameUnitFrame = ({
   unitId,
   pageUrl,
-  destSpec: destSpecInput,
+  destSpec,
   className,
   inputNotes,
   onIframeMounted,
@@ -38,12 +36,7 @@ export const IFrameUnitFrame = ({
 
   const [size, setSize] = useState<[number, number] | undefined>();
 
-  const destSpec = serializeUnitDestinationSpec(destSpecInput);
-
-  useEffect(() => {
-    //TODO: map to multiple connections and call reserveConnection for each item
-    // hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
-  }, [unitId, destSpec, hostSystem]);
+  useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useLayoutEffect(() => {
