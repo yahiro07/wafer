@@ -41,7 +41,8 @@ export const IFrameUnitFrame = ({
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
-    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
+    //TODO: map to multiple connections and call reserveConnection for each item
+    // hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management

@@ -101,5 +101,6 @@ desSpec="unit1&unit2|port1:unit3.port2&unit4"
 export type DestinationCode = string;
 
 export type HsUnitInterface = UnitInterface & {
+  unload: () => void;
   iframeUnloadingCallback?: () => void;
 };

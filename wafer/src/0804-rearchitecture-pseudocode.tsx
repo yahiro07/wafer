@@ -62,7 +62,6 @@ namespace ns2 {
     bus: HostStateBus;
     pushUnitLoadingId(id: string): void;
     clearUnitLoadingId(id: string): void;
-    clearUnitLoadingId(id: string): void;
     addUnit(unit: HsUnitInstance): void;
     removeUnit(unitId: string): void;
     addConnectionRule(
@@ -103,6 +102,7 @@ namespace ns2 {
   type NoteDeliveryEvent = {
     sourcePortKey: string;
     destPortKey: string;
+    noteNumber: number;
     isOn: boolean;
     time?: number;
     velocity?: number;

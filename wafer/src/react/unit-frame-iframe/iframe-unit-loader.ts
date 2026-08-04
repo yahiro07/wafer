@@ -16,33 +16,34 @@ export function loadIframeUnitInstance(
     unitInterface?: UnitInterface;
   };
 
-  const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
-    const unitInterface = hostSystem.linkageApi.createUnitInterface(
-      unitId,
-      (unitInstance) => {
-        sideEffects.unitInstanceRef.current = unitInstance;
-        sideEffects.onUnitInstanceLoaded?.(unitInstance);
-        resolve(unitInstance);
-      },
-    );
-    win.unitInterface = unitInterface;
-    win.queryUnitInterface = (versionCode: string) => {
-      if (versionCode === "wafer-v01") {
-        return unitInterface;
-      } else {
-        throw new Error(
-          `incompatible unit interface version: ${versionCode} for ${unitId}`,
-        );
-      }
-    };
-  });
-  const unregisterUnit =
-    hostSystem.linkageApi.registerPendingUnitInstancePromise(
-      unitId,
-      unitInstantiationPromise,
-    );
+  // const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
+  const unitInterface = hostSystem.linkageApi.createUnitInterface(
+    unitId,
+    (unitInstance) => {
+      sideEffects.unitInstanceRef.current = unitInstance;
+      sideEffects.onUnitInstanceLoaded?.(unitInstance);
+      // resolve(unitInstance);
+    },
+  );
+  win.unitInterface = unitInterface;
+  win.queryUnitInterface = (versionCode: string) => {
+    if (versionCode === "wafer-v01") {
+      return unitInterface;
+    } else {
+      throw new Error(
+        `incompatible unit interface version: ${versionCode} for ${unitId}`,
+      );
+    }
+  };
+  // });
+  // const unregisterUnit =
+  //   hostSystem.linkageApi.registerPendingUnitInstancePromise(
+  //     unitId,
+  //     unitInstantiationPromise,
+  //   );
   return () => {
-    unregisterUnit();
+    // unregisterUnit();
+    unitInterface.unload();
     cleanupIFrameCallback?.();
     win.iframeUnitUnloadingCallback?.();
   };
