@@ -1,3 +1,4 @@
+import { removeArrayItems } from "../../utils/array-utils";
 import { createHostStateBus } from "./host-state-bus";
 import { HostSystemCore, IAudioContext } from "./types";
 
@@ -8,14 +9,26 @@ export function createHostSystemCore(
   const bus = createHostStateBus(audioContext);
   // const loadingManager = createUnitLoadingManager(bus);
   // let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
+
+  const internal = {
+    cleanupDesiredConnectionsBeforeRemovingUnit(unitId: string) {
+      removeArrayItems(
+        bus.connectionRules,
+        (it) => it.srcUnitId === unitId || it.destUnitId === unitId,
+      );
+      bus.internalEventPort.emit({ type: "connectionRulesChanged" });
+    },
+  };
   return {
     bus,
     pushUnitLoadingId(id) {
       bus.unitLoadingIds.add(id);
     },
     clearUnitLoadingId(id) {
+      const prevCount = bus.unitLoadingIds.size;
       bus.unitLoadingIds.delete(id);
-      if (bus.unitLoadingIds.size === 0) {
+      const count = bus.unitLoadingIds.size;
+      if (prevCount === 1 && count === 0) {
         bus.internalEventPort.emit({ type: "pendingUnitsLoaded" });
       }
     },
@@ -27,16 +40,31 @@ export function createHostSystemCore(
     removeUnit(unitId) {
       const unit = bus.units.get(unitId);
       if (unit) {
+        internal.cleanupDesiredConnectionsBeforeRemovingUnit(unitId);
+        // bus.internalEventPort.emit({ type: "beforeRemoveUnit", unitId });
         bus.eventPort.emit({ type: "beforeRemoveUnit", unitInstance: unit });
         unit.cleanup?.();
         bus.eventPort.emit({ type: "unitRemoved", unitId });
-        bus.internalEventPort.emit({ type: "unitRemoved", unitId });
         bus.units.delete(unitId);
       }
     },
-    addConnectionRule(source, destination, enabled) {
-      bus.connectionRules.push({ source, destination, enabled });
-      bus.internalEventPort.emit({ type: "connectionRulesChanged" });
+    pushConnectionRule(source, destination, next) {
+      const connectionKey = `${source}>${destination}`;
+      const curr = bus.connectionRules.find(
+        (rule) => rule.connectionKey === connectionKey,
+      );
+      if (!curr && next) {
+        const srcUnitId = source.split(".")[0];
+        const destUnitId = destination.split(".")[0];
+        bus.connectionRules.push({ connectionKey, srcUnitId, destUnitId });
+        bus.internalEventPort.emit({ type: "connectionRulesChanged" });
+      } else if (curr && !next) {
+        removeArrayItems(
+          bus.connectionRules,
+          (it) => it.connectionKey === connectionKey,
+        );
+        bus.internalEventPort.emit({ type: "connectionRulesChanged" });
+      }
     },
     emitMetaAttributes(attributes) {
       for (const unit of bus.getAllUnits()) {

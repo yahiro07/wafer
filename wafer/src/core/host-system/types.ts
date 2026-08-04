@@ -21,14 +21,19 @@ export type HostSystemEvent =
 export type HostSystemInternalEvent =
   | { type: "connectionRulesChanged" }
   | { type: "unitAdded"; unitId: string }
-  | { type: "unitRemoved"; unitId: string }
+  // | { type: "beforeRemoveUnit"; unitId: string }
   | { type: "pendingUnitsLoaded" };
 
 export type ConnectionRule = {
-  source: string; //${unitId}.${portId}
-  destination: string; //${unitId}.${portId}
-  enabled: boolean;
+  connectionKey: string; // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  // source: string; //${unitId}.${portId}
+  // destination: string; //${unitId}.${portId}
+  // enabled: boolean;
+  srcUnitId: string;
+  destUnitId: string;
 };
+
+// type ConnectionKey =
 
 export type HostStateBus = {
   eventPort: EventPort<HostSystemEvent>;
@@ -37,9 +42,10 @@ export type HostStateBus = {
   masterGainNode: GainNode;
   audioDestinationVirtualInputPort: HsAudioInputPort;
   getUnit(unitId: string): HsUnitInstance | undefined;
-  getAllUnits(): HsUnitInstance[];
-  getConnectionRules(): ConnectionRule[];
-  getUnitLoadingIds(): Set<string>;
+  getAllUnits(): readonly HsUnitInstance[];
+  getAllUnitsDictionary(): ReadonlyMap<string, HsUnitInstance>;
+  getConnectionRules(): readonly ConnectionRule[];
+  getUnitLoadingIds(): ReadonlySet<string>;
 };
 
 export type HostStateBusImpl = HostStateBus & {
@@ -70,7 +76,7 @@ export type HostSystemCore = {
   removeUnit(unitId: string): void;
   pushUnitLoadingId(id: string): void;
   clearUnitLoadingId(id: string): void;
-  addConnectionRule(
+  pushConnectionRule(
     source: string,
     destination: string,
     enabled: boolean,
@@ -153,7 +159,7 @@ export type UnitNoteOutputMonitorFn = (args: {
 export type HostSystem = {
   audioContext: IAudioContext;
   eventPort: EventPort<HostSystemEvent>;
-  getAllUnits(): HsUnitInstance[];
+  getAllUnits(): readonly HsUnitInstance[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;

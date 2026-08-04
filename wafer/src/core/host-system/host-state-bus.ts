@@ -31,6 +31,9 @@ export function createHostStateBus(
     getUnit(unitId: string) {
       return units.get(unitId);
     },
+    getAllUnitsDictionary() {
+      return units;
+    },
     getAllUnits() {
       return Array.from(units.values());
     },

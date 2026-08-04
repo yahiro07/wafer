@@ -27,15 +27,15 @@ function createHsNoteOutputPort(
   notesDispatcher: NotesDispatcher,
   // getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
 ): HsNoteOutputPort {
-  const connectedInputPorts = new Set<NotePort>();
+  // const connectedInputPorts = new Set<NotePort>();
   // const noteIdsMap = new Map<number, string>();
   // let emitting = false;
   return {
     connectTo(port: NotePort) {
-      connectedInputPorts.add(port);
+      // connectedInputPorts.add(port);
     },
     disconnectTo(port: NotePort) {
-      connectedInputPorts.delete(port);
+      // connectedInputPorts.delete(port);
     },
     noteOn(noteNumber, time, velocity) {
       // const monitorFn = getUnitNoteOutputMonitor();

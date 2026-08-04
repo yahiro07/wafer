@@ -28,22 +28,29 @@ export function createLinkageApi(
     },
     registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
       const unitLoadingId = `${unitId}-${seqLoadingIndex++}`;
-      let disposed = false;
+      type Phase = "loading" | "loaded" | "loadCancelled" | "unloaded";
+      let phase: Phase = "loading";
       (async () => {
         hostSystemCore.pushUnitLoadingId(unitLoadingId);
         const unit = await unitInstancePromise;
-        if (disposed) return;
+        // @ts-expect-error
+        if (phase === "loadCancelled") return;
         hostSystemCore.clearUnitLoadingId(unitLoadingId);
         hostSystemCore.addUnit(unit);
+        phase = "loaded";
       })();
       return () => {
-        disposed = true;
-        hostSystemCore.removeUnit(unitId);
-        hostSystemCore.clearUnitLoadingId(unitLoadingId);
+        if (phase === "loading") {
+          hostSystemCore.clearUnitLoadingId(unitLoadingId);
+          phase = "loadCancelled";
+        } else {
+          hostSystemCore.removeUnit(unitId);
+          phase = "unloaded";
+        }
       };
     },
     reserveConnection(source, destination, enabled) {
-      hostSystemCore.addConnectionRule(source, destination, enabled);
+      hostSystemCore.pushConnectionRule(source, destination, enabled);
     },
     setClockingFrameId(id) {
       notesDispatcher.setClockingFrameId(id);
