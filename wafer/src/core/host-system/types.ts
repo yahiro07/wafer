@@ -111,6 +111,11 @@ export type LinkageApi = {
     unitId: string,
     completeSetupCallback: (unitInstance: HsUnitInstance) => void,
   ): HsUnitInterface;
+  registerUnitInstance(unit: HsUnitInstance): () => void;
+  registerPendingUnitInstancePromise(
+    unitId: string,
+    unitInstancePromise: Promise<HsUnitInstance>,
+  ): () => void;
   reserveConnection(
     source: string,
     destination: string,

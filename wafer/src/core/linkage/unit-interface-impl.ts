@@ -298,17 +298,13 @@ function buildPortInfos(
   ].filter(Boolean) as HsPortInfo[];
 }
 
-let seqLoadingIndex = 0;
-
 export function createUnitInterface(
   hostSystemCore: HostSystemCore,
   notesDispatcher: NotesDispatcher,
   unitId: string,
   createdCallback: (unitInstance: HsUnitInstance) => void,
 ): HsUnitInterface {
-  const unitLoadingId = `${unitId}-${seqLoadingIndex++}`;
-  hostSystemCore.pushUnitLoadingId(unitLoadingId);
-  let disposed = false;
+  let cancelled = false;
 
   const { audioContext } = hostSystemCore.bus;
   let audioOutputPort: HsAudioOutputPort | undefined;
@@ -389,7 +385,7 @@ export function createUnitInterface(
       });
     },
     completeSetup(attrs) {
-      if (disposed) return;
+      if (cancelled) return;
       const primaryInputPorts = {
         audioInput: audioInputPort,
         noteInput: attrs.noteInput
@@ -424,15 +420,11 @@ export function createUnitInterface(
         portInfos,
         cleanup: attrs.cleanup,
       };
-      hostSystemCore.addUnit(unitInstance);
-      hostSystemCore.clearUnitLoadingId(unitLoadingId);
       createdCallback(unitInstance);
       portsFixed = true;
     },
-    unload() {
-      disposed = true;
-      hostSystemCore.removeUnit(unitId);
-      hostSystemCore.clearUnitLoadingId(unitLoadingId);
+    cancelLoading() {
+      cancelled = true;
     },
   };
 }

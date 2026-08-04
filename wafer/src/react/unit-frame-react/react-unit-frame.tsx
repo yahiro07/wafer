@@ -41,7 +41,7 @@ export const ReactUnitFrame = ({
   const destSpec = serializeUnitDestinationSpec(destSpecInput);
 
   useEffect(() => {
-    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
+    // hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
   }, [unitId, destSpec, hostSystem]);
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { HostSystem, HsUnitInstance } from "../../core";
+import { HsUnitInterface } from "../../core/linkage/types";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 export function loadIframeUnitInstance(
   hostSystem: HostSystem,
@@ -16,34 +17,36 @@ export function loadIframeUnitInstance(
     unitInterface?: UnitInterface;
   };
 
-  // const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
-  const unitInterface = hostSystem.linkageApi.createUnitInterface(
-    unitId,
-    (unitInstance) => {
-      sideEffects.unitInstanceRef.current = unitInstance;
-      sideEffects.onUnitInstanceLoaded?.(unitInstance);
-      // resolve(unitInstance);
-    },
-  );
-  win.unitInterface = unitInterface;
-  win.queryUnitInterface = (versionCode: string) => {
-    if (versionCode === "wafer-v01") {
-      return unitInterface;
-    } else {
-      throw new Error(
-        `incompatible unit interface version: ${versionCode} for ${unitId}`,
-      );
-    }
-  };
-  // });
-  // const unregisterUnit =
-  //   hostSystem.linkageApi.registerPendingUnitInstancePromise(
-  //     unitId,
-  //     unitInstantiationPromise,
-  //   );
+  let unitInterface: HsUnitInterface | undefined;
+
+  const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
+    unitInterface = hostSystem.linkageApi.createUnitInterface(
+      unitId,
+      (unitInstance) => {
+        sideEffects.unitInstanceRef.current = unitInstance;
+        sideEffects.onUnitInstanceLoaded?.(unitInstance);
+        resolve(unitInstance);
+      },
+    );
+    win.unitInterface = unitInterface;
+    win.queryUnitInterface = (versionCode: string) => {
+      if (versionCode === "wafer-v01") {
+        return unitInterface;
+      } else {
+        throw new Error(
+          `incompatible unit interface version: ${versionCode} for ${unitId}`,
+        );
+      }
+    };
+  });
+  const unregisterUnit =
+    hostSystem.linkageApi.registerPendingUnitInstancePromise(
+      unitId,
+      unitInstantiationPromise,
+    );
   return () => {
-    // unregisterUnit();
-    unitInterface.unload();
+    unitInterface?.cancelLoading();
+    unregisterUnit();
     cleanupIFrameCallback?.();
     win.iframeUnitUnloadingCallback?.();
   };
