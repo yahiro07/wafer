@@ -34,7 +34,6 @@ function createHsNoteOutputPort(
     noteOn(noteNumber, time, velocity) {
       notesDispatcher.pushNoteDeliveryEvent({
         sourcePortKey: `${unitId}.noteOutput`,
-        destPortKey: `${unitId}.noteInput`,
         noteNumber,
         isOn: true,
         time,
@@ -44,7 +43,6 @@ function createHsNoteOutputPort(
     noteOff(noteNumber, time) {
       notesDispatcher.pushNoteDeliveryEvent({
         sourcePortKey: `${unitId}.noteOutput`,
-        destPortKey: `${unitId}.noteInput`,
         noteNumber,
         isOn: false,
         time,
@@ -54,6 +52,7 @@ function createHsNoteOutputPort(
 }
 
 function createHsAutomationOutputPort(
+  unitId: string,
   notesDispatcher: NotesDispatcher,
 ): HsAutomationOutputPort {
   let connectedInputPort: AutomationPort | undefined;
@@ -73,9 +72,12 @@ function createHsAutomationOutputPort(
       return connectedInputPort?.getParameter(id);
     },
     setParameter(id: string, value: number, time?: number) {
-      // actionScheduler.pushAction(() => {
-      //   connectedInputPort?.setParameter(id, value, time);
-      // }, time);
+      notesDispatcher.pushAutomationDeliveryEvent({
+        sourcePortKey: `${unitId}.automationOutput`,
+        parameterId: id,
+        value,
+        time,
+      });
     },
   };
 }
@@ -304,7 +306,10 @@ export function createUnitInterface(
       raiseIfInvalidPortsAccess(
         "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
       );
-      automationOutputPort = createHsAutomationOutputPort(notesDispatcher);
+      automationOutputPort = createHsAutomationOutputPort(
+        unitId,
+        notesDispatcher,
+      );
       return automationOutputPort;
     },
     createAdditionalAudioOutputNode(id: string, label?: string) {

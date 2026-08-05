@@ -7,7 +7,7 @@ import {
 } from "./types";
 import { createWebAudioActionScheduler } from "./webaudio-action-scheduler";
 
-function getNoteDestinationPortKeys(
+function getDestinationPortKeys(
   hostSystemCore: HostSystemCore,
   sourcePortKey: string,
 ): string[] {
@@ -23,7 +23,7 @@ function mapPortKeysToPorts(
 ): HsNoteInputPort[] {
   return portKeys
     .map((portKey) => {
-      const [unitId] = portKey.split(".");
+      const unitId = portKey.split(".")[0];
       const unit = hostSystemCore.bus.getUnit(unitId);
       return unit?.primaryInputPorts.noteInput;
     })
@@ -47,10 +47,7 @@ export function createNotesDispatcher(
       if (!sourcePortKey && destPortKey) {
         destPortKeys = [destPortKey];
       } else if (sourcePortKey) {
-        destPortKeys = getNoteDestinationPortKeys(
-          hostSystemCore,
-          sourcePortKey,
-        );
+        destPortKeys = getDestinationPortKeys(hostSystemCore, sourcePortKey);
       }
       if (destPortKeys) {
         const sourceUnitId = sourcePortKey?.split(".")[0];
@@ -101,6 +98,24 @@ export function createNotesDispatcher(
         }
       } else {
         internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
+      }
+    },
+    pushAutomationDeliveryEvent(automationDeliveryEvent) {
+      const { sourcePortKey, parameterId, value, time } =
+        automationDeliveryEvent;
+      const destPortKey = getDestinationPortKeys(
+        hostSystemCore,
+        sourcePortKey,
+      )[0];
+      if (destPortKey) {
+        const destUnitId = destPortKey.split(".")[0];
+        const unit = hostSystemCore.bus.getUnit(destUnitId);
+        const port = unit?.primaryInputPorts.automationInput;
+        if (port) {
+          actionScheduler.pushAction(() => {
+            port.setParameter(parameterId, value, time);
+          }, time);
+        }
       }
     },
     setUnitNoteOutputMonitor(monitorFn) {

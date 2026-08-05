@@ -94,8 +94,18 @@ export type NoteDeliveryEvent = {
   velocity?: number;
 };
 
+export type AutomationDeliveryEvent = {
+  sourcePortKey: string;
+  parameterId: string;
+  value: number;
+  time?: number;
+};
+
 export type NotesDispatcher = {
   pushNoteDeliveryEvent(noteDeliveryEvent: NoteDeliveryEvent): void;
+  pushAutomationDeliveryEvent(
+    automationDeliveryEvent: AutomationDeliveryEvent,
+  ): void;
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
