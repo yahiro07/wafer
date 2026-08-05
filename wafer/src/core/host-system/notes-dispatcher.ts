@@ -1,5 +1,5 @@
 import { HsNoteInputPort } from "../linkage/types";
-import { HostSystemCore, NotesDispatcher } from "./types";
+import { HostSystemCore, NoteDeliveryEvent, NotesDispatcher } from "./types";
 import { createWebAudioActionScheduler } from "./webaudio-action-scheduler";
 
 function getNoteDestinationPortKeys(
@@ -31,8 +31,10 @@ export function createNotesDispatcher(
   const actionScheduler = createWebAudioActionScheduler(
     hostSystemCore.bus.audioContext,
   );
-  return {
-    pushNoteDeliveryEvent(noteDeliveryEvent) {
+  const hopIds: string[] = [];
+
+  const internal = {
+    pushNoteDeliveryEventImpl(noteDeliveryEvent: NoteDeliveryEvent) {
       const { time, sourcePortKey, destPortKey, noteNumber, velocity, isOn } =
         noteDeliveryEvent;
       let destPortKeys: string[] | undefined;
@@ -45,11 +47,6 @@ export function createNotesDispatcher(
         );
       }
       if (destPortKeys) {
-        for (const destPortKey of destPortKeys) {
-          console.log(
-            `deliverNote ${sourcePortKey}-->${destPortKey} ${noteNumber} ${isOn ? "on" : "off"}`,
-          );
-        }
         const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
         actionScheduler.pushAction(() => {
           for (const port of destPorts) {
@@ -60,6 +57,29 @@ export function createNotesDispatcher(
             }
           }
         }, time);
+      }
+    },
+  };
+  return {
+    pushNoteDeliveryEvent(noteDeliveryEvent) {
+      const { sourcePortKey } = noteDeliveryEvent;
+      if (sourcePortKey) {
+        if (hopIds.includes(sourcePortKey)) {
+          console.warn(
+            `recursive note delivery loop detected`,
+            hopIds.join(" > "),
+          );
+          return;
+        }
+        // console.log(`hopIds: ${hopIds.join(" > ")}`);
+        try {
+          hopIds.push(sourcePortKey);
+          internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
+        } finally {
+          hopIds.pop();
+        }
+      } else {
+        internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
       }
     },
     // setClockingFrameId(id) {
