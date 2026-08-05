@@ -29,7 +29,6 @@ export function createSequencerTickDriver(
       processUnitsStartStop(getAllUnits(), "start");
       core.start({
         processScheduling(timeFrom, barFrom, barTo, bpm) {
-          // hostSystem.setClockingFrameId(frameIndex);
           oxLogger.clockingFrameStart(frameIndex);
           processUnitsScheduling(getAllUnits(), timeFrom, barFrom, barTo, bpm);
           oxLogger.clockingFrameEnd(frameIndex);

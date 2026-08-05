@@ -97,12 +97,9 @@ export function createUnitLinkageManager(
 
   const unsubscribeInternalEvents =
     hostSystemCore.bus.internalEventPort.subscribe((event) => {
-      // console.log(event);
       if (event.type === "unitAdded") {
         internal.wrapUpdateConnection();
-      } /* else if (event.type === "beforeRemoveUnit") {
-        internal.wrapUpdateConnection();
-      } */ else if (event.type === "connectionRulesChanged") {
+      } else if (event.type === "connectionRulesChanged") {
         internal.wrapUpdateConnection();
       }
     });

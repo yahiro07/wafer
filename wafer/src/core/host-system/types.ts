@@ -1,7 +1,6 @@
 import { MetaAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import {
-  DestinationCode,
   HsAudioInputPort,
   HsUnitInstance,
   HsUnitInterface,
@@ -32,8 +31,6 @@ export type ConnectionRule = {
   destUnitId: string;
 };
 
-// type ConnectionKey =
-
 export type HostStateBus = {
   eventPort: EventPort<HostSystemEvent>;
   internalEventPort: EventPort<HostSystemInternalEvent>;
@@ -53,24 +50,8 @@ export type HostStateBusImpl = HostStateBus & {
   connectionRules: ConnectionRule[];
 };
 
-//deprecated
-export type PendingUnitOperationItem = {
-  type: "connection" | "state";
-  op: () => void;
-  // debugMetadata?: string;
-};
-//deprecated
-export type UnitLoadingManager = {
-  reserveLoadUnit(unitId: string, promise: Promise<HsUnitInstance>): void;
-  cancelLoadUnit(promise: Promise<HsUnitInstance>): void;
-  reserveUnitOperation(item: PendingUnitOperationItem): void;
-};
-
 export type HostSystemCore = {
-  // audioContext: IAudioContext;
   bus: HostStateBus;
-  // loadingManager: UnitLoadingManager;
-  // actionScheduler: WebAudioActionScheduler;
   addUnit(unit: HsUnitInstance): void;
   removeUnit(unitId: string): void;
   pushUnitLoadingId(id: string): void;
@@ -81,30 +62,6 @@ export type HostSystemCore = {
     enabled: boolean,
   ): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
-  // getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
-  // setUnitNoteOutputMonitor(
-  //   monitorFn: UnitNoteOutputMonitorFn | undefined,
-  // ): void;
-};
-
-export type UnitLinkageManager__OldImpl = {
-  createUnitInterface(
-    unitId: string,
-    createdCallback: (unitInstance: HsUnitInstance) => void,
-  ): HsUnitInterface;
-  //
-  registerUnitInstance(unit: HsUnitInstance): () => void;
-  registerPendingUnitInstancePromise(
-    unitId: string,
-    unitInstancePromise: Promise<HsUnitInstance>,
-  ): () => void;
-  reserveConnectionSingle(source: string, destination: string): void;
-  removeConnectionSingle(source: string, destination: string): void;
-  reserveConnectionChange(
-    srcUnitId: string,
-    destSpec: DestinationCode | undefined,
-  ): void;
-  onUnitRemoving(unitId: string): void;
 };
 
 export type UnitLinkageManager = {
@@ -139,7 +96,6 @@ export type NoteDeliveryEvent = {
 
 export type NotesDispatcher = {
   pushNoteDeliveryEvent(noteDeliveryEvent: NoteDeliveryEvent): void;
-  // setClockingFrameId(id: number): void;
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
@@ -176,6 +132,5 @@ export type HostSystem = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
-  // setClockingFrameId(id: number): void;
   linkageApi: LinkageApi;
 };

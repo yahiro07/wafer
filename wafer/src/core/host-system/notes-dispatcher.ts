@@ -103,9 +103,6 @@ export function createNotesDispatcher(
         internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
       }
     },
-    // setClockingFrameId(id) {
-    //   console.log(`clocking frame id: ${id}`);
-    // },
     setUnitNoteOutputMonitor(monitorFn) {
       unitNoteOutputMonitorFn = monitorFn;
     },

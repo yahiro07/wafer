@@ -20,40 +20,19 @@ export function createHostSystem(
   audioContext: IAudioContext,
   options?: {
     hostSystemCore?: HostSystemCore;
-    // customActionScheduler?: WebAudioActionScheduler | "none";
     customNotesDispatcher?: NotesDispatcher;
     linkageManager?: UnitLinkageManager;
   },
 ): HostSystem {
-  // let actionScheduler: WebAudioActionScheduler;
-  // if (options?.customActionScheduler === "none") {
-  //   actionScheduler = createDummyActionScheduler();
-  // } else if (options?.customActionScheduler) {
-  //   actionScheduler = options.customActionScheduler;
-  // } else {
-  //   actionScheduler = createWebAudioActionScheduler(audioContext);
-  // }
   const hostSystemCore =
     options?.hostSystemCore ?? createHostSystemCore(audioContext);
+  const { bus } = hostSystemCore;
   const notesDispatcher =
     options?.customNotesDispatcher ?? createNotesDispatcher(hostSystemCore);
-
-  const { bus } = hostSystemCore;
-
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
-
   const linkageManager =
     options?.linkageManager ?? createUnitLinkageManager(hostSystemCore);
-
   const linkageApi = createLinkageApi(hostSystemCore, notesDispatcher);
-
-  // const noteNumberToUnitIdMap = new Map<number, string>();
-
-  const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
-    if (e.type === "beforeRemoveUnit") {
-      // linkageManager.onUnitRemoving(e.unitInstance.unitId);
-    }
-  });
 
   async function waitPendingUnitsLoaded(): Promise<void> {
     if (bus.getUnitLoadingIds().size === 0) return;
@@ -108,51 +87,13 @@ export function createHostSystem(
         time,
         velocity,
       });
-      // if (isOn) {
-      //   const unit = bus.getUnit(destUnitId);
-      //   const noteOnFn = unit?.primaryInputPorts.noteInput?.noteOn;
-      //   if (noteOnFn) {
-      //     // actionScheduler.pushAction(
-      //     //   () => noteOnFn(noteNumber, time, velocity),
-      //     //   time,
-      //     // );
-      //     notesDispatcher.pushNoteDeliveryEvent({
-      //       destPortKey: `${destUnitId}.noteInput`,
-      //       noteNumber,
-      //       isOn,
-      //       time,
-      //       velocity,
-      //     });
-      //   }
-      //   noteNumberToUnitIdMap.set(noteNumber, destUnitId);
-      // } else {
-      //   const unitId = noteNumberToUnitIdMap.get(noteNumber);
-      //   if (unitId) {
-      //     const unit = bus.getUnit(unitId);
-      //     const noteOffFn = unit?.primaryInputPorts.noteInput?.noteOff;
-      //     if (noteOffFn) {
-      //       // actionScheduler.pushAction(() => noteOffFn(noteNumber, time), time);
-      //       notesDispatcher.pushNoteDeliveryEvent({
-      //         destPortKey: `${destUnitId}.noteInput`,
-      //         noteNumber,
-      //         isOn,
-      //         time,
-      //       });
-      //     }
-      //   }
-      //   noteNumberToUnitIdMap.delete(noteNumber);
-      // }
     },
     cleanup() {
       linkageManager.cleanup();
-      unsubscribeInternalEvents();
     },
     setUnitNoteOutputMonitor(monitorFn) {
       notesDispatcher.setUnitNoteOutputMonitor(monitorFn);
     },
-    // setClockingFrameId(id) {
-    //   notesDispatcher.setClockingFrameId(id);
-    // },
     linkageApi,
   };
 }

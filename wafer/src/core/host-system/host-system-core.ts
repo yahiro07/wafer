@@ -4,12 +4,8 @@ import { HostSystemCore, IAudioContext } from "./types";
 
 export function createHostSystemCore(
   audioContext: IAudioContext,
-  // actionScheduler: WebAudioActionScheduler,
 ): HostSystemCore {
   const bus = createHostStateBus(audioContext);
-  // const loadingManager = createUnitLoadingManager(bus);
-  // let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
-
   const internal = {
     cleanupDesiredConnectionsBeforeRemovingUnit(unitId: string) {
       removeArrayItems(
@@ -77,11 +73,5 @@ export function createHostSystemCore(
         unit.hostCallbacks?.setMetaAttributes?.(attributes);
       }
     },
-    // getUnitNoteOutputMonitor() {
-    //   return unitNoteOutputMonitorFn;
-    // },
-    // setUnitNoteOutputMonitor(monitorFn) {
-    //   unitNoteOutputMonitorFn = monitorFn;
-    // },
   };
 }
