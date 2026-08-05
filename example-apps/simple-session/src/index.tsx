@@ -71,7 +71,7 @@ const ControlBar = () => {
         <input
           className="cursor-pointer"
           type="range"
-          min={90}
+          min={60}
           max={160}
           value={bpm}
           onInput={(e) => store.setBpm(Number(e.currentTarget.value))}
