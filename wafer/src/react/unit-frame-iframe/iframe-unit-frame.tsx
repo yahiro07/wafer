@@ -79,9 +79,12 @@ export const IFrameUnitFrame = ({
     <iframe
       key={pageUrl}
       className={className}
-      style={
-        size ? { width: `${size[0]}px`, height: `${size[1]}px` } : undefined
-      }
+      style={{
+        border: "none",
+        ...(size
+          ? { width: `${size[0]}px`, height: `${size[1]}px` }
+          : undefined),
+      }}
       ref={iframeRef}
       src={pageUrl}
       title={unitId}
