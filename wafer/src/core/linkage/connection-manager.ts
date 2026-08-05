@@ -244,30 +244,6 @@ function extractSingleDestCode(code: string): UnitPortSpec {
   }
 }
 
-function extractFanOutDestCode(code: string): UnitPortSpec[] {
-  const segments = code.split("&");
-  return segments.map((segment) => extractSingleDestCode(segment));
-}
-
-function buildConnectionEntries(
-  srcUnitId: string,
-  destSpec: DestinationCode,
-): UnitPortConnectionEntry[] {
-  return destSpec.split("|").flatMap((part) => {
-    const segments = part.split(":");
-    if (segments.length === 2) {
-      const from = { unitId: srcUnitId, portId: segments[0] };
-      const tos = extractFanOutDestCode(segments[1]);
-      return tos.map((to) => createUnitPortConnectionEntry(from, to));
-    } else if (segments.length === 1) {
-      const from = { unitId: srcUnitId, portId: "primaryOutput" };
-      const tos = extractFanOutDestCode(segments[0]);
-      return tos.map((to) => createUnitPortConnectionEntry(from, to));
-    }
-    return [];
-  });
-}
-
 export function createUnitConnectionsManagerSingle(
   bus: HostStateBus,
 ): ConnectionManagerSingle {
@@ -298,69 +274,6 @@ export function createUnitConnectionsManagerSingle(
         updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
         connectionEntries.delete(key);
       }
-    },
-  };
-}
-
-export function createUnitConnectionsManager(
-  bus: HostStateBus,
-): ConnectionManager {
-  let activeConnectionEntries: UnitPortConnectionEntry[] = [];
-
-  return {
-    setConnectionChange(srcUnitId: string, destSpec: DestinationCode) {
-      const unit = bus.getUnit(srcUnitId);
-      if (!unit) return;
-
-      let connectionsToAdd: UnitPortConnectionEntry[] = [];
-      let connectionsToRemove: UnitPortConnectionEntry[] = [];
-
-      if (destSpec) {
-        const existingKeys = activeConnectionEntries
-          .filter((entry) => entry.from.unitId === srcUnitId)
-          .map((entry) => entry.key);
-
-        const entries = buildConnectionEntries(srcUnitId, destSpec);
-        const nextKeys = entries.map((entry) => entry.key);
-
-        connectionsToAdd = entries.filter(
-          (entry) => !existingKeys.includes(entry.key),
-        );
-        connectionsToRemove = activeConnectionEntries.filter(
-          (entry) =>
-            entry.from.unitId === srcUnitId && !nextKeys.includes(entry.key),
-        );
-      } else {
-        connectionsToRemove = activeConnectionEntries.filter(
-          (entry) => entry.from.unitId === srcUnitId,
-        );
-      }
-
-      for (const entry of connectionsToAdd) {
-        updateUnitConnectionToPort(bus, entry.from, entry.to, "connectTo");
-      }
-      for (const entry of connectionsToRemove) {
-        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
-      }
-      activeConnectionEntries = [
-        ...activeConnectionEntries,
-        ...connectionsToAdd,
-      ].filter((key) => !connectionsToRemove.includes(key));
-      reportNumConnections();
-    },
-    onUnitRemoving(unitId: string) {
-      const unit = bus.getUnit(unitId);
-      if (!unit) return;
-      const connectionsToRemove = activeConnectionEntries.filter((entry) => {
-        return entry.from.unitId === unitId || entry.to.unitId === unitId;
-      });
-      for (const entry of connectionsToRemove) {
-        updateUnitConnectionToPort(bus, entry.from, entry.to, "disconnectTo");
-      }
-      activeConnectionEntries = activeConnectionEntries.filter(
-        (entry) => !connectionsToRemove.includes(entry),
-      );
-      reportNumConnections();
     },
   };
 }

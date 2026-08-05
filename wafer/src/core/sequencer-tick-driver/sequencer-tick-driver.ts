@@ -1,5 +1,6 @@
 import { oxLogger } from "../host-system/orchestration-logger";
 import { HostSystem } from "../host-system/types";
+import { HsUnitInstance } from "../linkage/types";
 import { createSequencerTickDriverCore } from "./sequencer-tick-driver-core";
 import { sequencerTickDriverHelper } from "./sequencer-tick-driver-helper";
 
@@ -17,7 +18,7 @@ export function createSequencerTickDriver(
   const { processUnitsStartStop, processUnitsScheduling } =
     sequencerTickDriverHelper;
   const core = createSequencerTickDriverCore(hostSystem.audioContext, 25, 100);
-  const getAllUnits = hostSystem.getAllUnits;
+  const getAllUnits = () => hostSystem.getAllUnits() as HsUnitInstance[];
   let frameIndex = 0;
 
   return {

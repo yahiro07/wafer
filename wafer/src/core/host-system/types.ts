@@ -1,13 +1,11 @@
 import { MetaAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import {
-  DestinationCode,
   HsAudioInputPort,
   HsUnitInstance,
   HsUnitInterface,
   HsUnitStateData,
 } from "../linkage/types";
-import { WebAudioActionScheduler } from "./webaudio-action-scheduler";
 
 export type IAudioContext = AudioContext | OfflineAudioContext;
 
@@ -19,59 +17,98 @@ export type HostSystemEvent =
   | { type: "unitRemoved"; unitId: string }
   | { type: "messageFromUnit"; message: object; senderUnitId: string };
 
+export type HostSystemInternalEvent =
+  | { type: "connectionRulesChanged" }
+  | { type: "unitAdded"; unitId: string }
+  // | { type: "beforeRemoveUnit"; unitId: string }
+  | { type: "pendingUnitsLoaded" };
+
+export type ConnectionRule = {
+  connectionKey: string; // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  srcPortKey: string; //${unitId}.${portId}
+  destPortKey: string; //${unitId}.${portId}
+  srcUnitId: string;
+  destUnitId: string;
+};
+
 export type HostStateBus = {
   eventPort: EventPort<HostSystemEvent>;
+  internalEventPort: EventPort<HostSystemInternalEvent>;
   audioContext: IAudioContext;
   masterGainNode: GainNode;
   audioDestinationVirtualInputPort: HsAudioInputPort;
-  addUnit(unit: HsUnitInstance): void;
   getUnit(unitId: string): HsUnitInstance | undefined;
-  getAllUnits(): HsUnitInstance[];
-  removeUnit(unitId: string): void;
+  getAllUnits(): readonly HsUnitInstance[];
+  getAllUnitsDictionary(): ReadonlyMap<string, HsUnitInstance>;
+  getConnectionRules(): readonly ConnectionRule[];
+  getUnitLoadingIds(): ReadonlySet<string>;
 };
 
-export type PendingUnitOperationItem = {
-  type: "connection" | "state";
-  op: () => void;
-  // debugMetadata?: string;
-};
-
-export type UnitLoadingManager = {
-  reserveLoadUnit(unitId: string, promise: Promise<HsUnitInstance>): void;
-  cancelLoadUnit(promise: Promise<HsUnitInstance>): void;
-  reserveUnitOperation(item: PendingUnitOperationItem): void;
+export type HostStateBusImpl = HostStateBus & {
+  unitLoadingIds: Set<string>;
+  units: Map<string, HsUnitInstance>;
+  connectionRules: ConnectionRule[];
 };
 
 export type HostSystemCore = {
-  audioContext: IAudioContext;
   bus: HostStateBus;
-  loadingManager: UnitLoadingManager;
-  actionScheduler: WebAudioActionScheduler;
-  emitMetaAttributes(attributes: MetaAttributes): void;
-  getUnitNoteOutputMonitor(): UnitNoteOutputMonitorFn | undefined;
-  setUnitNoteOutputMonitor(
-    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  addUnit(unit: HsUnitInstance): void;
+  removeUnit(unitId: string): void;
+  pushUnitLoadingId(id: string): void;
+  clearUnitLoadingId(id: string): void;
+  pushConnectionRule(
+    source: string,
+    destination: string,
+    enabled: boolean,
   ): void;
+  emitMetaAttributes(attributes: MetaAttributes): void;
 };
 
 export type UnitLinkageManager = {
+  cleanup(): void;
+};
+
+export type LinkageApi = {
   createUnitInterface(
     unitId: string,
-    createdCallback: (unitInstance: HsUnitInstance) => void,
+    completeSetupCallback: (unitInstance: HsUnitInstance) => void,
   ): HsUnitInterface;
-  //
   registerUnitInstance(unit: HsUnitInstance): () => void;
   registerPendingUnitInstancePromise(
     unitId: string,
     unitInstancePromise: Promise<HsUnitInstance>,
   ): () => void;
-  reserveConnectionSingle(source: string, destination: string): void;
-  removeConnectionSingle(source: string, destination: string): void;
-  reserveConnectionChange(
-    srcUnitId: string,
-    destSpec: DestinationCode | undefined,
+  reserveConnection(
+    source: string,
+    destination: string,
+    enabled: boolean,
   ): void;
-  onUnitRemoving(unitId: string): void;
+};
+
+export type NoteDeliveryEvent = {
+  sourcePortKey?: string;
+  destPortKey?: string;
+  noteNumber: number;
+  isOn: boolean;
+  time?: number;
+  velocity?: number;
+};
+
+export type AutomationDeliveryEvent = {
+  sourcePortKey: string;
+  parameterId: string;
+  value: number;
+  time?: number;
+};
+
+export type NotesDispatcher = {
+  pushNoteDeliveryEvent(noteDeliveryEvent: NoteDeliveryEvent): void;
+  pushAutomationDeliveryEvent(
+    automationDeliveryEvent: AutomationDeliveryEvent,
+  ): void;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
 };
 
 export type UnitNoteOutputMonitorFn = (args: {
@@ -86,7 +123,7 @@ export type UnitNoteOutputMonitorFn = (args: {
 export type HostSystem = {
   audioContext: IAudioContext;
   eventPort: EventPort<HostSystemEvent>;
-  getAllUnits(): HsUnitInstance[];
+  getAllUnits(): readonly HsUnitInstance[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
@@ -105,5 +142,5 @@ export type HostSystem = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
-  linkageApi: UnitLinkageManager;
+  linkageApi: LinkageApi;
 };

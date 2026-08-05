@@ -1,56 +1,50 @@
 import { delayMs } from "../../utils/timer-utils";
+import { createLinkageApi } from "../linkage/linkage-api";
 import { HsUnitStateData } from "../linkage/types";
 import { createUnitLinkageManager } from "../linkage/unit-linkage-manager";
 import { createHostSystemCore } from "./host-system-core";
+import { createNotesDispatcher } from "./notes-dispatcher";
 import {
   HostSystem,
   HostSystemCore,
   IAudioContext,
+  NotesDispatcher,
   UnitLinkageManager,
 } from "./types";
 import {
   createUnitPersistenceHandlers,
   unitStateOperations,
 } from "./unit-persistence";
-import {
-  createDummyActionScheduler,
-  createWebAudioActionScheduler,
-  WebAudioActionScheduler,
-} from "./webaudio-action-scheduler";
 
 export function createHostSystem(
   audioContext: IAudioContext,
   options?: {
     hostSystemCore?: HostSystemCore;
-    customActionScheduler?: WebAudioActionScheduler | "none";
+    customNotesDispatcher?: NotesDispatcher;
     linkageManager?: UnitLinkageManager;
   },
 ): HostSystem {
-  let actionScheduler: WebAudioActionScheduler;
-  if (options?.customActionScheduler === "none") {
-    actionScheduler = createDummyActionScheduler();
-  } else if (options?.customActionScheduler) {
-    actionScheduler = options.customActionScheduler;
-  } else {
-    actionScheduler = createWebAudioActionScheduler(audioContext);
-  }
   const hostSystemCore =
-    options?.hostSystemCore ??
-    createHostSystemCore(audioContext, actionScheduler);
-  const { bus, loadingManager } = hostSystemCore;
-
+    options?.hostSystemCore ?? createHostSystemCore(audioContext);
+  const { bus } = hostSystemCore;
+  const notesDispatcher =
+    options?.customNotesDispatcher ?? createNotesDispatcher(hostSystemCore);
   const unitPersistenceHandlers = createUnitPersistenceHandlers(bus);
-
   const linkageManager =
     options?.linkageManager ?? createUnitLinkageManager(hostSystemCore);
+  const linkageApi = createLinkageApi(hostSystemCore, notesDispatcher);
 
-  const noteNumberToUnitIdMap = new Map<number, string>();
-
-  const unsubscribeInternalEvents = bus.eventPort.subscribe((e) => {
-    if (e.type === "beforeRemoveUnit") {
-      linkageManager.onUnitRemoving(e.unitInstance.unitId);
-    }
-  });
+  async function waitPendingUnitsLoaded(): Promise<void> {
+    if (bus.getUnitLoadingIds().size === 0) return;
+    await new Promise<void>((resolve) => {
+      const unsubscribe = bus.internalEventPort.subscribe((ev) => {
+        if (ev.type === "pendingUnitsLoaded") {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
 
   return {
     audioContext,
@@ -83,42 +77,23 @@ export function createHostSystem(
     },
     async waitUnitsLoaded() {
       await delayMs(200); //wait for iframes to be mounted in dom
-      await new Promise<void>((resolve) => {
-        loadingManager.reserveUnitOperation({
-          type: "state",
-          op: () => resolve(),
-        });
-      });
+      await waitPendingUnitsLoaded();
     },
     deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
-      if (isOn) {
-        const unit = bus.getUnit(destUnitId);
-        const noteOnFn = unit?.primaryInputPorts.noteInput?.noteOn;
-        if (noteOnFn) {
-          actionScheduler.pushAction(
-            () => noteOnFn(noteNumber, time, velocity),
-            time,
-          );
-        }
-        noteNumberToUnitIdMap.set(noteNumber, destUnitId);
-      } else {
-        const unitId = noteNumberToUnitIdMap.get(noteNumber);
-        if (unitId) {
-          const unit = bus.getUnit(unitId);
-          const noteOffFn = unit?.primaryInputPorts.noteInput?.noteOff;
-          if (noteOffFn) {
-            actionScheduler.pushAction(() => noteOffFn(noteNumber, time), time);
-          }
-        }
-        noteNumberToUnitIdMap.delete(noteNumber);
-      }
+      notesDispatcher.pushNoteDeliveryEvent({
+        destPortKey: `${destUnitId}.noteInput`,
+        noteNumber,
+        isOn,
+        time,
+        velocity,
+      });
     },
     cleanup() {
-      unsubscribeInternalEvents();
+      linkageManager.cleanup();
     },
     setUnitNoteOutputMonitor(monitorFn) {
-      hostSystemCore.setUnitNoteOutputMonitor(monitorFn);
+      notesDispatcher.setUnitNoteOutputMonitor(monitorFn);
     },
-    linkageApi: linkageManager,
+    linkageApi,
   };
 }

@@ -4,9 +4,8 @@ import { oxLogger } from "../host-system/orchestration-logger";
 import {
   HostSystemCore,
   IAudioContext,
-  UnitNoteOutputMonitorFn,
+  NotesDispatcher,
 } from "../host-system/types";
-import { WebAudioActionScheduler } from "../host-system/webaudio-action-scheduler";
 import {
   AudioPort,
   HsAdditionalAudioInputPort,
@@ -20,78 +19,41 @@ import {
   HsUnitInterface,
 } from "./types";
 
-let seqNoteId = 0;
-
 function createHsNoteOutputPort(
-  actionScheduler: WebAudioActionScheduler,
   unitId: string,
-  getUnitNoteOutputMonitor: () => UnitNoteOutputMonitorFn | undefined,
+  notesDispatcher: NotesDispatcher,
 ): HsNoteOutputPort {
-  const connectedInputPorts = new Set<NotePort>();
-  const noteIdsMap = new Map<number, string>();
-  // let emitting = false;
+  // const connectedInputPorts = new Set<NotePort>();
   return {
-    connectTo(port: NotePort) {
-      connectedInputPorts.add(port);
+    connectTo(_port: NotePort) {
+      // connectedInputPorts.add(port);
     },
-    disconnectTo(port: NotePort) {
-      connectedInputPorts.delete(port);
+    disconnectTo(_port: NotePort) {
+      // connectedInputPorts.delete(port);
     },
     noteOn(noteNumber, time, velocity) {
-      const monitorFn = getUnitNoteOutputMonitor();
-      if (monitorFn) {
-        const sourceUnitId = unitId;
-        monitorFn({ sourceUnitId, noteNumber, isOn: true, time, velocity });
-      }
-      const noteId = `n${(seqNoteId++).toString().padStart(3, "0")}`;
-      // if (emitting) return; //avoid recursive call
-      // emitting = true;
-      oxLogger.noteEmit({
-        unitIdFrom: unitId,
-        unitIdTo: "??",
+      notesDispatcher.pushNoteDeliveryEvent({
+        sourcePortKey: `${unitId}.noteOutput`,
         noteNumber,
         isOn: true,
         time,
-        noteId,
+        velocity,
       });
-      noteIdsMap.set(noteNumber, noteId);
-      actionScheduler.pushAction(() => {
-        connectedInputPorts.forEach((connectedInputPort) => {
-          connectedInputPort.noteOn(noteNumber, time, velocity);
-        });
-      }, time);
-      // emitting = false;
     },
     noteOff(noteNumber, time) {
-      const monitorFn = getUnitNoteOutputMonitor();
-      if (monitorFn) {
-        const sourceUnitId = unitId;
-        monitorFn({ sourceUnitId, noteNumber, isOn: false, time });
-      }
-      const noteId = noteIdsMap.get(noteNumber);
-      // if (emitting) return; //avoid recursive call
-      // emitting = true;
-      oxLogger.noteEmit({
-        unitIdFrom: unitId,
-        unitIdTo: "??",
+      notesDispatcher.pushNoteDeliveryEvent({
+        sourcePortKey: `${unitId}.noteOutput`,
         noteNumber,
         isOn: false,
         time,
-        noteId: noteId ?? "??",
       });
-      noteIdsMap.delete(noteNumber);
-      actionScheduler.pushAction(() => {
-        connectedInputPorts.forEach((connectedInputPort) => {
-          connectedInputPort.noteOff(noteNumber, time);
-        });
-      }, time);
-      // emitting = false;
     },
   };
 }
 
 function createHsAutomationOutputPort(
-  actionScheduler: WebAudioActionScheduler,
+  unitId: string,
+  notesDispatcher: NotesDispatcher,
 ): HsAutomationOutputPort {
   let connectedInputPort: AutomationPort | undefined;
   return {
@@ -110,9 +72,12 @@ function createHsAutomationOutputPort(
       return connectedInputPort?.getParameter(id);
     },
     setParameter(id: string, value: number, time?: number) {
-      actionScheduler.pushAction(() => {
-        connectedInputPort?.setParameter(id, value, time);
-      }, time);
+      notesDispatcher.pushAutomationDeliveryEvent({
+        sourcePortKey: `${unitId}.automationOutput`,
+        parameterId: id,
+        value,
+        time,
+      });
     },
   };
 }
@@ -284,10 +249,13 @@ function buildPortInfos(
 
 export function createUnitInterface(
   hostSystemCore: HostSystemCore,
+  notesDispatcher: NotesDispatcher,
   unitId: string,
   createdCallback: (unitInstance: HsUnitInstance) => void,
 ): HsUnitInterface {
-  const { audioContext } = hostSystemCore;
+  let cancelled = false;
+
+  const { audioContext } = hostSystemCore.bus;
   let audioOutputPort: HsAudioOutputPort | undefined;
   let audioInputPort: HsAudioInputPort | undefined;
   let noteOutputPort: HsNoteOutputPort | undefined;
@@ -331,11 +299,7 @@ export function createUnitInterface(
       raiseIfInvalidPortsAccess(
         "unitInterface.createNoteOutputPort cannot be called after completeSetup",
       );
-      noteOutputPort = createHsNoteOutputPort(
-        hostSystemCore.actionScheduler,
-        unitId,
-        hostSystemCore.getUnitNoteOutputMonitor,
-      );
+      noteOutputPort = createHsNoteOutputPort(unitId, notesDispatcher);
       return noteOutputPort;
     },
     createAutomationOutputPort() {
@@ -343,7 +307,8 @@ export function createUnitInterface(
         "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
       );
       automationOutputPort = createHsAutomationOutputPort(
-        hostSystemCore.actionScheduler,
+        unitId,
+        notesDispatcher,
       );
       return automationOutputPort;
     },
@@ -372,6 +337,7 @@ export function createUnitInterface(
       });
     },
     completeSetup(attrs) {
+      if (cancelled) return;
       const primaryInputPorts = {
         audioInput: audioInputPort,
         noteInput: attrs.noteInput
@@ -391,7 +357,7 @@ export function createUnitInterface(
         additionalAudioInputs,
       );
 
-      createdCallback({
+      const unitInstance: HsUnitInstance = {
         unitId,
         viewSize: attrs.unitAspects.viewSize,
         preferJustSize: attrs.unitAspects.preferJustSize,
@@ -405,8 +371,12 @@ export function createUnitInterface(
         unitCallbacks: attrs.unitCallbacks,
         portInfos,
         cleanup: attrs.cleanup,
-      });
+      };
+      createdCallback(unitInstance);
       portsFixed = true;
+    },
+    cancelLoading() {
+      cancelled = true;
     },
   };
 }

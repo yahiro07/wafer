@@ -4,10 +4,12 @@ import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./unit-frame-react/react-unit-interface";
+import { UnitDestinationSpec } from "./destination-spec";
+import { useAffectUnitSourcedConnections } from "./use-affect-unit-sourced-connections";
 
 type Props = {
   unitId: string;
-  destSpec?: string;
+  destSpec?: UnitDestinationSpec;
 };
 
 const routingDummyUnitTemplateFn: ReactUnitTemplateFn = (unitInterface) => {
@@ -35,9 +37,7 @@ export const RoutingDummyUnit = ({ unitId, destSpec }: Props) => {
     return hostSystem.linkageApi.registerUnitInstance(unit);
   }, [unit, hostSystem]);
 
-  useEffect(() => {
-    hostSystem.linkageApi.reserveConnectionChange(unitId, destSpec);
-  }, [unitId, destSpec, hostSystem]);
+  useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 
   return <unit.RenderUi />;
 };

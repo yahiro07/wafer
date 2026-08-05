@@ -1,4 +1,5 @@
 import { HostSystem, HsUnitInstance } from "../../core";
+import { HsUnitInterface } from "../../core/linkage/types";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 export function loadIframeUnitInstance(
   hostSystem: HostSystem,
@@ -16,8 +17,10 @@ export function loadIframeUnitInstance(
     unitInterface?: UnitInterface;
   };
 
+  let unitInterface: HsUnitInterface | undefined;
+
   const unitInstantiationPromise = new Promise<HsUnitInstance>((resolve) => {
-    const unitInterface = hostSystem.linkageApi.createUnitInterface(
+    unitInterface = hostSystem.linkageApi.createUnitInterface(
       unitId,
       (unitInstance) => {
         sideEffects.unitInstanceRef.current = unitInstance;
@@ -42,6 +45,7 @@ export function loadIframeUnitInstance(
       unitInstantiationPromise,
     );
   return () => {
+    unitInterface?.cancelLoading();
     unregisterUnit();
     cleanupIFrameCallback?.();
     win.iframeUnitUnloadingCallback?.();

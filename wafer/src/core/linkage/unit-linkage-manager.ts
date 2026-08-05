@@ -1,67 +1,111 @@
 import { HostSystemCore, UnitLinkageManager } from "../host-system/types";
 import {
-  createUnitConnectionsManager,
+  ConnectionManagerSingle,
   createUnitConnectionsManagerSingle,
 } from "./connection-manager";
-import { HsUnitInstance } from "./types";
-import { createUnitInterface } from "./unit-interface-impl";
+
+function decodeConnectionKey(key: string): {
+  srcUnitId: string;
+  destUnitId: string;
+  srcPortKey: string;
+  destPortKey: string;
+} {
+  const [srcPortKey, destPortKey] = key.split(">");
+  const srcUnitId = srcPortKey.split(".")[0];
+  const destUnitId = destPortKey.split(".")[0];
+  return {
+    srcUnitId,
+    srcPortKey,
+    destUnitId,
+    destPortKey,
+  };
+}
+
+function updateConnections(
+  connectionManager: ConnectionManagerSingle,
+  activeUnitIds: Set<string>,
+  actualConnectionKeys: Set<string>,
+  desiredConnectionKeys: Set<string>,
+) {
+  let numAdded = 0;
+  let numRemoved = 0;
+  const connectionsToRemove = Array.from(actualConnectionKeys).filter(
+    (key) => !desiredConnectionKeys.has(key),
+  );
+  for (const conn of connectionsToRemove) {
+    const { srcUnitId, srcPortKey, destUnitId, destPortKey } =
+      decodeConnectionKey(conn);
+    const hasSrcUnit = activeUnitIds.has(srcUnitId);
+    const hasDestUnit =
+      activeUnitIds.has(destUnitId) || destUnitId === "$output";
+
+    if (!(hasSrcUnit && hasDestUnit)) {
+      console.warn(
+        "unit has already been removed when cleaning up the connection",
+        !hasSrcUnit ? `srcUnitId: ${srcUnitId}` : "",
+        !hasDestUnit ? `destUnitId: ${destUnitId}` : "",
+      );
+    }
+    connectionManager.setConnectionSingle(srcPortKey, destPortKey, false);
+    actualConnectionKeys.delete(conn);
+    numRemoved++;
+  }
+
+  const connectionsToAdd = Array.from(desiredConnectionKeys).filter(
+    (key) => !actualConnectionKeys.has(key),
+  );
+  for (const conn of connectionsToAdd) {
+    const { srcUnitId, srcPortKey, destUnitId, destPortKey } =
+      decodeConnectionKey(conn);
+    const hasSrcUnit = activeUnitIds.has(srcUnitId);
+    const hasDestUnit =
+      activeUnitIds.has(destUnitId) || destUnitId === "$output";
+    if (hasSrcUnit && hasDestUnit) {
+      connectionManager.setConnectionSingle(srcPortKey, destPortKey, true);
+      actualConnectionKeys.add(conn);
+      numAdded++;
+    }
+  }
+  // console.log(`updated connections: ${numAdded} added, ${numRemoved} removed`);
+}
 
 export function createUnitLinkageManager(
   hostSystemCore: HostSystemCore,
 ): UnitLinkageManager {
-  const { bus, loadingManager } = hostSystemCore;
-  const connectionManagerSingle = createUnitConnectionsManagerSingle(bus);
-  const connectionManager = createUnitConnectionsManager(bus);
+  const connectionManager = createUnitConnectionsManagerSingle(
+    hostSystemCore.bus,
+  );
+  const actualConnectionKeys = new Set<string>();
 
   const internal = {
-    addUnitInstancePromise(unitId: string, promise: Promise<HsUnitInstance>) {
-      loadingManager.reserveLoadUnit(unitId, promise);
-      return () => {
-        loadingManager.cancelLoadUnit(promise);
-        bus.removeUnit(unitId);
-      };
+    wrapUpdateConnection() {
+      const activeUnitIds = new Set(
+        hostSystemCore.bus.getAllUnits().map((unit) => unit.unitId),
+      );
+      const connectionRules = hostSystemCore.bus.getConnectionRules();
+      const desiredConnectionKeys = new Set(
+        connectionRules.map((rule) => rule.connectionKey),
+      );
+      updateConnections(
+        connectionManager,
+        activeUnitIds,
+        actualConnectionKeys,
+        desiredConnectionKeys,
+      );
     },
   };
 
+  const unsubscribeInternalEvents =
+    hostSystemCore.bus.internalEventPort.subscribe((event) => {
+      if (event.type === "unitAdded") {
+        internal.wrapUpdateConnection();
+      } else if (event.type === "connectionRulesChanged") {
+        internal.wrapUpdateConnection();
+      }
+    });
   return {
-    createUnitInterface(
-      unitId: string,
-      createdCallback: (unitInstance: HsUnitInstance) => void,
-    ) {
-      return createUnitInterface(hostSystemCore, unitId, createdCallback);
-    },
-    //
-    registerUnitInstance(unit: HsUnitInstance) {
-      const promise = Promise.resolve(unit);
-      return internal.addUnitInstancePromise(unit.unitId, promise);
-    },
-    registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
-      return internal.addUnitInstancePromise(unitId, unitInstancePromise);
-    },
-    reserveConnectionSingle(source, destination) {
-      loadingManager.reserveUnitOperation({
-        type: "connection",
-        op: () =>
-          connectionManagerSingle.setConnectionSingle(
-            source,
-            destination,
-            true,
-          ),
-      });
-    },
-    removeConnectionSingle(source, destination) {
-      connectionManagerSingle.setConnectionSingle(source, destination, false);
-    },
-    reserveConnectionChange(srcUnitId, destSpec) {
-      loadingManager.reserveUnitOperation({
-        type: "connection",
-        op: () =>
-          connectionManager.setConnectionChange(srcUnitId, destSpec ?? ""),
-      });
-    },
-    onUnitRemoving(unitId: string) {
-      connectionManagerSingle.onUnitRemoving(unitId);
-      connectionManager.onUnitRemoving(unitId);
+    cleanup() {
+      unsubscribeInternalEvents();
     },
   };
 }
