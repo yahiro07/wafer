@@ -140,9 +140,9 @@ export type NoteDeliveryEvent = {
 export type NotesDispatcher = {
   pushNoteDeliveryEvent(noteDeliveryEvent: NoteDeliveryEvent): void;
   // setClockingFrameId(id: number): void;
-  // setUnitNoteOutputMonitor(
-  //   monitorFn: UnitNoteOutputMonitorFn | undefined,
-  // ): void;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
 };
 
 export type UnitNoteOutputMonitorFn = (args: {
@@ -173,9 +173,9 @@ export type HostSystem = {
     velocity?: number;
   }): void;
   cleanup(): void;
-  // setUnitNoteOutputMonitor(
-  //   monitorFn: UnitNoteOutputMonitorFn | undefined,
-  // ): void;
+  setUnitNoteOutputMonitor(
+    monitorFn: UnitNoteOutputMonitorFn | undefined,
+  ): void;
   // setClockingFrameId(id: number): void;
   linkageApi: LinkageApi;
 };

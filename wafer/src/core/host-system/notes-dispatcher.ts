@@ -1,5 +1,10 @@
 import { HsNoteInputPort } from "../linkage/types";
-import { HostSystemCore, NoteDeliveryEvent, NotesDispatcher } from "./types";
+import {
+  HostSystemCore,
+  NoteDeliveryEvent,
+  NotesDispatcher,
+  UnitNoteOutputMonitorFn,
+} from "./types";
 import { createWebAudioActionScheduler } from "./webaudio-action-scheduler";
 
 function getNoteDestinationPortKeys(
@@ -32,6 +37,7 @@ export function createNotesDispatcher(
     hostSystemCore.bus.audioContext,
   );
   const hopIds: string[] = [];
+  let unitNoteOutputMonitorFn: UnitNoteOutputMonitorFn | undefined;
 
   const internal = {
     pushNoteDeliveryEventImpl(noteDeliveryEvent: NoteDeliveryEvent) {
@@ -47,8 +53,23 @@ export function createNotesDispatcher(
         );
       }
       if (destPortKeys) {
+        const sourceUnitId = sourcePortKey?.split(".")[0];
         const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
         actionScheduler.pushAction(() => {
+          if (sourceUnitId) {
+            unitNoteOutputMonitorFn?.({
+              sourceUnitId,
+              noteNumber,
+              isOn,
+              time,
+              velocity,
+            });
+          }
+          if (1) {
+            console.log(
+              `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
+            );
+          }
           for (const port of destPorts) {
             if (isOn) {
               port.noteOn(noteNumber, time, velocity);
@@ -71,7 +92,7 @@ export function createNotesDispatcher(
           );
           return;
         }
-        // console.log(`hopIds: ${hopIds.join(" > ")}`);
+        console.log(`hopIds: ${hopIds.join(" > ")}`);
         try {
           hopIds.push(sourcePortKey);
           internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
@@ -85,6 +106,8 @@ export function createNotesDispatcher(
     // setClockingFrameId(id) {
     //   console.log(`clocking frame id: ${id}`);
     // },
-    // setUnitNoteOutputMonitor(monitorFn) {},
+    setUnitNoteOutputMonitor(monitorFn) {
+      unitNoteOutputMonitorFn = monitorFn;
+    },
   };
 }
