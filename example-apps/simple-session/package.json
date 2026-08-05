@@ -1,5 +1,5 @@
 {
-  "name": "unit-thumbnail",
+  "name": "simple-session",
   "private": "true",
   "scripts": {
     "dev": "vite dev",
@@ -7,10 +7,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "snap-store": "^0.1.12",
-    "wafer-host": "^0.0.7"
+    "wafer-host": "file:../../wafer"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
