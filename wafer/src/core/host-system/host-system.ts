@@ -147,9 +147,12 @@ export function createHostSystem(
       linkageManager.cleanup();
       unsubscribeInternalEvents();
     },
-    setUnitNoteOutputMonitor(monitorFn) {
-      notesDispatcher.setUnitNoteOutputMonitor(monitorFn);
-    },
+    // setUnitNoteOutputMonitor(monitorFn) {
+    //   notesDispatcher.setUnitNoteOutputMonitor(monitorFn);
+    // },
+    // setClockingFrameId(id) {
+    //   notesDispatcher.setClockingFrameId(id);
+    // },
     linkageApi,
   };
 }

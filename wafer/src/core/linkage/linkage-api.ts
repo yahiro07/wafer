@@ -52,8 +52,5 @@ export function createLinkageApi(
     reserveConnection(source, destination, enabled) {
       hostSystemCore.pushConnectionRule(source, destination, enabled);
     },
-    setClockingFrameId(id) {
-      notesDispatcher.setClockingFrameId(id);
-    },
   };
 }

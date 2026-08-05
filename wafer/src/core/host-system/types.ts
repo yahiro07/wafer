@@ -26,9 +26,8 @@ export type HostSystemInternalEvent =
 
 export type ConnectionRule = {
   connectionKey: string; // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
-  // source: string; //${unitId}.${portId}
-  // destination: string; //${unitId}.${portId}
-  // enabled: boolean;
+  srcPortKey: string; //${unitId}.${portId}
+  destPortKey: string; //${unitId}.${portId}
   srcUnitId: string;
   destUnitId: string;
 };
@@ -127,12 +126,11 @@ export type LinkageApi = {
     destination: string,
     enabled: boolean,
   ): void;
-  setClockingFrameId(id: number): void;
 };
 
 export type NoteDeliveryEvent = {
   sourcePortKey?: string;
-  destPortKey: string;
+  destPortKey?: string;
   noteNumber: number;
   isOn: boolean;
   time?: number;
@@ -141,10 +139,10 @@ export type NoteDeliveryEvent = {
 
 export type NotesDispatcher = {
   pushNoteDeliveryEvent(noteDeliveryEvent: NoteDeliveryEvent): void;
-  setClockingFrameId(id: number): void;
-  setUnitNoteOutputMonitor(
-    monitorFn: UnitNoteOutputMonitorFn | undefined,
-  ): void;
+  // setClockingFrameId(id: number): void;
+  // setUnitNoteOutputMonitor(
+  //   monitorFn: UnitNoteOutputMonitorFn | undefined,
+  // ): void;
 };
 
 export type UnitNoteOutputMonitorFn = (args: {
@@ -175,8 +173,9 @@ export type HostSystem = {
     velocity?: number;
   }): void;
   cleanup(): void;
-  setUnitNoteOutputMonitor(
-    monitorFn: UnitNoteOutputMonitorFn | undefined,
-  ): void;
+  // setUnitNoteOutputMonitor(
+  //   monitorFn: UnitNoteOutputMonitorFn | undefined,
+  // ): void;
+  // setClockingFrameId(id: number): void;
   linkageApi: LinkageApi;
 };

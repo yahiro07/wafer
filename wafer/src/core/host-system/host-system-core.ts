@@ -56,7 +56,13 @@ export function createHostSystemCore(
       if (!curr && next) {
         const srcUnitId = source.split(".")[0];
         const destUnitId = destination.split(".")[0];
-        bus.connectionRules.push({ connectionKey, srcUnitId, destUnitId });
+        bus.connectionRules.push({
+          connectionKey,
+          srcPortKey: source,
+          destPortKey: destination,
+          srcUnitId,
+          destUnitId,
+        });
         bus.internalEventPort.emit({ type: "connectionRulesChanged" });
       } else if (curr && !next) {
         removeArrayItems(
