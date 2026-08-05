@@ -92,7 +92,7 @@ export function createNotesDispatcher(
           );
           return;
         }
-        console.log(`hopIds: ${hopIds.join(" > ")}`);
+        // console.log(`hopIds: ${hopIds.join(" > ")}`);
         try {
           hopIds.push(sourcePortKey);
           internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
