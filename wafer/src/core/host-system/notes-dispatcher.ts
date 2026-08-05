@@ -11,9 +11,15 @@ function getDestinationPortKeys(
   hostSystemCore: HostSystemCore,
   sourcePortKey: string,
 ): string[] {
+  const sourceUnitId = sourcePortKey.split(".")[0];
+  const sourcePrimaryOutputPortKey = `${sourceUnitId}.primaryOutput`;
   return hostSystemCore.bus
     .getConnectionRules()
-    .filter((it) => it.srcPortKey === sourcePortKey)
+    .filter(
+      (it) =>
+        it.srcPortKey === sourcePortKey ||
+        it.srcPortKey === sourcePrimaryOutputPortKey,
+    )
     .map((it) => it.destPortKey);
 }
 
@@ -52,29 +58,31 @@ export function createNotesDispatcher(
       if (destPortKeys) {
         const sourceUnitId = sourcePortKey?.split(".")[0];
         const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
-        actionScheduler.pushAction(() => {
-          if (sourceUnitId) {
-            unitNoteOutputMonitorFn?.({
-              sourceUnitId,
-              noteNumber,
-              isOn,
-              time,
-              velocity,
-            });
-          }
-          if (1) {
-            console.log(
-              `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
-            );
-          }
-          for (const port of destPorts) {
-            if (isOn) {
-              port.noteOn(noteNumber, time, velocity);
-            } else {
-              port.noteOff(noteNumber, time);
+        if (destPorts.length > 0) {
+          actionScheduler.pushAction(() => {
+            if (sourceUnitId) {
+              unitNoteOutputMonitorFn?.({
+                sourceUnitId,
+                noteNumber,
+                isOn,
+                time,
+                velocity,
+              });
             }
-          }
-        }, time);
+            if (1) {
+              console.log(
+                `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
+              );
+            }
+            for (const port of destPorts) {
+              if (isOn) {
+                port.noteOn(noteNumber, time, velocity);
+              } else {
+                port.noteOff(noteNumber, time);
+              }
+            }
+          }, time);
+        }
       }
     },
   };
