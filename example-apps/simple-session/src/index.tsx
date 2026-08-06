@@ -90,7 +90,6 @@ const UnitTiles = () => {
         destSpec="$output"
         unitUrl={catalog.sunsetDelay.loaderPageUrl}
       />
-
       <UnitFrameEx
         unitId="synth1"
         destSpec="effect1"
