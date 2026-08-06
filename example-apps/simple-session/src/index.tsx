@@ -86,24 +86,25 @@ const UnitTiles = () => {
   return (
     <div className="grid grid-cols-2 gap-2">
       <UnitFrameEx
+        unitId="effect1"
+        destSpec="$output"
+        unitUrl={catalog.sunsetDelay.loaderPageUrl}
+      />
+
+      <UnitFrameEx
+        unitId="synth1"
+        destSpec="effect1"
+        unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
+      />
+      <UnitFrameEx
         unitId="drum1"
         destSpec="$output"
         unitUrl={catalog.graphiteDrumMachine.loaderPageUrl}
       />
       <UnitFrameEx
-        unitId="effect1"
-        destSpec="$output"
-        unitUrl={catalog.sunsetDelay.loaderPageUrl}
-      />
-      <UnitFrameEx
         unitId="sequencer1"
         destSpec="synth1"
         unitUrl={catalog.tonerioSequencer.loaderPageUrl}
-      />
-      <UnitFrameEx
-        unitId="synth1"
-        destSpec="effect1"
-        unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
       />
     </div>
   );
