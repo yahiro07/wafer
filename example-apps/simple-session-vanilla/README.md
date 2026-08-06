@@ -4,7 +4,7 @@ A minimum host app example with plain javascript, without bundlers.
 
 ## prepare
 
-Run fetch-units.sh first. The script downloads required units from github and store them in `./units` folder.
+Run `fetch-units.sh` first. The script downloads required units from github and store them in `./units` folder.
 
 ```
 sh fetch-units.sh
