@@ -3,3 +3,5 @@ dist/
 node_modules/
 .vscode/settings.json
 *.code-workspace
+.wafer-cache/
+unit-inventories.json
