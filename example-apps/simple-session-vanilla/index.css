@@ -45,6 +45,10 @@ body {
   gap: 4px;
 }
 
+.bpm-input {
+  cursor: pointer;
+}
+
 .bpm-text {
   width: 40px;
   text-align: center;

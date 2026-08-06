@@ -11,10 +11,9 @@ const store = {
 const createElement = (tag) => document.createElement(tag);
 const getElement = (id) => document.getElementById(id);
 
-function createUnit(baseDiv, unitId, destSpec, url) {
+function setupIframeUnit(baseDiv, unitId, destSpec, url) {
   const innerDiv = createElement("div");
   baseDiv.appendChild(innerDiv);
-  baseDiv.style.overflow = "hidden";
 
   const iframe = createElement("iframe");
   iframe.src = url;
@@ -25,17 +24,15 @@ function createUnit(baseDiv, unitId, destSpec, url) {
     const baseRect = baseDiv.getBoundingClientRect();
     const [w, h] = unitInstance.viewSize;
     const scale = Math.min(baseRect.width / w, baseRect.height / h);
-
     baseDiv.style.display = "flex";
     baseDiv.style.justifyContent = "center";
     baseDiv.style.alignItems = "center";
-
+    baseDiv.style.overflow = "hidden";
+    innerDiv.style.transform = `scale(${scale})`;
+    innerDiv.style.transformOrigin = "center";
     iframe.style.width = w + "px";
     iframe.style.height = h + "px";
     iframe.style.border = "none";
-
-    innerDiv.style.transform = `scale(${scale})`;
-    innerDiv.style.transformOrigin = "center";
     hostSystem.linkageApi.registerUnitInstance(unitInstance);
     hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
   });
@@ -44,6 +41,58 @@ function createUnit(baseDiv, unitId, destSpec, url) {
       return unitInterface;
     }
   };
+}
+
+const customElementUnitInterfaceMap = new Map();
+window.queryUnitInterfaceForModule = (versionCode, requestModuleUrl) => {
+  if (versionCode === "wafer-v01") {
+    const item = customElementUnitInterfaceMap.get(requestModuleUrl);
+    customElementUnitInterfaceMap.delete(requestModuleUrl);
+    return item;
+  }
+  return undefined;
+};
+
+async function setupWebComponentsUnit(baseDiv, unitId, destSpec, url) {
+  const innerDiv = createElement("div");
+  baseDiv.appendChild(innerDiv);
+  const subInnerDiv = createElement("div");
+  innerDiv.appendChild(subInnerDiv);
+
+  const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
+    const baseRect = baseDiv.getBoundingClientRect();
+    const [w, h] = unitInstance.viewSize;
+    const scale = Math.min(baseRect.width / w, baseRect.height / h);
+    baseDiv.style.display = "flex";
+    baseDiv.style.justifyContent = "center";
+    baseDiv.style.alignItems = "center";
+    baseDiv.style.overflow = "hidden";
+    innerDiv.style.transform = `scale(${scale})`;
+    innerDiv.style.transformOrigin = "center";
+    subInnerDiv.style.width = w + "px";
+    subInnerDiv.style.height = h + "px";
+    hostSystem.linkageApi.registerUnitInstance(unitInstance);
+    hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
+  });
+  const moduleUrl = `${location.origin}/${url}?tagName=${unitId}`;
+  customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
+
+  const tagName = `${unitId}-unit`;
+  const unitElementClass = await import(moduleUrl).then((module) => module.default);
+  if (unitElementClass.supportsSharableUnitClass) {
+    throw new Error(`Sharable unit class is not supported: ${moduleUrl}`);
+  }
+  customElements.define(tagName, unitElementClass);
+  const element = createElement(tagName);
+  subInnerDiv.appendChild(element);
+}
+
+function setupUnit(baseDiv, unitId, destSpec, url) {
+  if (url.endsWith(".js")) {
+    setupWebComponentsUnit(baseDiv, unitId, destSpec, url);
+  } else {
+    setupIframeUnit(baseDiv, unitId, destSpec, url);
+  }
 }
 
 function setupPlayButton(button) {
@@ -77,10 +126,10 @@ window.addEventListener("load", () => {
     bpmInput: getElement("bpm-input"),
     bpmText: getElement("bpm-text"),
   };
-  createUnit(doms.card1, "effect1", "$output", "./units/lofi2/index.html");
-  createUnit(doms.card2, "synth1", "effect1", "./units/webaudio-tinysynth-mini/index.html");
-  createUnit(doms.card3, "drum1", "effect1", "./units/techno-beat-machine/index.html");
-  createUnit(doms.card4, "sequencer1", "synth1", "./units/bseq2/index.html");
+  setupUnit(doms.card1, "effect1", "$output", "units/sunset-delay/index.js");
+  setupUnit(doms.card2, "synth1", "effect1", "units/webaudio-tinysynth-mini/index.html");
+  setupUnit(doms.card3, "drum1", "$output", "units/graphite-drum-machine/index.js");
+  setupUnit(doms.card4, "sequencer1", "synth1", "units/tonerio-sequencer/index.html");
   setupPlayButton(doms.playButton);
   setupBpmInput(doms.bpmInput, doms.bpmText);
 });
