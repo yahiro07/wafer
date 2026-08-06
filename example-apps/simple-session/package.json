@@ -11,7 +11,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "snap-store": "^0.1.12",
-    "wafer-host": "file:../../wafer"
+    "wafer-host": "^0.1.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
