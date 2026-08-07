@@ -24,10 +24,6 @@ function setupIframeUnit(baseDiv, unitId, destSpec, url) {
     const baseRect = baseDiv.getBoundingClientRect();
     const [w, h] = unitInstance.viewSize;
     const scale = Math.min(baseRect.width / w, baseRect.height / h);
-    baseDiv.style.display = "flex";
-    baseDiv.style.justifyContent = "center";
-    baseDiv.style.alignItems = "center";
-    baseDiv.style.overflow = "hidden";
     innerDiv.style.transform = `scale(${scale})`;
     innerDiv.style.transformOrigin = "center";
     iframe.style.width = w + "px";
@@ -63,10 +59,6 @@ async function setupWebComponentsUnit(baseDiv, unitId, destSpec, url) {
     const baseRect = baseDiv.getBoundingClientRect();
     const [w, h] = unitInstance.viewSize;
     const scale = Math.min(baseRect.width / w, baseRect.height / h);
-    baseDiv.style.display = "flex";
-    baseDiv.style.justifyContent = "center";
-    baseDiv.style.alignItems = "center";
-    baseDiv.style.overflow = "hidden";
     innerDiv.style.transform = `scale(${scale})`;
     innerDiv.style.transformOrigin = "center";
     subInnerDiv.style.width = w + "px";

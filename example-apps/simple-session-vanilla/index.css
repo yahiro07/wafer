@@ -64,4 +64,8 @@ body {
 .unit-card {
   height: 400px;
   background: #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
