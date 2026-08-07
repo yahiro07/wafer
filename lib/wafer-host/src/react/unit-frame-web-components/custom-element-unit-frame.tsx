@@ -5,7 +5,7 @@ import { UnitDestinationSpec } from "../destination-spec";
 
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
-import { createUnitInstantiationPromise } from "./unit-element-loader";
+import { createCustomElementUnitInstantiationPromise } from "./unit-element-loader";
 import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
@@ -44,31 +44,35 @@ export const CustomElementUnitFrame = ({
       const container = containerRef.current;
       let createdElement: HTMLElement | undefined;
 
-      const unitInstantiationPromise = createUnitInstantiationPromise(
-        unitId,
-        scriptUrl,
-        hostSystem,
-        {
-          onElementCreated(element) {
-            createdElement = element;
-            element.style.width = "100%";
-            element.style.height = "100%";
-            container.appendChild(element);
+      const unitInstantiationPromise =
+        createCustomElementUnitInstantiationPromise(
+          unitId,
+          scriptUrl,
+          hostSystem,
+          {
+            onElementCreated(element) {
+              createdElement = element;
+              element.style.width = "100%";
+              element.style.height = "100%";
+              container.appendChild(element);
+            },
+            onInstanceLoaded(instance) {
+              const { viewSize } = instance;
+              if (viewSize) {
+                const sz =
+                  frameAspectRatio && !instance.preferJustSize
+                    ? extendFrameSizeToFillAspectRatio(
+                        viewSize,
+                        frameAspectRatio,
+                      )
+                    : viewSize;
+                setSize(sz);
+              }
+              unitInstanceRef.current = instance;
+              onUnitInstanceLoaded?.(instance);
+            },
           },
-          onInstanceLoaded(instance) {
-            const { viewSize } = instance;
-            if (viewSize) {
-              const sz =
-                frameAspectRatio && !instance.preferJustSize
-                  ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
-                  : viewSize;
-              setSize(sz);
-            }
-            unitInstanceRef.current = instance;
-            onUnitInstanceLoaded?.(instance);
-          },
-        },
-      );
+        );
       const unregisterUnit =
         hostSystem.linkageApi.registerPendingUnitInstancePromise(
           unitId,
