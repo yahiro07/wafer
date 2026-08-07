@@ -1,11 +1,10 @@
 import { createStore } from "snap-store";
-import { createHostSystem, HsUnitInstance } from "wafer-host/core";
-import { HostAppProvider, UnitFrame } from "wafer-host/react";
+import { createHostSystem } from "wafer-host/core";
+import { HostAppProvider, UnitFrameScaled } from "wafer-host/react";
 import catalog from "./unit-inventories.json";
 import { createRoot } from "react-dom/client";
 import "virtual:uno.css";
 import "./app.css";
-import { useRef, useState } from "react";
 import clsx from "clsx";
 
 const audioContext = new AudioContext();
@@ -20,43 +19,6 @@ const store = createStore<StoreState>({
   playing: false,
   bpm: 100,
 });
-
-const UnitFrameScaled = ({
-  className,
-  unitId,
-  unitUrl,
-  destSpec,
-}: {
-  className?: string;
-  unitId: string;
-  unitUrl: string;
-  destSpec: string;
-}) => {
-  const baseDivRef = useRef<HTMLDivElement>(null);
-  const [baseAsr, setBaseAsr] = useState(1.6);
-  const [scale, setScale] = useState(1);
-  const onUnitInstanceLoaded = (unit: HsUnitInstance) => {
-    const baseEl = baseDivRef.current;
-    if (!baseEl) return;
-    const bounds = baseEl.getBoundingClientRect();
-    const [w, h] = unit.viewSize;
-    setBaseAsr(bounds.width / bounds.height);
-    setScale(Math.min(bounds.width / w, bounds.height / h));
-  };
-  return (
-    <div ref={baseDivRef} className={clsx("flex-c w-full h-full overflow-hidden", className)}>
-      <div className="flex-c" style={{ transform: `scale(${scale})` }}>
-        <UnitFrame
-          unitId={unitId}
-          unitUrl={unitUrl}
-          destSpec={destSpec}
-          onUnitInstanceLoaded={onUnitInstanceLoaded}
-          frameAspectRatio={baseAsr}
-        />
-      </div>
-    </div>
-  );
-};
 
 const ControlBar = () => {
   const { playing, bpm } = store.useSnapshot();
