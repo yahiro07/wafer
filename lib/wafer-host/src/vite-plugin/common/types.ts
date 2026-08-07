@@ -32,3 +32,8 @@ export type UnitInventorySpec = {
 };
 
 export type UnitInventoriesJson = Record<string, UnitInventorySpec>;
+
+export type UnitEntryKind =
+  | "iframe"
+  | "customElement"
+  | "customElementSharable";
