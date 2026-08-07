@@ -48,15 +48,6 @@ function createHsNoteOutputPort(
         time,
       });
     },
-    setProgressionRootNote(noteNumber, time) {
-      notesDispatcher.pushNoteDeliveryEvent({
-        sourcePortKey: `${unitId}.noteOutput`,
-        noteNumber,
-        isOn: true,
-        time,
-        isRootProgressionNote: true,
-      });
-    },
   };
 }
 
@@ -166,7 +157,6 @@ function createNoteInputWrapper(
       });
       noteInput.noteOff(noteNumber, time);
     },
-    setProgressionRootNote: noteInput.setProgressionRootNote,
   };
 }
 

@@ -47,15 +47,8 @@ export function createNotesDispatcher(
 
   const internal = {
     pushNoteDeliveryEventImpl(noteDeliveryEvent: NoteDeliveryEvent) {
-      const {
-        time,
-        sourcePortKey,
-        destPortKey,
-        noteNumber,
-        velocity,
-        isOn,
-        isRootProgressionNote,
-      } = noteDeliveryEvent;
+      const { time, sourcePortKey, destPortKey, noteNumber, velocity, isOn } =
+        noteDeliveryEvent;
       let destPortKeys: string[] | undefined;
       if (!sourcePortKey && destPortKey) {
         destPortKeys = [destPortKey];
@@ -66,35 +59,29 @@ export function createNotesDispatcher(
         const sourceUnitId = sourcePortKey?.split(".")[0];
         const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
         if (destPorts.length > 0) {
-          if (isRootProgressionNote) {
-            for (const port of destPorts) {
-              port.setProgressionRootNote?.(noteNumber, time);
+          actionScheduler.pushAction(() => {
+            if (sourceUnitId) {
+              unitNoteOutputMonitorFn?.({
+                sourceUnitId,
+                noteNumber,
+                isOn,
+                time,
+                velocity,
+              });
             }
-          } else {
-            actionScheduler.pushAction(() => {
-              if (sourceUnitId) {
-                unitNoteOutputMonitorFn?.({
-                  sourceUnitId,
-                  noteNumber,
-                  isOn,
-                  time,
-                  velocity,
-                });
+            if (1) {
+              console.log(
+                `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
+              );
+            }
+            for (const port of destPorts) {
+              if (isOn) {
+                port.noteOn(noteNumber, time, velocity);
+              } else {
+                port.noteOff(noteNumber, time);
               }
-              if (1) {
-                console.log(
-                  `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
-                );
-              }
-              for (const port of destPorts) {
-                if (isOn) {
-                  port.noteOn(noteNumber, time, velocity);
-                } else {
-                  port.noteOff(noteNumber, time);
-                }
-              }
-            }, time);
-          }
+            }
+          }, time);
         }
       }
     },

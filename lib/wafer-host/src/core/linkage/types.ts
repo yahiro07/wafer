@@ -28,11 +28,11 @@ export type HsNoteInputPort = NoteInputPort;
 export type HsAutomationInputPort = AutomationPort;
 export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
 
-type WrapperOutputPort<T, T2 = T> = T & {
-  connectTo(port: T2): void;
-  disconnectTo(port: T2): void;
+type WrapperOutputPort<T> = T & {
+  connectTo(port: T): void;
+  disconnectTo(port: T): void;
 };
-export type HsNoteOutputPort = WrapperOutputPort<NoteOutputPort, NoteInputPort>;
+export type HsNoteOutputPort = WrapperOutputPort<NoteOutputPort>;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
 export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
 export type HsAdditionalAudioOutputPort =

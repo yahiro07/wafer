@@ -10,18 +10,12 @@ export type UnitCategoryHint =
 
 export type PortSubtype = "audio" | "note" | "automation";
 
-type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
 export type NoteOutputPort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
   noteOff(noteNumber: number, time?: number): void;
-  setProgressionRootNote(noteNumber: number, time?: number): void;
 };
 
-export type NoteInputPort = WithOptional<
-  NoteOutputPort,
-  "setProgressionRootNote"
->;
+export type NoteInputPort = NoteOutputPort;
 
 export type AutomationParameterSpec = {
   id: string;
