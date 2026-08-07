@@ -31,6 +31,57 @@ function setupIframeUnit(hostSystem, outerElement, unitId, destSpec, url, loaded
   };
 }
 
+const customElementUnitInterfaceMap = new Map();
+window.queryUnitInterfaceForModule = (versionCode, requestModuleUrl) => {
+  if (versionCode === "wafer-v01") {
+    const item = customElementUnitInterfaceMap.get(requestModuleUrl);
+    customElementUnitInterfaceMap.delete(requestModuleUrl);
+    return item;
+  }
+  return undefined;
+};
+
+async function setupWebComponentsUnit(
+  hostSystem,
+  outerElement,
+  unitId,
+  destSpec,
+  url,
+  loadedCallback,
+) {
+  let cleanupFn = null;
+  let viewSize = null;
+
+  const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
+    viewSize = unitInstance.viewSize;
+    cleanupFn = hostSystem.linkageApi.registerUnitInstance(unitInstance);
+    hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
+    loadedCallback?.(unitInstance);
+  });
+  const moduleUrl = `${location.origin}/${url}?tagName=${unitId}`;
+  customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
+
+  const tagName = `${unitId}-unit`;
+  const unitElementClass = await import(moduleUrl).then((module) => module.default);
+  if (unitElementClass.supportsSharableUnitClass) {
+    throw new Error(`Sharable unit class is not supported: ${moduleUrl}`);
+  }
+  customElements.define(tagName, unitElementClass);
+
+  const unitElement = createElement(tagName);
+  if (viewSize) {
+    const [w, h] = viewSize;
+    unitElement.style.width = w + "px";
+    unitElement.style.height = h + "px";
+  }
+  outerElement.appendChild(unitElement);
+
+  return () => {
+    cleanupFn?.();
+    cleanupFn = null;
+  };
+}
+
 function registerCustomElements(hostSystem) {
   class UnitFrame extends HTMLElement {
     static get observedAttributes() {
@@ -52,6 +103,16 @@ function registerCustomElements(hostSystem) {
       const url = this.getAttribute("url");
       this.attachShadow({ mode: "open" });
       if (url.endsWith(".js")) {
+        this._cleanup = setupWebComponentsUnit(
+          hostSystem,
+          this.shadowRoot,
+          unitId,
+          destSpec,
+          url,
+          (unitInstance) => {
+            this.onUnitInstanceLoaded?.(unitInstance);
+          },
+        );
       } else {
         this._cleanup = setupIframeUnit(
           hostSystem,
@@ -139,57 +200,10 @@ const store = {
 const createElement = (tag) => document.createElement(tag);
 const getElement = (id) => document.getElementById(id);
 
-// const customElementUnitInterfaceMap = new Map();
-// window.queryUnitInterfaceForModule = (versionCode, requestModuleUrl) => {
-//   if (versionCode === "wafer-v01") {
-//     const item = customElementUnitInterfaceMap.get(requestModuleUrl);
-//     customElementUnitInterfaceMap.delete(requestModuleUrl);
-//     return item;
-//   }
-//   return undefined;
-// };
-
-// async function setupWebComponentsUnit(baseDiv, unitId, destSpec, url) {
-//   const innerDiv = createElement("div");
-//   baseDiv.appendChild(innerDiv);
-//   const subInnerDiv = createElement("div");
-//   innerDiv.appendChild(subInnerDiv);
-
-//   const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
-//     const baseRect = baseDiv.getBoundingClientRect();
-//     const [w, h] = unitInstance.viewSize;
-//     const scale = Math.min(baseRect.width / w, baseRect.height / h);
-//     innerDiv.style.transform = `scale(${scale})`;
-//     innerDiv.style.transformOrigin = "center";
-//     subInnerDiv.style.width = w + "px";
-//     subInnerDiv.style.height = h + "px";
-//     hostSystem.linkageApi.registerUnitInstance(unitInstance);
-//     hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
-//   });
-//   const moduleUrl = `${location.origin}/${url}?tagName=${unitId}`;
-//   customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
-
-//   const tagName = `${unitId}-unit`;
-//   const unitElementClass = await import(moduleUrl).then((module) => module.default);
-//   if (unitElementClass.supportsSharableUnitClass) {
-//     throw new Error(`Sharable unit class is not supported: ${moduleUrl}`);
-//   }
-//   customElements.define(tagName, unitElementClass);
-//   const element = createElement(tagName);
-//   subInnerDiv.appendChild(element);
-// }
-
 function setupUnit(baseDiv, unitId, destSpec, url) {
-  if (url.endsWith(".js")) {
-    // setupWebComponentsUnit(baseDiv, unitId, destSpec, url);
-  } else {
-    // setupIframeUnit(baseDiv, unitId, destSpec, url);
-    const rr = baseDiv.getBoundingClientRect();
-    console.log({ rr });
-    baseDiv.innerHTML = `
+  baseDiv.innerHTML = `
     <unit-frame-scaled unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame-scaled>
   `;
-  }
 }
 
 function setupPlayButton(button) {
