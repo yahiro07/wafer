@@ -2,40 +2,40 @@ import { createHostSystem, createSequencerTickDriver } from "https://esm.sh/wafe
 
 //library prototyping
 
-// function setupIframeUnit(baseDiv, unitId, destSpec, url) {
-//   const innerDiv = createElement("div");
-//   baseDiv.appendChild(innerDiv);
+function setupIframeUnit(hostSystem, outerElement, unitId, destSpec, url, loadedCallback) {
+  let cleanupFn = null;
 
-//   const iframe = createElement("iframe");
-//   iframe.src = url;
-//   innerDiv.appendChild(iframe);
+  const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
+    const [w, h] = unitInstance.viewSize;
+    iframe.style.width = w + "px";
+    iframe.style.height = h + "px";
+    cleanupFn = hostSystem.linkageApi.registerUnitInstance(unitInstance);
+    hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
+    loadedCallback?.(unitInstance);
+  });
 
-//   const win = iframe.contentWindow;
-//   const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
-//     const baseRect = baseDiv.getBoundingClientRect();
-//     const [w, h] = unitInstance.viewSize;
-//     const scale = Math.min(baseRect.width / w, baseRect.height / h);
-//     innerDiv.style.transform = `scale(${scale})`;
-//     innerDiv.style.transformOrigin = "center";
-//     iframe.style.width = w + "px";
-//     iframe.style.height = h + "px";
-//     iframe.style.border = "none";
-//     hostSystem.linkageApi.registerUnitInstance(unitInstance);
-//     hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
-//   });
-//   win.queryUnitInterface = (versionCode) => {
-//     if (versionCode === "wafer-v01") {
-//       return unitInterface;
-//     }
-//   };
-// }
+  const iframe = createElement("iframe");
+  iframe.style.border = "none";
+  iframe.src = url;
+  outerElement.appendChild(iframe);
+  const win = iframe.contentWindow;
+  win.queryUnitInterface = (versionCode) => {
+    if (versionCode === "wafer-v01") {
+      return unitInterface;
+    }
+  };
+
+  return () => {
+    cleanupFn?.();
+    cleanupFn = null;
+  };
+}
 
 function registerCustomElements(hostSystem) {
   class UnitFrame extends HTMLElement {
     static get observedAttributes() {
       return ["unit-id", "dest-spec", "url"];
     }
-
     onUnitInstanceLoaded = null;
 
     connectedCallback() {
@@ -50,29 +50,20 @@ function registerCustomElements(hostSystem) {
       const unitId = this.getAttribute("unit-id");
       const destSpec = this.getAttribute("dest-spec");
       const url = this.getAttribute("url");
-
       this.attachShadow({ mode: "open" });
-
-      const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
-        const [w, h] = unitInstance.viewSize;
-        iframe.style.width = w + "px";
-        iframe.style.height = h + "px";
-        this._cleanup = hostSystem.linkageApi.registerUnitInstance(unitInstance);
-        hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
-
-        this.onUnitInstanceLoaded?.(unitInstance);
-      });
-
-      const iframe = createElement("iframe");
-      iframe.style.border = "none";
-      iframe.src = url;
-      this.shadowRoot.appendChild(iframe);
-      const win = iframe.contentWindow;
-      win.queryUnitInterface = (versionCode) => {
-        if (versionCode === "wafer-v01") {
-          return unitInterface;
-        }
-      };
+      if (url.endsWith(".js")) {
+      } else {
+        this._cleanup = setupIframeUnit(
+          hostSystem,
+          this.shadowRoot,
+          unitId,
+          destSpec,
+          url,
+          (unitInstance) => {
+            this.onUnitInstanceLoaded?.(unitInstance);
+          },
+        );
+      }
     }
   }
   customElements.define("unit-frame", UnitFrame);
