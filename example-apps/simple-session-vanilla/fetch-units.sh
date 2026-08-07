@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
-mkdir -p units
+mkdir -p units .tmp
 
-curl -L "https://github.com/yahiro07/wafer-units/archive/refs/tags/r16.zip" -o /tmp/wafer-units-r16.zip
-unzip -q /tmp/wafer-units-r16.zip -d /tmp
-cp -R /tmp/wafer-units-r16/{graphite-drum-machine,sunset-delay,tonerio-sequencer} units/
+rm -rf .tmp/wafer-units .tmp/wafer-custom-units
+git -c advice.detachedHead=false clone --depth 1 --branch r16 https://github.com/yahiro07/wafer-units.git .tmp/wafer-units
+git -c advice.detachedHead=false clone --depth 1 --branch r16 https://github.com/yahiro07/wafer-custom-units.git .tmp/wafer-custom-units
 
-curl -L "https://github.com/yahiro07/wafer-custom-units/archive/refs/tags/r16.zip" -o /tmp/wafer-custom-units-r16.zip
-unzip -q /tmp/wafer-custom-units-r16.zip -d /tmp
-cp -R /tmp/wafer-custom-units-r16/webaudio-tinysynth-mini units/
+cp -R .tmp/wafer-units/{graphite-drum-machine,sunset-delay,tonerio-sequencer} units/
+cp -R .tmp/wafer-custom-units/webaudio-tinysynth-mini units/

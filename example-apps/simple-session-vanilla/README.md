@@ -4,10 +4,10 @@ A minimum host app example with plain javascript, without bundlers.
 
 ## prepare
 
-Run `fetch-units.sh` first. The script downloads required units from github and store them in `./units` folder.
+Run `fetch-units.sh` first. The script clones required unit repos and copies the needed unit folders into `./units`.
 
 ```
-sh fetch-units.sh
+sh ./fetch-units.sh
 ```
 
 ## run
