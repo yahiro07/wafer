@@ -30,7 +30,7 @@ export function startWatchEntryFiles(
     .filter(Boolean) as WatchTarget[];
 
   for (const item of watchTargets) {
-    console.log(`watch ${item.filePath}`);
+    // console.log(`watch ${item.filePath}`);
     server.watcher.add(item.filePath);
   }
   server.watcher.on("change", (filePath) => {
