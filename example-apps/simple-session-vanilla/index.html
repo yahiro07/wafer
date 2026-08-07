@@ -17,10 +17,34 @@
         </div>
       </div>
       <div class="units-panel">
-        <div id="unit-card-1" class="unit-card"></div>
-        <div id="unit-card-2" class="unit-card"></div>
-        <div id="unit-card-3" class="unit-card"></div>
-        <div id="unit-card-4" class="unit-card"></div>
+        <div id="unit-card-1" class="unit-card">
+          <unit-frame-scaled
+            unit-id="effect1"
+            dest-spec="$output"
+            url="units/sunset-delay/index.js"
+          ></unit-frame-scaled>
+        </div>
+        <div id="unit-card-2" class="unit-card">
+          <unit-frame-scaled
+            unit-id="synth1"
+            dest-spec="effect1"
+            url="units/webaudio-tinysynth-mini/index.html"
+          ></unit-frame-scaled>
+        </div>
+        <div id="unit-card-3" class="unit-card">
+          <unit-frame-scaled
+            unit-id="drum1"
+            dest-spec="$output"
+            url="units/graphite-drum-machine/index.js"
+          ></unit-frame-scaled>
+        </div>
+        <div id="unit-card-4" class="unit-card">
+          <unit-frame-scaled
+            unit-id="sequencer1"
+            dest-spec="synth1"
+            url="units/tonerio-sequencer/index.html"
+          ></unit-frame-scaled>
+        </div>
       </div>
     </div>
   </body>
