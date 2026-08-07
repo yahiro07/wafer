@@ -13,6 +13,7 @@ export type PortSubtype = "audio" | "note" | "automation";
 export type NotePort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
   noteOff(noteNumber: number, time?: number): void;
+  setProgressionRootNote?(noteNumber: number, time?: number): void;
 };
 
 export type AutomationParameterSpec = {

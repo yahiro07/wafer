@@ -92,6 +92,7 @@ export type NoteDeliveryEvent = {
   isOn: boolean;
   time?: number;
   velocity?: number;
+  isRootProgressionNote?: boolean;
 };
 
 export type AutomationDeliveryEvent = {
