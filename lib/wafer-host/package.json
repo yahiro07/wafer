@@ -54,7 +54,7 @@
   "scripts": {
     "build": "tsdown",
     "prepublishOnly": "npm run build",
-    "lint": "oxlint --type-aware"
+    "lint": "oxlint --type-aware --type-check"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
