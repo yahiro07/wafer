@@ -31,6 +31,52 @@ import { createHostSystem, createSequencerTickDriver } from "https://esm.sh/wafe
 // }
 
 function registerCustomElements(hostSystem) {
+  class UnitFrame extends HTMLElement {
+    static get observedAttributes() {
+      return ["unit-id", "dest-spec", "url"];
+    }
+
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this._cleanup = null;
+    }
+
+    connectedCallback() {
+      this.#mount();
+    }
+    disconnectedCallback() {
+      this._cleanup?.();
+      this._cleanup = null;
+    }
+
+    #mount() {
+      const unitId = this.getAttribute("unit-id");
+      const destSpec = this.getAttribute("dest-spec");
+      const url = this.getAttribute("url");
+
+      const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
+        const [w, h] = unitInstance.viewSize;
+        iframe.style.width = w + "px";
+        iframe.style.height = h + "px";
+        this._cleanup = hostSystem.linkageApi.registerUnitInstance(unitInstance);
+        hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
+      });
+
+      const iframe = createElement("iframe");
+      iframe.style.border = "none";
+      iframe.src = url;
+      this.shadowRoot.appendChild(iframe);
+      const win = iframe.contentWindow;
+      win.queryUnitInterface = (versionCode) => {
+        if (versionCode === "wafer-v01") {
+          return unitInterface;
+        }
+      };
+    }
+  }
+  customElements.define("unit-frame", UnitFrame);
+
   class UnitFrameScaled extends HTMLElement {
     static get observedAttributes() {
       return ["unit-id", "dest-spec", "url"];
@@ -168,7 +214,7 @@ function setupUnit(baseDiv, unitId, destSpec, url) {
     const rr = baseDiv.getBoundingClientRect();
     console.log({ rr });
     baseDiv.innerHTML = `
-    <unit-frame-scaled unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame-scaled>
+    <unit-frame unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
   `;
   }
 }
