@@ -1,6 +1,6 @@
 {
   "name": "wafer-host",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WebAudio host framework for the browser based DAW.",
   "keywords": [
     "daw",
@@ -29,6 +29,10 @@
     "./core": {
       "types": "./dist/core/index.d.ts",
       "default": "./dist/core/index.js"
+    },
+    "./custom-elements": {
+      "types": "./dist/custom-elements/index.d.ts",
+      "default": "./dist/custom-elements/index.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
