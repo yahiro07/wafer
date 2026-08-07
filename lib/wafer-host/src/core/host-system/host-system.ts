@@ -50,6 +50,7 @@ export function createHostSystem(
     audioContext,
     eventPort: bus.eventPort,
     getAllUnits: bus.getAllUnits,
+    getConnectionRules: bus.getConnectionRules,
     setMasterGain(gain) {
       bus.masterGainNode.gain.linearRampToValueAtTime(
         gain,
