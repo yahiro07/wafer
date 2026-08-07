@@ -36,11 +36,7 @@ function registerCustomElements(hostSystem) {
       return ["unit-id", "dest-spec", "url"];
     }
 
-    constructor() {
-      super();
-      this.attachShadow({ mode: "open" });
-      this._cleanup = null;
-    }
+    onUnitInstanceLoaded = null;
 
     connectedCallback() {
       this.#mount();
@@ -55,12 +51,16 @@ function registerCustomElements(hostSystem) {
       const destSpec = this.getAttribute("dest-spec");
       const url = this.getAttribute("url");
 
+      this.attachShadow({ mode: "open" });
+
       const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
         const [w, h] = unitInstance.viewSize;
         iframe.style.width = w + "px";
         iframe.style.height = h + "px";
         this._cleanup = hostSystem.linkageApi.registerUnitInstance(unitInstance);
         hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
+
+        this.onUnitInstanceLoaded?.(unitInstance);
       });
 
       const iframe = createElement("iframe");
@@ -82,31 +82,7 @@ function registerCustomElements(hostSystem) {
       return ["unit-id", "dest-spec", "url"];
     }
 
-    constructor() {
-      super();
-      this.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = `
-        <style>
-        :host{
-          width: 100%;
-          height: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          overflow: hidden;
-        }
-        #inner{
-          transform-origin: center;
-        }
-        #iframe{
-          border:none;
-          display: block;
-        }
-        </style>
-        <div id="inner"></div>
-      `;
-      this._cleanup = null;
-    }
+    onUnitInstanceLoaded = null;
 
     connectedCallback() {
       this.#mount();
@@ -120,30 +96,36 @@ function registerCustomElements(hostSystem) {
       const unitId = this.getAttribute("unit-id");
       const destSpec = this.getAttribute("dest-spec");
       const url = this.getAttribute("url");
-      const baseRect = this.getBoundingClientRect();
-      const innerDiv = this.shadowRoot.querySelector("#inner");
 
-      const unitInterface = hostSystem.linkageApi.createUnitInterface(unitId, (unitInstance) => {
-        // console.log("unit loaded");
-        // console.log({ baseRect });
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.innerHTML = `
+        <style>
+        :host{
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+        }
+        #scaler{
+          transform-origin: center;
+        }
+        </style>
+        <div id="scaler">
+          <unit-frame id="unit-frame" unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
+        </div>
+      `;
+
+      const unitFrame = this.shadowRoot.querySelector("#unit-frame");
+      const scalerDiv = this.shadowRoot.querySelector("#scaler");
+
+      unitFrame.onUnitInstanceLoaded = (unitInstance) => {
+        const baseRect = this.getBoundingClientRect();
         const [w, h] = unitInstance.viewSize;
         const scale = Math.min(baseRect.width / w, baseRect.height / h);
-        innerDiv.style.transform = `scale(${scale})`;
-        iframe.style.width = w + "px";
-        iframe.style.height = h + "px";
-        hostSystem.linkageApi.registerUnitInstance(unitInstance);
-        hostSystem.linkageApi.reserveConnection(`${unitId}.primaryOutput`, destSpec, true);
-      });
-
-      const iframe = createElement("iframe");
-      iframe.id = "iframe";
-      iframe.src = url;
-      innerDiv.appendChild(iframe);
-      const win = iframe.contentWindow;
-      win.queryUnitInterface = (versionCode) => {
-        if (versionCode === "wafer-v01") {
-          return unitInterface;
-        }
+        scalerDiv.style.transform = `scale(${scale})`;
+        this.onUnitInstanceLoaded?.(unitInstance);
       };
     }
   }
@@ -214,7 +196,7 @@ function setupUnit(baseDiv, unitId, destSpec, url) {
     const rr = baseDiv.getBoundingClientRect();
     console.log({ rr });
     baseDiv.innerHTML = `
-    <unit-frame unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
+    <unit-frame-scaled unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame-scaled>
   `;
   }
 }
