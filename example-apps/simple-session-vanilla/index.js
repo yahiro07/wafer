@@ -1,5 +1,5 @@
 import { createHostSystem, createSequencerTickDriver } from "https://esm.sh/wafer-host/core";
-import { registerCustomElements } from "./lib.js";
+import { registerCustomElements } from "https://esm.sh/wafer-host/custom-elements";
 
 const audioContext = new AudioContext();
 const hostSystem = createHostSystem(audioContext);
