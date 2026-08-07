@@ -3,7 +3,8 @@ import {
   AutomationPort,
   ClockHandlers,
   HostCallbacks,
-  NotePort,
+  NoteInputPort,
+  NoteOutputPort,
   Persistence,
   PortSubtype,
   UnitCallbacks,
@@ -23,15 +24,15 @@ export type HsUnitStateData =
   | { unitId: string; type: "json"; json: Record<string, any> };
 
 export type HsAudioInputPort = AudioPort;
-export type HsNoteInputPort = NotePort;
+export type HsNoteInputPort = NoteInputPort;
 export type HsAutomationInputPort = AutomationPort;
 export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
 
-type WrapperOutputPort<T> = T & {
-  connectTo(port: T): void;
-  disconnectTo(port: T): void;
+type WrapperOutputPort<T, T2 = T> = T & {
+  connectTo(port: T2): void;
+  disconnectTo(port: T2): void;
 };
-export type HsNoteOutputPort = WrapperOutputPort<NotePort>;
+export type HsNoteOutputPort = WrapperOutputPort<NoteOutputPort, NoteInputPort>;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
 export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
 export type HsAdditionalAudioOutputPort =
@@ -69,9 +70,9 @@ export type HsUnitInstance = {
   viewSize: [number, number];
   preferJustSize?: boolean;
   primaryInputPorts: {
-    audioInput?: AudioPort;
-    noteInput?: NotePort;
-    automationInput?: AutomationPort;
+    audioInput?: HsAudioInputPort;
+    noteInput?: HsNoteInputPort;
+    automationInput?: HsAutomationInputPort;
   };
   primaryOutputPorts: {
     audioOutput?: HsAudioOutputPort;
