@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import { UnitDestinationSpec } from "../destination-spec";
-
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { createCustomElementUnitInstantiationPromise } from "./unit-element-loader";
-import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
@@ -16,7 +14,6 @@ type Props = {
   className?: string;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
-  frameAspectRatio?: number;
 };
 
 export const CustomElementUnitFrame = ({
@@ -26,11 +23,9 @@ export const CustomElementUnitFrame = ({
   className,
   inputNotes,
   onUnitInstanceLoaded,
-  frameAspectRatio,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
-  const [size, setSize] = useState<[number, number] | undefined>();
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
@@ -57,17 +52,6 @@ export const CustomElementUnitFrame = ({
               container.appendChild(element);
             },
             onInstanceLoaded(instance) {
-              const { viewSize } = instance;
-              if (viewSize) {
-                const sz =
-                  frameAspectRatio && !instance.preferJustSize
-                    ? extendFrameSizeToFillAspectRatio(
-                        viewSize,
-                        frameAspectRatio,
-                      )
-                    : viewSize;
-                setSize(sz);
-              }
               unitInstanceRef.current = instance;
               onUnitInstanceLoaded?.(instance);
             },
@@ -107,9 +91,7 @@ export const CustomElementUnitFrame = ({
     <div
       ref={containerRef}
       className={className}
-      style={
-        size ? { width: `${size[0]}px`, height: `${size[1]}px` } : undefined
-      }
+      style={{ width: "100%", height: "100%" }}
     />
   );
 };
