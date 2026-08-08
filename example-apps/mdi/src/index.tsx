@@ -23,6 +23,7 @@ type UnitItem = {
   destSpec: string;
   position: Point;
   size: Size;
+  zIndex: number;
 };
 
 const defaultWindowSize: Size = { width: 450, height: 300 };
@@ -36,6 +37,7 @@ const initialUnitItems: UnitItem[] = [
     destSpec: "$output",
     position: { x: ox, y: oy },
     size: defaultWindowSize,
+    zIndex: 0,
   },
   {
     unitId: "sequencer1",
@@ -43,6 +45,7 @@ const initialUnitItems: UnitItem[] = [
     destSpec: "synth1",
     position: { x: ox, y: oy + 350 },
     size: defaultWindowSize,
+    zIndex: 0,
   },
   {
     unitId: "synth1",
@@ -50,6 +53,7 @@ const initialUnitItems: UnitItem[] = [
     destSpec: "effect1",
     position: { x: ox + 500, y: oy + 350 },
     size: defaultWindowSize,
+    zIndex: 0,
   },
   {
     unitId: "effect1",
@@ -57,6 +61,7 @@ const initialUnitItems: UnitItem[] = [
     destSpec: "$output",
     position: { x: ox + 500, y: oy },
     size: defaultWindowSize,
+    zIndex: 0,
   },
 ];
 
@@ -84,6 +89,8 @@ const actionsInternal = {
 const actions = {
   setActiveUnit(unitId: string) {
     store.setActiveUnitId(unitId);
+    const nextZIndex = Math.max(...store.state.unitItems.map((item) => item.zIndex)) + 1;
+    actionsInternal.patchUnitAttrs(unitId, { zIndex: nextZIndex });
   },
   setWindowPosition(unitId: string, newPos: Point) {
     actionsInternal.patchUnitAttrs(unitId, { position: newPos });
@@ -104,6 +111,7 @@ const TitleBarGrip = ({
 }) => {
   const onPointerDown = (e0: React.PointerEvent<HTMLDivElement>) => {
     const unitOriginalPos = unitItem.position;
+    actions.setActiveUnit(unitItem.unitId);
     startDragSession(e0.nativeEvent, {
       onMove(e) {
         const deltaX = e.position.x - e.originalPosition.x;
@@ -158,6 +166,7 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
         top: npx(unitItem.position.y),
         width: npx(unitItem.size.width),
         height: npx(unitItem.size.height),
+        zIndex: unitItem.zIndex,
       }}
     >
       <div className="relative w-full h-full bg-white flex-v bd-blue-500 border-[3px]">
@@ -222,7 +231,7 @@ const UnitTaskButton = ({ unitItem }: { unitItem: UnitItem }) => {
 const BottomBar = () => {
   const { unitItems } = store.useSnapshot();
   return (
-    <div className="bg-gray-400 flex-c gap-4 p-4">
+    <div className="bg-gray-400 flex-c gap-4 p-3">
       {unitItems.map((item) => (
         <UnitTaskButton key={item.unitId} unitItem={item} />
       ))}
