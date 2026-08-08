@@ -1,5 +1,5 @@
 {
-  "name": "mdi",
+  "name": "mdi-app",
   "private": "true",
   "scripts": {
     "dev": "vite dev",
