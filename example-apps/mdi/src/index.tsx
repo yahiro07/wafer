@@ -24,6 +24,7 @@ type UnitItem = {
   position: Point;
   size: Size;
   zIndex: number;
+  visible: boolean;
 };
 
 const defaultWindowSize: Size = { width: 450, height: 300 };
@@ -38,6 +39,7 @@ const initialUnitItems: UnitItem[] = [
     position: { x: ox, y: oy },
     size: defaultWindowSize,
     zIndex: 0,
+    visible: true,
   },
   {
     unitId: "sequencer1",
@@ -46,6 +48,7 @@ const initialUnitItems: UnitItem[] = [
     position: { x: ox, y: oy + 350 },
     size: defaultWindowSize,
     zIndex: 0,
+    visible: true,
   },
   {
     unitId: "synth1",
@@ -54,6 +57,7 @@ const initialUnitItems: UnitItem[] = [
     position: { x: ox + 500, y: oy + 350 },
     size: defaultWindowSize,
     zIndex: 0,
+    visible: true,
   },
   {
     unitId: "effect1",
@@ -62,6 +66,7 @@ const initialUnitItems: UnitItem[] = [
     position: { x: ox + 500, y: oy },
     size: defaultWindowSize,
     zIndex: 0,
+    visible: true,
   },
 ];
 
@@ -90,13 +95,16 @@ const actions = {
   setActiveUnit(unitId: string) {
     store.setActiveUnitId(unitId);
     const nextZIndex = Math.max(...store.state.unitItems.map((item) => item.zIndex)) + 1;
-    actionsInternal.patchUnitAttrs(unitId, { zIndex: nextZIndex });
+    actionsInternal.patchUnitAttrs(unitId, { zIndex: nextZIndex, visible: true });
   },
   setWindowPosition(unitId: string, newPos: Point) {
     actionsInternal.patchUnitAttrs(unitId, { position: newPos });
   },
   setWindowSize(unitId: string, newSize: Size) {
     actionsInternal.patchUnitAttrs(unitId, { size: newSize });
+  },
+  setWindowVisibility(unitId: string, visible: boolean) {
+    actionsInternal.patchUnitAttrs(unitId, { visible });
   },
 };
 
@@ -128,8 +136,15 @@ const TitleBarGrip = ({
   );
 };
 
-const WindowCloseButton = () => {
-  return <div className="w-[30px] h-[24px] flex-c bg-orange-400 shrink-0 mb-0.5">x</div>;
+const WindowCloseButton = ({ unitId }: { unitId: string }) => {
+  return (
+    <button
+      className="w-[30px] h-[24px] flex-c bg-orange-400 shrink-0 mb-0.5"
+      onClick={() => actions.setWindowVisibility(unitId, false)}
+    >
+      x
+    </button>
+  );
 };
 
 const WindowResizeAnchor = ({ unitItem }: { unitItem: UnitItem }) => {
@@ -167,6 +182,7 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
         width: npx(unitItem.size.width),
         height: npx(unitItem.size.height),
         zIndex: unitItem.zIndex,
+        display: unitItem.visible ? "block" : "none",
       }}
     >
       <div className="relative w-full h-full bg-white flex-v bd-blue-500 border-[3px]">
@@ -179,7 +195,7 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
           <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
             {catalogItem.name}
           </TitleBarGrip>
-          <WindowCloseButton />
+          <WindowCloseButton unitId={unitItem.unitId} />
         </div>
         <div className="grow flex-c overflow-hidden">
           <UnitFrameScaled
