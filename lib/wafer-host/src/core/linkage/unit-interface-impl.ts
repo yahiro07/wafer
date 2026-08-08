@@ -17,6 +17,7 @@ import {
   HsPortInfo,
   HsUnitInstance,
   HsUnitInterface,
+  HsViewSize,
 } from "./types";
 
 function createHsNoteOutputPort(
@@ -271,6 +272,15 @@ export function createUnitInterface(
     | undefined;
   let portsFixed = false;
 
+  let latestViewSize: HsViewSize | undefined;
+  type ViewSizeListener = (viewSize: HsViewSize) => void;
+  const viewSizeListeners = new Set<ViewSizeListener>();
+
+  const setViewSizeInternal = (size: HsViewSize) => {
+    viewSizeListeners.forEach((fn) => fn(size));
+    latestViewSize = size;
+  };
+
   function raiseIfInvalidPortsAccess(message: string) {
     if (portsFixed) {
       // throw new Error(message);
@@ -339,6 +349,9 @@ export function createUnitInterface(
         senderUnitId: unitId,
       });
     },
+    setViewSize(width, height) {
+      setViewSizeInternal({ width, height });
+    },
     completeSetup(attrs) {
       if (cancelled) return;
       const primaryInputPorts = {
@@ -360,10 +373,18 @@ export function createUnitInterface(
         additionalAudioInputs,
       );
 
+      const subscribeViewSize = (fn: ViewSizeListener) => {
+        if (latestViewSize) {
+          fn(latestViewSize);
+        }
+        viewSizeListeners.add(fn);
+        return () => {
+          viewSizeListeners.delete(fn);
+        };
+      };
+
       const unitInstance: HsUnitInstance = {
         unitId,
-        viewSize: attrs.unitAspects.viewSize,
-        preferJustSize: attrs.unitAspects.preferJustSize,
         primaryInputPorts: primaryInputPorts,
         primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs,
@@ -373,9 +394,15 @@ export function createUnitInterface(
         persistence: attrs.persistence,
         unitCallbacks: attrs.unitCallbacks,
         portInfos,
+        subscribeViewSize,
         cleanup: attrs.cleanup,
       };
       createdCallback(unitInstance);
+
+      if (attrs.unitAspects.viewSize) {
+        const [width, height] = attrs.unitAspects.viewSize;
+        setViewSizeInternal({ width, height });
+      }
       portsFixed = true;
     },
     cancelLoading() {

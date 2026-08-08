@@ -65,10 +65,10 @@ export type HsPortInfo =
   | HsPortInfoPrimaryInner
   | HsPortInfoAdditional;
 
+export type HsViewSize = { width: number; height: number };
+
 export type HsUnitInstance = {
   unitId: string;
-  viewSize: [number, number];
-  preferJustSize?: boolean;
   primaryInputPorts: {
     audioInput?: HsAudioInputPort;
     noteInput?: HsNoteInputPort;
@@ -86,6 +86,7 @@ export type HsUnitInstance = {
   persistence?: Persistence;
   unitCallbacks?: UnitCallbacks;
   portInfos: HsPortInfo[];
+  subscribeViewSize(fn: (viewSize: HsViewSize) => void): () => void;
   cleanup?: () => void;
   RenderUi?: () => ReactNode;
 };

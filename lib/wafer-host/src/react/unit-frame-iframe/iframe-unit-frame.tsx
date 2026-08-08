@@ -1,11 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
-import { extendFrameSizeToFillAspectRatio } from "../frame-size-helper";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
@@ -16,7 +15,6 @@ type Props = {
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
-  frameAspectRatio?: number;
 };
 
 export const IFrameUnitFrame = ({
@@ -27,34 +25,20 @@ export const IFrameUnitFrame = ({
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
-  frameAspectRatio,
 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
 
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
-  const [size, setSize] = useState<[number, number] | undefined>();
-
   useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useLayoutEffect(() => {
     checkUnitIdValidity(unitId);
-    const handleLoaded = (unitInstance: HsUnitInstance) => {
-      const { viewSize } = unitInstance;
-      if (viewSize) {
-        const sz =
-          frameAspectRatio && !unitInstance.preferJustSize
-            ? extendFrameSizeToFillAspectRatio(viewSize, frameAspectRatio)
-            : viewSize;
-        setSize(sz);
-      }
-      onUnitInstanceLoaded?.(unitInstance);
-    };
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
-      onUnitInstanceLoaded: handleLoaded,
+      onUnitInstanceLoaded,
       unitInstanceRef,
     });
   }, [pageUrl, hostSystem, unitId]);
@@ -79,12 +63,7 @@ export const IFrameUnitFrame = ({
     <iframe
       key={pageUrl}
       className={className}
-      style={{
-        border: "none",
-        ...(size
-          ? { width: `${size[0]}px`, height: `${size[1]}px` }
-          : undefined),
-      }}
+      style={{ width: "100%", height: "100%", border: "none" }}
       ref={iframeRef}
       src={pageUrl}
       title={unitId}

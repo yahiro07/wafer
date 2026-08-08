@@ -56,8 +56,7 @@ export type ClockHandlers = {
 export type UnitAspects = {
   unitType: UnitType;
   categoryHint?: UnitCategoryHint;
-  viewSize: [number, number];
-  preferJustSize?: boolean;
+  viewSize?: [number, number];
 };
 
 export type MetaAttributes = Record<string, any>;
@@ -92,6 +91,7 @@ export type UnitInterface = {
   sendMessageToHost(message: object): void;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
   // sendMessageToDestinationUnits(message: object): void;
+  setViewSize(width: number, height: number): void;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;

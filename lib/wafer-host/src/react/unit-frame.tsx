@@ -11,7 +11,6 @@ type Props = {
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
-  frameAspectRatio?: number;
 };
 
 export const UnitFrame = ({
@@ -22,7 +21,6 @@ export const UnitFrame = ({
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
-  frameAspectRatio,
 }: Props) => {
   if (unitUrl.endsWith(".js")) {
     return (
@@ -33,7 +31,6 @@ export const UnitFrame = ({
         className={className}
         inputNotes={inputNotes}
         onUnitInstanceLoaded={onUnitInstanceLoaded}
-        frameAspectRatio={frameAspectRatio}
       />
     );
   } else {
@@ -46,7 +43,6 @@ export const UnitFrame = ({
         inputNotes={inputNotes}
         onIframeMounted={onIframeMounted}
         onUnitInstanceLoaded={onUnitInstanceLoaded}
-        frameAspectRatio={frameAspectRatio}
       />
     );
   }
