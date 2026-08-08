@@ -7,6 +7,7 @@ import { createHostSystem } from "wafer-host/core";
 import { HostAppProvider, UnitFrameScaled } from "wafer-host/react";
 import { ReactNode } from "react";
 import { startDragSession } from "./drag-session";
+
 const audioContext = new AudioContext();
 const hostSystem = createHostSystem(audioContext);
 
@@ -16,6 +17,8 @@ type CatalogKey = keyof typeof catalog;
 
 type Point = { x: number; y: number };
 type Size = { width: number; height: number };
+
+const gray350 = "#b7bcc5";
 
 type UnitItem = {
   unitId: string;
@@ -73,11 +76,13 @@ const initialUnitItems: UnitItem[] = [
 type StoreState = {
   unitItems: UnitItem[];
   activeUnitId: string;
+  playing: boolean;
 };
 
 const store = createStore<StoreState>({
   unitItems: initialUnitItems,
   activeUnitId: "drum1",
+  playing: false,
 });
 
 const actionsInternal = {
@@ -116,6 +121,9 @@ const actions = {
       actions.setActiveWindow(nextActiveUnitId);
     }
   },
+  togglePlayState() {
+    store.togglePlaying();
+  },
 };
 
 const TitleBarGrip = ({
@@ -149,7 +157,7 @@ const TitleBarGrip = ({
 const WindowCloseButton = ({ className, unitId }: { className?: string; unitId: string }) => {
   return (
     <button
-      className={cx("w-[30px] h-[24px] flex-cshrink-0 mb-0.5", className)}
+      className={cx("w-[30px] h-[24px] flex-c shrink-0 mb-0.5", className)}
       onClick={() => actions.closeWindow(unitId)}
     >
       x
@@ -200,14 +208,14 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
       <div
         className={cx(
           "relative w-full h-full bg-white flex-v border-[3px]",
-          active ? "border-blue-500" : "border-gray-300",
+          active ? "border-blue-500" : `border-[${gray350}]`,
         )}
       >
         <div
           className={cx(
             "flex-ha h-[32px] shrink-0 text-white font-[600]",
             "justify-between pl-1 pr-0.5",
-            active ? "bg-blue-500" : "bg-gray-300",
+            active ? "bg-blue-500" : `bg-[${gray350}]`,
           )}
         >
           <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
@@ -265,20 +273,40 @@ const UnitTaskButton = ({ unitItem }: { unitItem: UnitItem }) => {
   );
 };
 
+const PlayButton = () => {
+  const { playing } = store.useSnapshot();
+  return (
+    <button
+      className={cx(
+        "w-[64px] h-[48px] flex-c shrink-0 text-white text-2xl",
+        playing ? "bg-sky-500" : `bg-[${gray350}]`,
+        css({ border: playing ? "outset 1px #6ac" : "outset 1px #ddd" }),
+      )}
+      onClick={() => actions.togglePlayState()}
+    >
+      ▶
+    </button>
+  );
+};
+
 const BottomBar = () => {
   const { unitItems } = store.useSnapshot();
   return (
-    <div className="bg-gray-400 flex-c gap-3 p-3">
-      {unitItems.map((item) => (
-        <UnitTaskButton key={item.unitId} unitItem={item} />
-      ))}
+    <div className="bg-gray-400 flex-c gap-6 p-3">
+      <PlayButton />
+      <div className="flex-ha gap-3">
+        {unitItems.map((item) => (
+          <UnitTaskButton key={item.unitId} unitItem={item} />
+        ))}
+      </div>
     </div>
   );
 };
 
 const App = () => {
+  const { playing } = store.useSnapshot();
   return (
-    <HostAppProvider hostSystem={hostSystem}>
+    <HostAppProvider hostSystem={hostSystem} playing={playing}>
       <div className={cx("flex-v select-none", css({ height: "100dvh" }))}>
         <DeskSection />
         <BottomBar />
