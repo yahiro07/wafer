@@ -15,38 +15,48 @@ const npx = (value: number) => `${value}px`;
 type CatalogKey = keyof typeof catalog;
 
 type Point = { x: number; y: number };
+type Size = { width: number; height: number };
 
 type UnitItem = {
   unitId: string;
   catalogKey: CatalogKey;
   destSpec: string;
   position: Point;
+  size: Size;
 };
 
+const defaultWindowSize: Size = { width: 450, height: 300 };
+
+const ox = 100;
+const oy = 40;
 const initialUnitItems: UnitItem[] = [
   {
     unitId: "drum1",
     catalogKey: "graphiteDrumMachine",
     destSpec: "$output",
-    position: { x: 0, y: 0 },
+    position: { x: ox, y: oy },
+    size: defaultWindowSize,
   },
   {
     unitId: "sequencer1",
     catalogKey: "tonerioSequencer",
     destSpec: "synth1",
-    position: { x: 100, y: 100 },
+    position: { x: ox, y: oy + 350 },
+    size: defaultWindowSize,
   },
   {
     unitId: "synth1",
     catalogKey: "webaudioTinysynthMini",
     destSpec: "effect1",
-    position: { x: 200, y: 200 },
+    position: { x: ox + 500, y: oy + 350 },
+    size: defaultWindowSize,
   },
   {
     unitId: "effect1",
     catalogKey: "sunsetDelay",
     destSpec: "$output",
-    position: { x: 300, y: 300 },
+    position: { x: ox + 500, y: oy },
+    size: defaultWindowSize,
   },
 ];
 
@@ -75,8 +85,11 @@ const actions = {
   setActiveUnit(unitId: string) {
     store.setActiveUnitId(unitId);
   },
-  moveUnitWindow(unitId: string, newPos: Point) {
+  setWindowPosition(unitId: string, newPos: Point) {
     actionsInternal.patchUnitAttrs(unitId, { position: newPos });
+  },
+  setWindowSize(unitId: string, newSize: Size) {
+    actionsInternal.patchUnitAttrs(unitId, { size: newSize });
   },
 };
 
@@ -91,58 +104,84 @@ const TitleBarGrip = ({
 }) => {
   const onPointerDown = (e0: React.PointerEvent<HTMLDivElement>) => {
     const unitOriginalPos = unitItem.position;
-
     startDragSession(e0.nativeEvent, {
       onMove(e) {
         const deltaX = e.position.x - e.originalPosition.x;
         const deltaY = e.position.y - e.originalPosition.y;
         const newPos = { x: unitOriginalPos.x + deltaX, y: unitOriginalPos.y + deltaY };
-        actions.moveUnitWindow(unitItem.unitId, newPos);
+        actions.setWindowPosition(unitItem.unitId, newPos);
       },
     });
   };
-
   return (
-    <div className={className} onPointerDown={onPointerDown}>
+    <div className={cx("cursor-move", className)} onPointerDown={onPointerDown}>
       {children}
     </div>
   );
 };
 
 const WindowCloseButton = () => {
-  return <div className="w-[24px] h-[24px] flex-c bg-orange-400 shrink-0 mb-0.5">x</div>;
+  return <div className="w-[30px] h-[24px] flex-c bg-orange-400 shrink-0 mb-0.5">x</div>;
+};
+
+const WindowResizeAnchor = ({ unitItem }: { unitItem: UnitItem }) => {
+  const onPointerDown = (e0: React.PointerEvent<HTMLDivElement>) => {
+    const unitOriginalSize = unitItem.size;
+    startDragSession(e0.nativeEvent, {
+      onMove(e) {
+        const deltaX = e.position.x - e.originalPosition.x;
+        const deltaY = e.position.y - e.originalPosition.y;
+        const newSize = {
+          width: unitOriginalSize.width + deltaX,
+          height: unitOriginalSize.height + deltaY,
+        };
+        actions.setWindowSize(unitItem.unitId, newSize);
+      },
+    });
+  };
+  return (
+    <div
+      className="w-[20px] h-[20px] cursor-se-resize"
+      style={{ transform: "translate(30%, 30%)" }}
+      onPointerDown={onPointerDown}
+    />
+  );
 };
 
 const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
   const catalogItem = catalog[unitItem.catalogKey];
   return (
     <div
-      className={cx(
-        "absolute top-0 left-0 bg-white w-[450px] h-[300px] flex-v",
-        "bd-blue-500 border-[3px] ",
-      )}
+      className={"absolute"}
       style={{
         left: npx(unitItem.position.x),
         top: npx(unitItem.position.y),
+        width: npx(unitItem.size.width),
+        height: npx(unitItem.size.height),
       }}
     >
-      <div
-        className={cx(
-          "flex-ha h-[32px] bg-blue-500 shrink-0 text-white font-[600]",
-          "justify-between cursor-pointer px-1",
-        )}
-      >
-        <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
-          {catalogItem.name}
-        </TitleBarGrip>
-        <WindowCloseButton />
+      <div className="relative w-full h-full bg-white flex-v bd-blue-500 border-[3px]">
+        <div
+          className={cx(
+            "flex-ha h-[32px] bg-blue-500 shrink-0 text-white font-[600]",
+            "justify-between pl-1 pr-0.5",
+          )}
+        >
+          <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
+            {catalogItem.name}
+          </TitleBarGrip>
+          <WindowCloseButton />
+        </div>
+        <div className="grow flex-c overflow-hidden">
+          <UnitFrameScaled
+            unitId={unitItem.unitId}
+            unitUrl={catalog[unitItem.catalogKey].loaderPageUrl}
+            destSpec={unitItem.destSpec}
+          />
+        </div>
       </div>
-      <div className="grow flex-c overflow-hidden">
-        <UnitFrameScaled
-          unitId={unitItem.unitId}
-          unitUrl={catalog[unitItem.catalogKey].loaderPageUrl}
-          destSpec={unitItem.destSpec}
-        />
+      <div className="absolute bottom-0 right-0">
+        <WindowResizeAnchor unitItem={unitItem} />
       </div>
     </div>
   );
