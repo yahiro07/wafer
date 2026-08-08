@@ -1,16 +1,8 @@
 import { HostSystem, HsUnitInstance } from "../../core";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 
-type UnitSetupContextItem = {
-  unitInterface: UnitInterface;
-};
-
-const setupContextMap = new Map<string, UnitSetupContextItem>();
-
 /*
 There are two type of web-component units implementation patterns.
-We first try to initialize the unit assuming it is (A), then if not, we try (B).
-
 
 //(A) non-sharable web-components unit (easy to implement, but less efficient)
 
@@ -54,121 +46,115 @@ class MyUnit extends HTMLElement {
 }
 
 */
-async function loadUnitElementClass(
-  moduleUrl: string,
-  unitInterface: UnitInterface,
-): Promise<{
-  tagName: string;
-  unitElementClass: CustomElementConstructor;
-  isSharableUnitClass: boolean;
-}> {
-  const tagName = `unit-${Math.random().toString().slice(2, 8)}`;
 
-  if (!moduleUrl.startsWith("http")) {
-    moduleUrl = location.origin + moduleUrl;
-  }
-  moduleUrl += `?tagName=${tagName}`;
-
-  setupContextMap.set(moduleUrl, { unitInterface });
-
-  let globalUnitInterfaceQueried = false;
+function createLoaderNonSharable() {
+  const customElementUnitInterfaceMap = new Map();
 
   (window as any).queryUnitInterfaceForModule = (
     versionCode: string,
     requestModuleUrl: string,
   ) => {
-    globalUnitInterfaceQueried = true;
-    const item = setupContextMap.get(requestModuleUrl);
-    if (item) {
-      if (versionCode === "wafer-v01" || versionCode === "wus-v01") {
-        return item.unitInterface;
-      } else {
-        console.warn(
-          `incompatible unit interface version: ${versionCode} for module ${moduleUrl}`,
+    if (versionCode !== "wafer-v01") {
+      console.warn(`incompatible unit interface version: ${versionCode}`);
+      return undefined;
+    }
+    return customElementUnitInterfaceMap.get(requestModuleUrl);
+  };
+
+  async function loadUnitElementClass(
+    url: string,
+    unitInterface: UnitInterface,
+  ): Promise<string> {
+    const tagName = `unit-${Math.random().toString().slice(2, 8)}`;
+    const moduleUrl = `${location.origin}${url}?tagName=${tagName}`;
+    customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
+
+    const unitElementClass = await import(moduleUrl).then(
+      (module) => module.default,
+    );
+    customElementUnitInterfaceMap.delete(moduleUrl);
+
+    customElements.define(tagName, unitElementClass);
+    return tagName;
+  }
+
+  return { loadUnitElementClass };
+}
+const loaderNonSharable = createLoaderNonSharable();
+
+function createLoaderSharable() {
+  type LoadingItem = {
+    tagName: string;
+    unitElementClassPromise: Promise<void>;
+  };
+  const loadingItemMap: Record<string, LoadingItem> = {};
+
+  async function loadUnitElementClass(url: string): Promise<string> {
+    let loadingItem = loadingItemMap[url];
+    if (!loadingItem) {
+      const tagName = `unit-${Math.random().toString().slice(2, 8)}`;
+      const unitElementClassPromise = (async () => {
+        const unitElementClass = await import(url).then(
+          (module) => module.default,
         );
-        return undefined;
-      }
+        customElements.define(tagName, unitElementClass);
+      })();
+      loadingItem = loadingItemMap[url] = {
+        tagName,
+        unitElementClassPromise,
+      };
     }
-    return undefined;
-  };
-
-  const unitElementClass = (await import(moduleUrl).then(
-    (module) => module.default,
-  )) as any;
-
-  const isSharableUnitClass =
-    !globalUnitInterfaceQueried &&
-    unitElementClass.supportsSharableUnitClass !== undefined;
-
-  return { tagName, unitElementClass, isSharableUnitClass };
-}
-
-type UnitClassTagEntry = {
-  tagName: string;
-  isSharableUnitClass: boolean;
-};
-const sharableUnitClassTagNameMap = new Map<string, UnitClassTagEntry>();
-
-async function wrapLoadUnitElementClass(
-  moduleUrl: string,
-  unitInterface: UnitInterface,
-): Promise<UnitClassTagEntry> {
-  if (sharableUnitClassTagNameMap.has(moduleUrl)) {
-    return sharableUnitClassTagNameMap.get(moduleUrl)!;
+    await loadingItem.unitElementClassPromise;
+    return loadingItem.tagName;
   }
-  const res = await loadUnitElementClass(moduleUrl, unitInterface);
-  // console.log([moduleUrl, res.isSharableUnitClass, res.tagName]);
-  if (res.isSharableUnitClass) {
-    //it's possible that sharable unit class is loaded duplicated in first loading,
-    //so we simply ignore later one and use first one's cached tag.
-    if (sharableUnitClassTagNameMap.has(moduleUrl)) {
-      return sharableUnitClassTagNameMap.get(moduleUrl)!;
-    }
-    const entry = { tagName: res.tagName, isSharableUnitClass: true };
-    customElements.define(res.tagName, res.unitElementClass);
-    sharableUnitClassTagNameMap.set(moduleUrl, entry);
-    return entry;
-  } else {
-    customElements.define(res.tagName, res.unitElementClass);
-    return { tagName: res.tagName, isSharableUnitClass: false };
+
+  function instantiateSharableUnitClassUnit(
+    tagName: string,
+    unitInterface: UnitInterface,
+  ): HTMLElement {
+    const element = document.createElement(tagName);
+
+    const unitInstantiateContext: UnitInterfaceProvider = {
+      queryUnitInterface(versionCode: string) {
+        if (versionCode !== "wafer-v01") {
+          console.warn(`incompatible unit interface version: ${versionCode}`);
+          return undefined;
+        }
+        return unitInterface;
+      },
+    };
+    (element as any).setupUnit(unitInstantiateContext);
+
+    return element;
   }
+
+  return { loadUnitElementClass, instantiateSharableUnitClassUnit };
 }
-
-function instantiateSharableUnitClassUnit(
-  tagName: string,
-  unitInterface: UnitInterface,
-): HTMLElement {
-  const element = document.createElement(tagName);
-
-  const unitInstantiateContext: UnitInterfaceProvider = {
-    queryUnitInterface(versionCode: string) {
-      if (versionCode !== "wafer-v01") {
-        console.warn(`incompatible unit interface version: ${versionCode}`);
-        return undefined;
-      }
-      return unitInterface;
-    },
-  };
-  (element as any).setupUnit(unitInstantiateContext);
-
-  return element;
-}
+const loaderSharable = createLoaderSharable();
 
 async function loadUnitElement(
-  moduleUrl: string,
+  url: string,
   unitInterface: UnitInterface,
 ): Promise<HTMLElement> {
-  const res = await wrapLoadUnitElementClass(moduleUrl, unitInterface);
-  if (res.isSharableUnitClass) {
-    return instantiateSharableUnitClassUnit(res.tagName, unitInterface);
+  const isSharableUnitClass = url.endsWith(".sharable.js");
+  if (isSharableUnitClass) {
+    const tagName = await loaderSharable.loadUnitElementClass(url);
+    return loaderSharable.instantiateSharableUnitClassUnit(
+      tagName,
+      unitInterface,
+    );
   } else {
-    return document.createElement(res.tagName);
+    const tagName = await loaderNonSharable.loadUnitElementClass(
+      url,
+      unitInterface,
+    );
+    return document.createElement(tagName);
   }
 }
 
-export function createUnitInstantiationPromise(
+export function createCustomElementUnitInstantiationPromise(
   unitId: string,
-  scriptUrl: string,
+  url: string,
   hostSystem: HostSystem,
   callbacks: {
     onElementCreated: (element: HTMLElement) => void;
@@ -185,7 +171,7 @@ export function createUnitInstantiationPromise(
           resolve(unitInstance);
         },
       );
-      const element = await loadUnitElement(scriptUrl, unitInterface);
+      const element = await loadUnitElement(url, unitInterface);
       callbacks.onElementCreated(element);
     },
   );

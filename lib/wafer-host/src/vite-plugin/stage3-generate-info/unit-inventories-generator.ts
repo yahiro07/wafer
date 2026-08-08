@@ -2,7 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { UnitMetadata } from "../../unit-types";
 import { ResolvedUnitEntry } from "../common/internal-types";
-import { UnitInventoriesJson, UnitInventorySpec } from "../common/types";
+import {
+  UnitEntryKind,
+  UnitInventoriesJson,
+  UnitInventorySpec,
+} from "../common/types";
 
 async function fetchUnitAssetText(
   resolvedUnitEntry: ResolvedUnitEntry,
@@ -99,7 +103,7 @@ function getUrlBaseForAssets(resolvedUnitEntry: ResolvedUnitEntry): string {
 function createUnitInventorySpec(
   resolvedUnitEntry: ResolvedUnitEntry,
   meta: UnitMetadata,
-  isModuleLibraryUnit: boolean,
+  unitEntryKind: UnitEntryKind,
   hasThumbnail: boolean,
   hasLicenseText: boolean,
 ): UnitInventorySpec {
@@ -109,7 +113,11 @@ function createUnitInventorySpec(
   const _meta = meta as any;
   const loaderPageUrlBase = getLoaderPageUrlBase(resolvedUnitEntry);
   const urlBaseForAssets = getUrlBaseForAssets(resolvedUnitEntry);
-  const entryFileName = isModuleLibraryUnit ? "index.js" : "index.html";
+  const entryFileName = {
+    iframe: "index.html",
+    customElement: "index.js",
+    customElementSharable: "index.sharable.js",
+  }[unitEntryKind];
   return {
     catalogKey,
     name: meta.name,
@@ -151,21 +159,29 @@ export async function generateSummariesJson(
         resolvedUnitEntry,
         "index.html",
       );
+      const hasIndexSharableJs = await checkUnitAssetExists(
+        resolvedUnitEntry,
+        "index.sharable.js",
+      );
       const hasIndexJs = await checkUnitAssetExists(
         resolvedUnitEntry,
         "index.js",
       );
-      if (!(hasIndexHtml || hasIndexJs)) {
+      if (!(hasIndexHtml || hasIndexSharableJs || hasIndexJs)) {
         throw new Error(
-          `both index.html and index.js are missing for unit ${resolvedUnitEntry.catalogKey}`,
+          `none of index.html or index.sharable.js or index.js exists for unit ${resolvedUnitEntry.catalogKey}`,
         );
       }
-      const isModuleLibraryUnit = !hasIndexHtml && hasIndexJs;
+      const unitEntryKind = hasIndexHtml
+        ? "iframe"
+        : hasIndexSharableJs
+          ? "customElementSharable"
+          : "customElement";
 
       return createUnitInventorySpec(
         resolvedUnitEntry,
         meta,
-        isModuleLibraryUnit,
+        unitEntryKind,
         hasThumbnail,
         hasLicenseText,
       );

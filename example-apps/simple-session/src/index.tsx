@@ -1,11 +1,10 @@
 import { createStore } from "snap-store";
-import { createHostSystem, HsUnitInstance } from "wafer-host/core";
-import { HostAppProvider, UnitFrame } from "wafer-host/react";
+import { createHostSystem } from "wafer-host/core";
+import { HostAppProvider, UnitFrameScaled } from "wafer-host/react";
 import catalog from "./unit-inventories.json";
 import { createRoot } from "react-dom/client";
 import "virtual:uno.css";
 import "./app.css";
-import { useState } from "react";
 import clsx from "clsx";
 
 const audioContext = new AudioContext();
@@ -20,38 +19,6 @@ const store = createStore<StoreState>({
   playing: false,
   bpm: 100,
 });
-
-const UnitFrameEx = ({
-  unitId,
-  unitUrl,
-  destSpec,
-}: {
-  unitId: string;
-  unitUrl: string;
-  destSpec: string;
-}) => {
-  const outerW = 600;
-  const outerH = 350;
-  const frameAspectRatio = outerW / outerH;
-  const [scale, setScale] = useState(1);
-  const onUnitInstanceLoaded = (unit: HsUnitInstance) => {
-    const [w, h] = unit.viewSize;
-    setScale(Math.min(outerW / w, outerH / h));
-  };
-  return (
-    <div className="bg-gray-400 flex-c" style={{ width: `${outerW}px`, height: `${outerH}px` }}>
-      <div className="flex-c" style={{ transform: `scale(${scale})` }}>
-        <UnitFrame
-          unitId={unitId}
-          unitUrl={unitUrl}
-          destSpec={destSpec}
-          onUnitInstanceLoaded={onUnitInstanceLoaded}
-          frameAspectRatio={frameAspectRatio}
-        />
-      </div>
-    </div>
-  );
-};
 
 const ControlBar = () => {
   const { playing, bpm } = store.useSnapshot();
@@ -84,23 +51,29 @@ const ControlBar = () => {
 
 const UnitTiles = () => {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <UnitFrameEx
+    <div
+      className={clsx("grid grid-cols-2 grid-rows-2 gap-2 w-[1200px] h-[700px] overflow-hidden")}
+    >
+      <UnitFrameScaled
+        className="bg-gray-400"
         unitId="effect1"
         destSpec="$output"
         unitUrl={catalog.sunsetDelay.loaderPageUrl}
       />
-      <UnitFrameEx
+      <UnitFrameScaled
+        className="bg-gray-400"
         unitId="synth1"
         destSpec="effect1"
         unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
       />
-      <UnitFrameEx
+      <UnitFrameScaled
+        className="bg-gray-400"
         unitId="drum1"
         destSpec="$output"
         unitUrl={catalog.graphiteDrumMachine.loaderPageUrl}
       />
-      <UnitFrameEx
+      <UnitFrameScaled
+        className="bg-gray-400"
         unitId="sequencer1"
         destSpec="synth1"
         unitUrl={catalog.tonerioSequencer.loaderPageUrl}

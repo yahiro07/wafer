@@ -8,6 +8,7 @@ export default defineConfig([
     outDir: "dist",
     entry: {
       "core/index": "src/core/index.ts",
+      "custom-elements/index": "src/custom-elements/index.ts",
       "react/index": "src/react/index.ts",
       "unit-types/index": "src/unit-types/index.ts",
       "unit-helper/index": "src/unit-helper/index.ts",

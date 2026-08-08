@@ -124,6 +124,7 @@ export type HostSystem = {
   audioContext: IAudioContext;
   eventPort: EventPort<HostSystemEvent>;
   getAllUnits(): readonly HsUnitInstance[];
+  getConnectionRules(): readonly ConnectionRule[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;

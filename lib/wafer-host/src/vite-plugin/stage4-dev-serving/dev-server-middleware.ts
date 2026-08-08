@@ -11,7 +11,7 @@ export function createDevServerMiddleware(
     resolvedUnitEntries.map((entry) => [entry.catalogKey, entry]),
   );
   return async (req, res, next) => {
-    console.log("requested", req.url);
+    // console.log("requested", req.url);
     if (!req.url) {
       next();
       return;
@@ -35,12 +35,12 @@ export function createDevServerMiddleware(
             resolvedUnitEntry.folderPath,
             pathInUnit,
           );
-          console.log(
-            "--> resolved by unit loader:",
-            req.url,
-            "-->",
-            targetFilePath,
-          );
+          // console.log(
+          //   "--> resolved by unit loader:",
+          //   req.url,
+          //   "-->",
+          //   targetFilePath,
+          // );
           res.statusCode = 200;
           res.setHeader("Content-Type", getContentType(targetFilePath));
           fs.createReadStream(targetFilePath).pipe(res);

@@ -24,7 +24,7 @@ export const UnitFrame = ({
   onUnitInstanceLoaded,
   frameAspectRatio,
 }: Props) => {
-  if (unitUrl.endsWith("/index.js")) {
+  if (unitUrl.endsWith(".js")) {
     return (
       <CustomElementUnitFrame
         unitId={unitId}

@@ -13,10 +13,14 @@ export function startWatchEntryFiles(
       if (item.kind === "file") {
         const indexHtmlPath = item.folderPath + "index.html";
         const indexJsPath = item.folderPath + "index.js";
+        const indexSharableJsPath = item.folderPath + "index.sharable.js";
         const hasIndexHtml = fs.existsSync(indexHtmlPath);
         const hasIndexJs = fs.existsSync(indexJsPath);
+        const hasIndexSharableJs = fs.existsSync(indexSharableJsPath);
         if (!hasIndexHtml && hasIndexJs) {
           return { catalogKey: item.catalogKey, filePath: indexJsPath };
+        } else if (!hasIndexHtml && hasIndexSharableJs) {
+          return { catalogKey: item.catalogKey, filePath: indexSharableJsPath };
         } else if (hasIndexHtml) {
           return { catalogKey: item.catalogKey, filePath: indexHtmlPath };
         }
@@ -26,7 +30,7 @@ export function startWatchEntryFiles(
     .filter(Boolean) as WatchTarget[];
 
   for (const item of watchTargets) {
-    console.log(`watch ${item.filePath}`);
+    // console.log(`watch ${item.filePath}`);
     server.watcher.add(item.filePath);
   }
   server.watcher.on("change", (filePath) => {
