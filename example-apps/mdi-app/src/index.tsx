@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import "./setup-twind";
 import { css, cx } from "@twind/core";
 import catalog from "./unit-inventories.json";
 import { createStore } from "snap-store";
@@ -7,6 +6,9 @@ import { createHostSystem } from "wafer-host/core";
 import { HostAppProvider, UnitFrameScaled } from "wafer-host/react";
 import { ReactNode } from "react";
 import { startDragSession } from "./drag-session";
+import { install } from "@twind/core";
+import config from "./twind.config";
+install(config);
 
 const audioContext = new AudioContext();
 const hostSystem = createHostSystem(audioContext);
