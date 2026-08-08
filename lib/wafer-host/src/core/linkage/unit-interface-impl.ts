@@ -349,8 +349,8 @@ export function createUnitInterface(
         senderUnitId: unitId,
       });
     },
-    setViewSize(width, height) {
-      setViewSizeInternal({ width, height });
+    setViewSize(width, height, preferJustSize) {
+      setViewSizeInternal({ width, height, preferJustSize });
     },
     completeSetup(attrs) {
       if (cancelled) return;
@@ -401,7 +401,8 @@ export function createUnitInterface(
 
       if (attrs.unitAspects.viewSize) {
         const [width, height] = attrs.unitAspects.viewSize;
-        setViewSizeInternal({ width, height });
+        const preferJustSize = attrs.unitAspects.preferJustSize ?? false;
+        setViewSizeInternal({ width, height, preferJustSize });
       }
       portsFixed = true;
     },

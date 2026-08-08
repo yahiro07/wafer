@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HsUnitInstance } from "../core";
 import { UnitFrame } from "./unit-frame";
 import { UnitDestinationSpec } from "./destination-spec";
+import { HsViewSize } from "../core/linkage/types";
 
 type Props = {
   unitId: string;
@@ -38,7 +39,7 @@ export const UnitFrameScaled = ({
   const outerDivRef = useRef<HTMLDivElement>(null);
   const [outerSize, setOuterSize] = useState<Size | null>(null);
   const [unitInstance, setUnitInstance] = useState<HsUnitInstance | null>(null);
-  const [unitViewSize, setUnitViewSize] = useState<Size | null>(null);
+  const [unitViewSize, setUnitViewSize] = useState<HsViewSize | null>(null);
 
   useEffect(() => {
     const outerDiv = outerDivRef.current!;
@@ -73,6 +74,17 @@ export const UnitFrameScaled = ({
     }
   }, [outerSize, unitViewSize]);
 
+  const styleScalerDivSize = useMemo(() => {
+    if (unitViewSize) {
+      const { width, height, preferJustSize } = unitViewSize;
+      if (preferJustSize) {
+        return { width: `${width}px`, height: `${height}px` };
+      } else {
+        return { width: `${100 / scale}%`, height: `${100 / scale}%` };
+      }
+    }
+  }, [unitViewSize, scale]);
+
   return (
     <div
       ref={outerDivRef}
@@ -89,8 +101,10 @@ export const UnitFrameScaled = ({
       <div
         style={{
           flexShrink: 0,
-          width: `${100 / scale}%`,
-          height: `${100 / scale}%`,
+          // width: `${100 / scale}%`,
+          // height: `${100 / scale}%`,
+          width: styleScalerDivSize?.width,
+          height: styleScalerDivSize?.height,
           transform: `scale(${scale})`,
           transformOrigin: "center",
           display: "flex",

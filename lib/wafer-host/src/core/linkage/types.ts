@@ -65,7 +65,11 @@ export type HsPortInfo =
   | HsPortInfoPrimaryInner
   | HsPortInfoAdditional;
 
-export type HsViewSize = { width: number; height: number };
+export type HsViewSize = {
+  width: number;
+  height: number;
+  preferJustSize?: boolean;
+};
 
 export type HsUnitInstance = {
   unitId: string;
