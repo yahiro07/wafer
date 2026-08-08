@@ -92,7 +92,7 @@ const actionsInternal = {
 };
 
 const actions = {
-  setActiveUnit(unitId: string) {
+  setActiveWindow(unitId: string) {
     store.setActiveUnitId(unitId);
     const nextZIndex = Math.max(...store.state.unitItems.map((item) => item.zIndex)) + 1;
     actionsInternal.patchUnitAttrs(unitId, { zIndex: nextZIndex, visible: true });
@@ -105,6 +105,16 @@ const actions = {
   },
   setWindowVisibility(unitId: string, visible: boolean) {
     actionsInternal.patchUnitAttrs(unitId, { visible });
+  },
+  closeWindow(unitId: string) {
+    actions.setWindowVisibility(unitId, false);
+    const nextActiveUnitId = store.state.unitItems
+      .filter((item) => item.visible)
+      .sort((a, b) => a.zIndex - b.zIndex)
+      .at(-1)?.unitId;
+    if (nextActiveUnitId) {
+      actions.setActiveWindow(nextActiveUnitId);
+    }
   },
 };
 
@@ -119,7 +129,7 @@ const TitleBarGrip = ({
 }) => {
   const onPointerDown = (e0: React.PointerEvent<HTMLDivElement>) => {
     const unitOriginalPos = unitItem.position;
-    actions.setActiveUnit(unitItem.unitId);
+    actions.setActiveWindow(unitItem.unitId);
     startDragSession(e0.nativeEvent, {
       onMove(e) {
         const deltaX = e.position.x - e.originalPosition.x;
@@ -140,7 +150,7 @@ const WindowCloseButton = ({ className, unitId }: { className?: string; unitId: 
   return (
     <button
       className={cx("w-[30px] h-[24px] flex-cshrink-0 mb-0.5", className)}
-      onClick={() => actions.setWindowVisibility(unitId, false)}
+      onClick={() => actions.closeWindow(unitId)}
     >
       x
     </button>
@@ -245,7 +255,7 @@ const UnitTaskButton = ({ unitItem }: { unitItem: UnitItem }) => {
         "cursor-pointer text-gray-800",
         css({ border: active ? "inset 2px #888" : "outset 2px #ccc" }),
       )}
-      onClick={() => actions.setActiveUnit(unitItem.unitId)}
+      onClick={() => actions.setActiveWindow(unitItem.unitId)}
     >
       <div className="w-[48px] h-[32px] shrink-0">
         <img className="w-full h-full object-contain" src={catalogItem.thumbnailUrl} />
