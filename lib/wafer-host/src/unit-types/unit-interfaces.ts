@@ -10,10 +10,12 @@ export type UnitCategoryHint =
 
 export type PortSubtype = "audio" | "note" | "automation";
 
-export type NotePort = {
+export type NoteOutputPort = {
   noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
   noteOff(noteNumber: number, time?: number): void;
 };
+
+export type NoteInputPort = NoteOutputPort;
 
 export type AutomationParameterSpec = {
   id: string;
@@ -83,7 +85,7 @@ export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
-  createNoteOutputPort(): NotePort;
+  createNoteOutputPort(): NoteOutputPort;
   createAutomationOutputPort(): AutomationPort;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
@@ -93,7 +95,7 @@ export type UnitInterface = {
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
-    noteInput?: NotePort;
+    noteInput?: NoteInputPort;
     persistence?: Persistence;
     clockHandlers?: ClockHandlers;
     automationInput?: AutomationPort;

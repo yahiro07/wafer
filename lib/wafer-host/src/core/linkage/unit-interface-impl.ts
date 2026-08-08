@@ -1,4 +1,4 @@
-import { AutomationPort, NotePort, PortSubtype } from "../../unit-types";
+import { AutomationPort, NoteInputPort, PortSubtype } from "../../unit-types";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { oxLogger } from "../host-system/orchestration-logger";
 import {
@@ -25,10 +25,10 @@ function createHsNoteOutputPort(
 ): HsNoteOutputPort {
   // const connectedInputPorts = new Set<NotePort>();
   return {
-    connectTo(_port: NotePort) {
+    connectTo(_port: NoteInputPort) {
       // connectedInputPorts.add(port);
     },
-    disconnectTo(_port: NotePort) {
+    disconnectTo(_port: NoteInputPort) {
       // connectedInputPorts.delete(port);
     },
     noteOn(noteNumber, time, velocity) {
@@ -130,7 +130,10 @@ function createHsAdditionalAudioInputPort(
   return { node, id, label };
 }
 
-function createNoteInputWrapper(noteInput: NotePort, unitId: string): NotePort {
+function createNoteInputWrapper(
+  noteInput: NoteInputPort,
+  unitId: string,
+): NoteInputPort {
   return {
     noteOn(noteNumber, time, velocity) {
       oxLogger.noteReceived({

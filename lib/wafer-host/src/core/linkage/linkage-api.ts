@@ -30,7 +30,7 @@ export function createLinkageApi(
       const unitLoadingId = `${unitId}-${seqLoadingIndex++}`;
       type Phase = "loading" | "loaded" | "loadCancelled" | "unloaded";
       let phase: Phase = "loading";
-      (async () => {
+      void (async () => {
         hostSystemCore.pushUnitLoadingId(unitLoadingId);
         const unit = await unitInstancePromise;
         // @ts-expect-error
