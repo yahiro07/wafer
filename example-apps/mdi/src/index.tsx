@@ -136,10 +136,10 @@ const TitleBarGrip = ({
   );
 };
 
-const WindowCloseButton = ({ unitId }: { unitId: string }) => {
+const WindowCloseButton = ({ className, unitId }: { className?: string; unitId: string }) => {
   return (
     <button
-      className="w-[30px] h-[24px] flex-c bg-orange-400 shrink-0 mb-0.5"
+      className={cx("w-[30px] h-[24px] flex-cshrink-0 mb-0.5", className)}
       onClick={() => actions.setWindowVisibility(unitId, false)}
     >
       x
@@ -172,6 +172,8 @@ const WindowResizeAnchor = ({ unitItem }: { unitItem: UnitItem }) => {
 };
 
 const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
+  const { activeUnitId } = store.useSnapshot();
+  const active = activeUnitId === unitItem.unitId;
   const catalogItem = catalog[unitItem.catalogKey];
   return (
     <div
@@ -185,17 +187,26 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
         display: unitItem.visible ? "block" : "none",
       }}
     >
-      <div className="relative w-full h-full bg-white flex-v bd-blue-500 border-[3px]">
+      <div
+        className={cx(
+          "relative w-full h-full bg-white flex-v border-[3px]",
+          active ? "border-blue-500" : "border-gray-300",
+        )}
+      >
         <div
           className={cx(
-            "flex-ha h-[32px] bg-blue-500 shrink-0 text-white font-[600]",
+            "flex-ha h-[32px] shrink-0 text-white font-[600]",
             "justify-between pl-1 pr-0.5",
+            active ? "bg-blue-500" : "bg-gray-300",
           )}
         >
           <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
             {catalogItem.name}
           </TitleBarGrip>
-          <WindowCloseButton unitId={unitItem.unitId} />
+          <WindowCloseButton
+            unitId={unitItem.unitId}
+            className={active ? "bg-orange-400" : "bg-orange-200"}
+          />
         </div>
         <div className="grow flex-c overflow-hidden">
           <UnitFrameScaled
@@ -247,7 +258,7 @@ const UnitTaskButton = ({ unitItem }: { unitItem: UnitItem }) => {
 const BottomBar = () => {
   const { unitItems } = store.useSnapshot();
   return (
-    <div className="bg-gray-400 flex-c gap-4 p-3">
+    <div className="bg-gray-400 flex-c gap-3 p-3">
       {unitItems.map((item) => (
         <UnitTaskButton key={item.unitId} unitItem={item} />
       ))}
