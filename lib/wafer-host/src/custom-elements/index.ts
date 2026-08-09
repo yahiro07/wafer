@@ -92,7 +92,7 @@ async function setupWebComponentsUnit(
   customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
 
   const tagName = `${unitId}-unit`;
-  const unitElementClass = await import(moduleUrl).then(
+  const unitElementClass = await import(/* @vite-ignore */ moduleUrl).then(
     (module: { default: UnitElementClass }) => module.default,
   );
   if (unitElementClass.supportsSharableUnitClass) {
@@ -220,7 +220,9 @@ export function registerCustomElements(hostSystem: HostSystem): void {
       const unitFrame = shadowRoot.querySelector(
         "#unit-frame",
       ) as UnitFrame | null;
-      const scalerDiv = shadowRoot.querySelector("#scaler") as HTMLDivElement | null;
+      const scalerDiv = shadowRoot.querySelector(
+        "#scaler",
+      ) as HTMLDivElement | null;
       if (!unitFrame || !scalerDiv) {
         throw new Error("unit-frame-scaled failed to mount internal elements");
       }
