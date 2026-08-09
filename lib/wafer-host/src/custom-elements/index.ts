@@ -1,4 +1,10 @@
 import { HostSystem, HsUnitInstance } from "../core";
+import { HsViewSize } from "../core/linkage/types";
+import {
+  makeSize,
+  observeElementSize,
+  Size,
+} from "../mounter-common/size-helper";
 import { UnitInterface, UnitInterfaceProvider } from "../unit-types";
 
 type LoadedCallback = (unitInstance: HsUnitInstance) => void;
@@ -21,9 +27,6 @@ function setupIframeUnit(
   const unitInterface = hostSystem.linkageApi.createUnitInterface(
     unitId,
     (unitInstance) => {
-      const [w, h] = unitInstance.viewSize;
-      iframe.style.width = w + "px";
-      iframe.style.height = h + "px";
       cleanupFn = hostSystem.linkageApi.registerUnitInstance(unitInstance);
       hostSystem.linkageApi.reserveConnection(
         `${unitId}.primaryOutput`,
@@ -35,7 +38,11 @@ function setupIframeUnit(
   );
 
   const iframe = document.createElement("iframe");
-  iframe.style.border = "none";
+  Object.assign(iframe.style, {
+    width: "100%",
+    height: "100%",
+    border: "none",
+  });
   iframe.src = url;
   outerElement.appendChild(iframe);
   const win = iframe.contentWindow as unknown as UnitInterfaceProvider;
@@ -73,12 +80,10 @@ async function setupWebComponentsUnit(
   loadedCallback?: LoadedCallback,
 ): Promise<CleanupFn> {
   let cleanupFn: CleanupFn | null = null;
-  const state: { viewSize: [number, number] | null } = { viewSize: null };
 
   const unitInterface = hostSystem.linkageApi.createUnitInterface(
     unitId,
     (unitInstance) => {
-      state.viewSize = unitInstance.viewSize;
       cleanupFn = hostSystem.linkageApi.registerUnitInstance(unitInstance);
       hostSystem.linkageApi.reserveConnection(
         `${unitId}.primaryOutput`,
@@ -101,11 +106,6 @@ async function setupWebComponentsUnit(
   customElements.define(tagName, unitElementClass);
 
   const unitElement = document.createElement(tagName);
-  if (state.viewSize) {
-    const [w, h] = state.viewSize;
-    unitElement.style.width = w + "px";
-    unitElement.style.height = h + "px";
-  }
   outerElement.appendChild(unitElement);
 
   return () => {
@@ -143,6 +143,7 @@ class UnitFrame extends HTMLElement {
       );
     }
     this.attachShadow({ mode: "open" });
+    Object.assign(this.style, { width: "100%", height: "100%" });
     const shadowRoot = this.shadowRoot!;
     if (url.endsWith(".js")) {
       void setupWebComponentsUnit(
@@ -178,17 +179,18 @@ class UnitFrameScaled extends HTMLElement {
   }
 
   onUnitInstanceLoaded: LoadedCallback | null = null;
-  _cleanup: CleanupFn | null = null;
+
+  private cleanupFns: CleanupFn[] | null = null;
 
   connectedCallback(): void {
-    this.#mount();
+    this.mount();
   }
   disconnectedCallback(): void {
-    this._cleanup?.();
-    this._cleanup = null;
+    this.cleanupFns?.forEach((cleanup) => cleanup());
+    this.cleanupFns = null;
   }
 
-  #mount(): void {
+  private mount(): void {
     const unitId = this.getAttribute("unit-id");
     const destSpec = this.getAttribute("dest-spec");
     const url = this.getAttribute("url");
@@ -212,6 +214,9 @@ class UnitFrameScaled extends HTMLElement {
       }
       #scaler{
         transform-origin: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       </style>
       <div id="scaler">
@@ -229,11 +234,67 @@ class UnitFrameScaled extends HTMLElement {
       throw new Error("unit-frame-scaled failed to mount internal elements");
     }
 
+    const state: {
+      outerSize: Size | null;
+      unitViewSize: HsViewSize | null;
+    } = {
+      outerSize: null,
+      unitViewSize: null,
+    };
+
+    const self = this;
+    const internal = {
+      addCleanupFn(fn: CleanupFn): void {
+        self.cleanupFns ??= [];
+        self.cleanupFns.push(fn);
+      },
+      updateScaling() {
+        const { outerSize, unitViewSize } = state;
+        const innerSize = unitViewSize;
+        const scale =
+          outerSize && innerSize
+            ? Math.min(
+                outerSize.width / innerSize.width,
+                outerSize.height / innerSize.height,
+              )
+            : 1;
+        scalerDiv.style.transform = `scale(${scale})`;
+        if (unitViewSize) {
+          const { width, height, preferJustSize } = unitViewSize;
+          if (preferJustSize) {
+            scalerDiv.style.width = width + "px";
+            scalerDiv.style.height = height + "px";
+          } else {
+            scalerDiv.style.width = `${100 / scale}%`;
+            scalerDiv.style.height = `${100 / scale}%`;
+          }
+        }
+      },
+      setupObserveOuterSize() {
+        const outerDiv = self;
+        const updateBaseSize = () => {
+          state.outerSize = makeSize(
+            outerDiv.offsetWidth,
+            outerDiv.offsetHeight,
+          );
+          internal.updateScaling();
+        };
+        const cleanup = observeElementSize(outerDiv, updateBaseSize);
+        internal.addCleanupFn(cleanup);
+      },
+      setupObserveUnitSize(unitInstance: HsUnitInstance) {
+        const cleanup = unitInstance.subscribeViewSize((viewSize) => {
+          state.unitViewSize = viewSize;
+          internal.updateScaling();
+        });
+        internal.addCleanupFn(cleanup);
+      },
+    };
+
+    internal.setupObserveOuterSize();
+
     unitFrame.onUnitInstanceLoaded = (unitInstance) => {
-      const baseRect = this.getBoundingClientRect();
-      const [w, h] = unitInstance.viewSize;
-      const scale = Math.min(baseRect.width / w, baseRect.height / h);
-      scalerDiv.style.transform = `scale(${scale})`;
+      internal.setupObserveUnitSize(unitInstance);
       this.onUnitInstanceLoaded?.(unitInstance);
     };
   }
