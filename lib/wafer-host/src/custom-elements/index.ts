@@ -242,6 +242,7 @@ class UnitFrameScaled extends HTMLElement {
       unitViewSize: null,
     };
 
+    // oxlint-disable-next-line typescript/no-this-alias
     const self = this;
     const internal = {
       addCleanupFn(fn: CleanupFn): void {
