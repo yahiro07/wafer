@@ -114,127 +114,133 @@ async function setupWebComponentsUnit(
   };
 }
 
+const moduleLocal = {
+  hostSystem: undefined! as HostSystem,
+};
+
+class UnitFrame extends HTMLElement {
+  static get observedAttributes(): string[] {
+    return ["unit-id", "dest-spec", "url"];
+  }
+  onUnitInstanceLoaded: LoadedCallback | null = null;
+  _cleanup: CleanupFn | null = null;
+
+  connectedCallback(): void {
+    this.#mount();
+  }
+  disconnectedCallback(): void {
+    this._cleanup?.();
+    this._cleanup = null;
+  }
+
+  #mount(): void {
+    const unitId = this.getAttribute("unit-id");
+    const destSpec = this.getAttribute("dest-spec");
+    const url = this.getAttribute("url");
+    if (!unitId || !destSpec || !url) {
+      throw new Error(
+        "unit-frame requires unit-id, dest-spec, and url attributes",
+      );
+    }
+    this.attachShadow({ mode: "open" });
+    const shadowRoot = this.shadowRoot!;
+    if (url.endsWith(".js")) {
+      void setupWebComponentsUnit(
+        moduleLocal.hostSystem,
+        shadowRoot,
+        unitId,
+        destSpec,
+        url,
+        (unitInstance) => {
+          this.onUnitInstanceLoaded?.(unitInstance);
+        },
+      ).then((cleanup) => {
+        this._cleanup = cleanup;
+      });
+    } else {
+      this._cleanup = setupIframeUnit(
+        moduleLocal.hostSystem!,
+        shadowRoot,
+        unitId,
+        destSpec,
+        url,
+        (unitInstance) => {
+          this.onUnitInstanceLoaded?.(unitInstance);
+        },
+      );
+    }
+  }
+}
+
+class UnitFrameScaled extends HTMLElement {
+  static get observedAttributes(): string[] {
+    return ["unit-id", "dest-spec", "url"];
+  }
+
+  onUnitInstanceLoaded: LoadedCallback | null = null;
+  _cleanup: CleanupFn | null = null;
+
+  connectedCallback(): void {
+    this.#mount();
+  }
+  disconnectedCallback(): void {
+    this._cleanup?.();
+    this._cleanup = null;
+  }
+
+  #mount(): void {
+    const unitId = this.getAttribute("unit-id");
+    const destSpec = this.getAttribute("dest-spec");
+    const url = this.getAttribute("url");
+    if (!unitId || !destSpec || !url) {
+      throw new Error(
+        "unit-frame-scaled requires unit-id, dest-spec, and url attributes",
+      );
+    }
+
+    this.attachShadow({ mode: "open" });
+    const shadowRoot = this.shadowRoot!;
+    shadowRoot.innerHTML = `
+      <style>
+      :host{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+      }
+      #scaler{
+        transform-origin: center;
+      }
+      </style>
+      <div id="scaler">
+        <unit-frame id="unit-frame" unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
+      </div>
+    `;
+
+    const unitFrame = shadowRoot.querySelector(
+      "#unit-frame",
+    ) as UnitFrame | null;
+    const scalerDiv = shadowRoot.querySelector(
+      "#scaler",
+    ) as HTMLDivElement | null;
+    if (!unitFrame || !scalerDiv) {
+      throw new Error("unit-frame-scaled failed to mount internal elements");
+    }
+
+    unitFrame.onUnitInstanceLoaded = (unitInstance) => {
+      const baseRect = this.getBoundingClientRect();
+      const [w, h] = unitInstance.viewSize;
+      const scale = Math.min(baseRect.width / w, baseRect.height / h);
+      scalerDiv.style.transform = `scale(${scale})`;
+      this.onUnitInstanceLoaded?.(unitInstance);
+    };
+  }
+}
+
 export function registerCustomElements(hostSystem: HostSystem): void {
-  class UnitFrame extends HTMLElement {
-    static get observedAttributes(): string[] {
-      return ["unit-id", "dest-spec", "url"];
-    }
-    onUnitInstanceLoaded: LoadedCallback | null = null;
-    _cleanup: CleanupFn | null = null;
-
-    connectedCallback(): void {
-      this.#mount();
-    }
-    disconnectedCallback(): void {
-      this._cleanup?.();
-      this._cleanup = null;
-    }
-
-    #mount(): void {
-      const unitId = this.getAttribute("unit-id");
-      const destSpec = this.getAttribute("dest-spec");
-      const url = this.getAttribute("url");
-      if (!unitId || !destSpec || !url) {
-        throw new Error(
-          "unit-frame requires unit-id, dest-spec, and url attributes",
-        );
-      }
-      this.attachShadow({ mode: "open" });
-      const shadowRoot = this.shadowRoot!;
-      if (url.endsWith(".js")) {
-        void setupWebComponentsUnit(
-          hostSystem,
-          shadowRoot,
-          unitId,
-          destSpec,
-          url,
-          (unitInstance) => {
-            this.onUnitInstanceLoaded?.(unitInstance);
-          },
-        ).then((cleanup) => {
-          this._cleanup = cleanup;
-        });
-      } else {
-        this._cleanup = setupIframeUnit(
-          hostSystem,
-          shadowRoot,
-          unitId,
-          destSpec,
-          url,
-          (unitInstance) => {
-            this.onUnitInstanceLoaded?.(unitInstance);
-          },
-        );
-      }
-    }
-  }
+  moduleLocal.hostSystem = hostSystem;
   customElements.define("unit-frame", UnitFrame);
-
-  class UnitFrameScaled extends HTMLElement {
-    static get observedAttributes(): string[] {
-      return ["unit-id", "dest-spec", "url"];
-    }
-
-    onUnitInstanceLoaded: LoadedCallback | null = null;
-    _cleanup: CleanupFn | null = null;
-
-    connectedCallback(): void {
-      this.#mount();
-    }
-    disconnectedCallback(): void {
-      this._cleanup?.();
-      this._cleanup = null;
-    }
-
-    #mount(): void {
-      const unitId = this.getAttribute("unit-id");
-      const destSpec = this.getAttribute("dest-spec");
-      const url = this.getAttribute("url");
-      if (!unitId || !destSpec || !url) {
-        throw new Error(
-          "unit-frame-scaled requires unit-id, dest-spec, and url attributes",
-        );
-      }
-
-      this.attachShadow({ mode: "open" });
-      const shadowRoot = this.shadowRoot!;
-      shadowRoot.innerHTML = `
-        <style>
-        :host{
-          width: 100%;
-          height: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          overflow: hidden;
-        }
-        #scaler{
-          transform-origin: center;
-        }
-        </style>
-        <div id="scaler">
-          <unit-frame id="unit-frame" unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
-        </div>
-      `;
-
-      const unitFrame = shadowRoot.querySelector(
-        "#unit-frame",
-      ) as UnitFrame | null;
-      const scalerDiv = shadowRoot.querySelector(
-        "#scaler",
-      ) as HTMLDivElement | null;
-      if (!unitFrame || !scalerDiv) {
-        throw new Error("unit-frame-scaled failed to mount internal elements");
-      }
-
-      unitFrame.onUnitInstanceLoaded = (unitInstance) => {
-        const baseRect = this.getBoundingClientRect();
-        const [w, h] = unitInstance.viewSize;
-        const scale = Math.min(baseRect.width / w, baseRect.height / h);
-        scalerDiv.style.transform = `scale(${scale})`;
-        this.onUnitInstanceLoaded?.(unitInstance);
-      };
-    }
-  }
   customElements.define("unit-frame-scaled", UnitFrameScaled);
 }
