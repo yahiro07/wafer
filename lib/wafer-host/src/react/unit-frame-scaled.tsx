@@ -3,6 +3,11 @@ import { HsUnitInstance } from "../core";
 import { UnitFrame } from "./unit-frame";
 import { UnitDestinationSpec } from "./destination-spec";
 import { HsViewSize } from "../core/linkage/types";
+import {
+  Size,
+  makeSize,
+  observeElementSize,
+} from "../mounter-common/size-helper";
 
 type Props = {
   unitId: string;
@@ -13,19 +18,6 @@ type Props = {
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
-
-type Size = { width: number; height: number };
-
-const makeSize = (width: number, height: number): Size => ({ width, height });
-
-function observeElementSize(el: HTMLElement, callback: (size: Size) => void) {
-  const updateSize = () => {
-    callback(makeSize(el.offsetWidth, el.offsetHeight));
-  };
-  const ro = new ResizeObserver(updateSize);
-  ro.observe(el);
-  return () => ro.disconnect();
-}
 
 export const UnitFrameScaled = ({
   unitId,
@@ -47,7 +39,7 @@ export const UnitFrameScaled = ({
       const size = makeSize(outerDiv.offsetWidth, outerDiv.offsetHeight);
       setOuterSize(size);
     };
-    observeElementSize(outerDiv, updateOuterSize);
+    return observeElementSize(outerDiv, updateOuterSize);
   }, []);
 
   const handleUnitInstanceLoaded = (unit: HsUnitInstance) => {
