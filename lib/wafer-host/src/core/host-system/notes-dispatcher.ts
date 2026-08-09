@@ -69,7 +69,7 @@ export function createNotesDispatcher(
               velocity,
             });
           }
-          if (1) {
+          if (0) {
             console.log(
               `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
             );
