@@ -1,0 +1,24 @@
+{
+  "name": "unit-thumbnail",
+  "private": "true",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "snap-store": "^0.1.12",
+    "wafer-host": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@unocss/vite": "^66.7.5",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^7.0.2",
+    "unocss": "^66.7.5",
+    "vite": "^8.2.0"
+  }
+}

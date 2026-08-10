@@ -1,0 +1,20 @@
+export function seqNumbers(n: number): number[] {
+  return Array.from({ length: n })
+    .fill(0)
+    .map((_, i) => i);
+}
+
+export function removeArrayItem<T>(items: T[], item: T) {
+  const index = items.indexOf(item);
+  if (index >= 0) {
+    items.splice(index, 1);
+  }
+}
+
+export function removeArrayItems<T>(items: T[], cond: (item: T) => boolean) {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (cond(items[i])) {
+      items.splice(i, 1);
+    }
+  }
+}
