@@ -7,6 +7,7 @@ import {
   NoteOutputPort,
   Persistence,
   PortSubtype,
+  PresetProvider,
   UnitCallbacks,
   UnitInterface,
 } from "../../unit-types";
@@ -91,6 +92,7 @@ export type HsUnitInstance = {
   unitCallbacks?: UnitCallbacks;
   portInfos: HsPortInfo[];
   subscribeViewSize(fn: (viewSize: HsViewSize) => void): () => void;
+  presetProvider?: PresetProvider;
   cleanup?: () => void;
   RenderUi?: () => ReactNode;
 };

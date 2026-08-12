@@ -13,5 +13,5 @@ export const unitSourceUrls = [
 if (0) {
   const toAbsolute = (path: string) => new URL(path, import.meta.url).pathname;
   const localWaferUnitsBase = toAbsolute("../../../../wafer-units/");
-  unitSourceUrls.push(`file://${localWaferUnitsBase}/dist/mini-synth-2/`);
+  unitSourceUrls.push(`file://${localWaferUnitsBase}/dist/orion/`);
 }
