@@ -395,6 +395,7 @@ export function createUnitInterface(
         unitCallbacks: attrs.unitCallbacks,
         portInfos,
         subscribeViewSize,
+        presetProvider: attrs.presetProvider,
         cleanup: attrs.cleanup,
       };
       createdCallback(unitInstance);

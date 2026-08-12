@@ -81,6 +81,11 @@ export type UnitCallbacks = {
   // onMessageFromSourceUnit?(message: object): void;
 };
 
+export type PresetProvider = {
+  getPresetNames(): string[]; //prefix by $ if it is a command (like $Reset or $Random, ...etc)
+  applyPreset(presetName: string): void;
+};
+
 export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
@@ -101,6 +106,7 @@ export type UnitInterface = {
     clockHandlers?: ClockHandlers;
     automationInput?: AutomationPort;
     unitCallbacks?: UnitCallbacks;
+    presetProvider?: PresetProvider;
     cleanup?: () => void;
   }): void;
 };
