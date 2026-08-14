@@ -74,6 +74,8 @@ export function createHostSystem(
       const unit = bus.getUnit(unitId);
       if (unit) {
         unitStateOperations.applyStateToUnit(unit, state);
+      } else {
+        console.warn(`unit not found when applying state for ${unitId}`);
       }
     },
     async waitUnitsLoaded() {
