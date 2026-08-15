@@ -10,8 +10,7 @@ import { install } from "@twind/core";
 import config from "./twind.config";
 install(config);
 
-const audioContext = new AudioContext();
-const hostSystem = createHostSystem(audioContext);
+const hostSystem = createHostSystem();
 
 const npx = (value: number) => `${value}px`;
 
@@ -101,8 +100,12 @@ const actionsInternal = {
 const actions = {
   setActiveWindow(unitId: string) {
     store.setActiveUnitId(unitId);
-    const nextZIndex = Math.max(...store.state.unitItems.map((item) => item.zIndex)) + 1;
-    actionsInternal.patchUnitAttrs(unitId, { zIndex: nextZIndex, visible: true });
+    const nextZIndex =
+      Math.max(...store.state.unitItems.map((item) => item.zIndex)) + 1;
+    actionsInternal.patchUnitAttrs(unitId, {
+      zIndex: nextZIndex,
+      visible: true,
+    });
   },
   setWindowPosition(unitId: string, newPos: Point) {
     actionsInternal.patchUnitAttrs(unitId, { position: newPos });
@@ -144,7 +147,10 @@ const TitleBarGrip = ({
       onMove(e) {
         const deltaX = e.position.x - e.originalPosition.x;
         const deltaY = e.position.y - e.originalPosition.y;
-        const newPos = { x: unitOriginalPos.x + deltaX, y: unitOriginalPos.y + deltaY };
+        const newPos = {
+          x: unitOriginalPos.x + deltaX,
+          y: unitOriginalPos.y + deltaY,
+        };
         actions.setWindowPosition(unitItem.unitId, newPos);
       },
     });
@@ -156,7 +162,13 @@ const TitleBarGrip = ({
   );
 };
 
-const WindowCloseButton = ({ className, unitId }: { className?: string; unitId: string }) => {
+const WindowCloseButton = ({
+  className,
+  unitId,
+}: {
+  className?: string;
+  unitId: string;
+}) => {
   return (
     <button
       className={cx("w-[30px] h-[24px] flex-c shrink-0 mb-0.5", className)}
@@ -220,7 +232,10 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
             active ? "bg-blue-500" : `bg-[${gray350}]`,
           )}
         >
-          <TitleBarGrip className="h-full grow flex-ha pb-1" unitItem={unitItem}>
+          <TitleBarGrip
+            className="h-full grow flex-ha pb-1"
+            unitItem={unitItem}
+          >
             {catalogItem.name}
           </TitleBarGrip>
           <WindowCloseButton
@@ -268,9 +283,14 @@ const UnitTaskButton = ({ unitItem }: { unitItem: UnitItem }) => {
       onClick={() => actions.setActiveWindow(unitItem.unitId)}
     >
       <div className="w-[48px] h-[32px] shrink-0">
-        <img className="w-full h-full object-contain" src={catalogItem.thumbnailUrl} />
+        <img
+          className="w-full h-full object-contain"
+          src={catalogItem.thumbnailUrl}
+        />
       </div>
-      <div className="overflow-hidden text-ellipsis whitespace-nowrap">{catalogItem.name}</div>
+      <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+        {catalogItem.name}
+      </div>
     </div>
   );
 };

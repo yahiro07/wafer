@@ -15,11 +15,11 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
       snap-store:
-        specifier: ^0.1.12
-        version: 0.1.12(react@19.2.8)
+        specifier: ^0.1.14
+        version: 0.1.14(react@19.2.8)
       wafer-host:
-        specifier: ^0.1.6
-        version: 0.1.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^0.1.7
+        version: 0.1.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: ^19.2.18
@@ -767,8 +767,8 @@ packages:
     resolution: {integrity: sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g==}
     engines: {node: '>=18'}
 
-  snap-store@0.1.12:
-    resolution: {integrity: sha512-THAvor6MQ3YLSn5euN4LUv4Woaisb5sWfquLvCIu9pg2kl6KSV2rJt7ejrzDx9Ohp9F2T9Zyv4hUCiAbQYMTPw==}
+  snap-store@0.1.14:
+    resolution: {integrity: sha512-v8OJzbe4Dq+vmTcVslunraKL+4AsISu4YdsKRWNmj9Z6XDfPGH+hWG4RtrKdg13VAtrGAZxd9MqesD1l0l53jA==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       preact: '>=10.0.0'
@@ -880,8 +880,8 @@ packages:
       yaml:
         optional: true
 
-  wafer-host@0.1.6:
-    resolution: {integrity: sha512-HTpcR5KTVcg5fDE6Nq7P0z/u4aOa3CSpfAoGALWrrZDcxez8qzrDwcUQeQYK600B3Ot57F9Y5VwiGXa7W1M6ug==}
+  wafer-host@0.1.7:
+    resolution: {integrity: sha512-v4+56cXnzB/zaWWDCYZ4ejmyjxDHY4IH5UiMHc1X6rctMO5/10HMtcMoCHnbb/qPzz2kKJcN/4KNPTViSjcUoA==}
     peerDependencies:
       react: ^19.2.6
       react-dom: ^19.2.6
@@ -1503,7 +1503,7 @@ snapshots:
       mrmime: 2.0.1
       totalist: 3.0.1
 
-  snap-store@0.1.12(react@19.2.8):
+  snap-store@0.1.14(react@19.2.8):
     optionalDependencies:
       react: 19.2.8
 
@@ -1606,7 +1606,7 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  wafer-host@0.1.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  wafer-host@0.1.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     optionalDependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)

@@ -13,8 +13,7 @@ type StoreState = {
   catalogKey: CatalogKey;
 };
 
-const audioContext = new AudioContext();
-const hostSystem = createHostSystem(audioContext);
+const hostSystem = createHostSystem();
 
 const store = createStore<StoreState>({
   catalogKey: Object.keys(catalog)[0] as CatalogKey,
