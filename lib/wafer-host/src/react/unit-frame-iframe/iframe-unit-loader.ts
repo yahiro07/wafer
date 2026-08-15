@@ -6,7 +6,7 @@ export function loadIframeUnitInstance(
   unitId: string,
   iframe: HTMLIFrameElement,
   sideEffects: {
-    onIframeMounted?: (iframe: HTMLIFrameElement) => (() => void) | undefined;
+    onIframeMounted?: (iframe: HTMLIFrameElement) => (() => void) | void;
     onUnitInstanceLoaded?: (unitInstance: HsUnitInstance) => void;
     unitInstanceRef: React.RefObject<HsUnitInstance | null>;
   },

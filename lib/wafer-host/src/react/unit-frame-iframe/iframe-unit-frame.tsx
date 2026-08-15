@@ -13,7 +13,7 @@ type Props = {
   destSpec?: UnitDestinationSpec;
   className?: string;
   inputNotes?: number[];
-  onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
+  onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | void;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
 
