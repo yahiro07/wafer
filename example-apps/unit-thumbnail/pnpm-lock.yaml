@@ -18,7 +18,7 @@ importers:
         specifier: ^0.1.12
         version: 0.1.12(react@19.2.8)
       wafer-host:
-        specifier: ^0.1.0
+        specifier: ^0.1.6
         version: 0.1.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@types/react':
