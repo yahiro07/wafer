@@ -1,8 +1,10 @@
-import { createHostSystem, createSequencerTickDriver } from "https://esm.sh/wafer-host/core";
+import {
+  createHostSystem,
+  createSequencerTickDriver,
+} from "https://esm.sh/wafer-host/core";
 import { registerCustomElements } from "https://esm.sh/wafer-host/custom-elements";
 
-const audioContext = new AudioContext();
-const hostSystem = createHostSystem(audioContext);
+const hostSystem = createHostSystem();
 registerCustomElements(hostSystem);
 const sequencerTickDriver = createSequencerTickDriver(hostSystem);
 

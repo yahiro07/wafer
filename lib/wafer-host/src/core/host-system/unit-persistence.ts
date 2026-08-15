@@ -24,10 +24,14 @@ export const unitStateOperations = {
     const stateInput = unit.persistence;
     if (stateData.type === "bytes" && stateInput?.applyStateBytes) {
       const bytes = base64Helper.decode(stateData.base64);
+      console.log(`call applyStateBytes for ${unit.unitId}`);
       stateInput.applyStateBytes(bytes);
     } else if (stateData.type === "json" && stateInput?.applyState) {
       const data = structuredClone(stateData.json);
+      console.log(`call applyState for ${unit.unitId}`);
       stateInput.applyState(data);
+    } else {
+      console.warn(`invalid condition applyStateToUnit for ${unit.unitId}`);
     }
   },
 };

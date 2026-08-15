@@ -10,8 +10,8 @@
     "clsx": "^2.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "snap-store": "^0.1.12",
-    "wafer-host": "^0.1.3"
+    "snap-store": "^0.1.14",
+    "wafer-host": "^0.1.7"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

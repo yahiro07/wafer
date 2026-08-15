@@ -104,7 +104,7 @@ export function createRemoteUnitCacheStorageIo(
     },
     async listExistingBucketPieceKeys() {
       const paths = await internal.globFoldersTwoLevels("units");
-      return paths.map((p) => p.replace("/", ":"));
+      return paths.map((p) => p.replace(/[\\/]/g, ":"));
     },
     writeCachedPiece(bucketName, pieceName, sourceUnitFolderPath) {
       const destFolder = `units/${bucketName}/${pieceName}`;

@@ -7,8 +7,7 @@ import "virtual:uno.css";
 import "./app.css";
 import clsx from "clsx";
 
-const audioContext = new AudioContext();
-const hostSystem = createHostSystem(audioContext);
+const hostSystem = createHostSystem();
 
 type StoreState = {
   playing: boolean;
@@ -52,7 +51,9 @@ const ControlBar = () => {
 const UnitTiles = () => {
   return (
     <div
-      className={clsx("grid grid-cols-2 grid-rows-2 gap-2 w-[1200px] h-[700px] overflow-hidden")}
+      className={clsx(
+        "grid grid-cols-2 grid-rows-2 gap-2 w-[1200px] h-[700px] overflow-hidden",
+      )}
     >
       <UnitFrameScaled
         className="bg-gray-400"

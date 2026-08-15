@@ -82,8 +82,10 @@ export type UnitCallbacks = {
 };
 
 export type PresetProvider = {
-  getPresetNames(): string[]; //prefix by $ if it is a command (like $Reset or $Random, ...etc)
-  applyPreset(presetName: string): void;
+  getPresetNames?(): string[];
+  applyPreset?(presetName: string): void;
+  getCommandNames?(): string[];
+  applyCommand?(commandName: string): void | boolean; //if true returned, host ui resets the preset selection
 };
 
 export type UnitInterface = {

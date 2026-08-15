@@ -13,8 +13,7 @@ type StoreState = {
   catalogKey: CatalogKey;
 };
 
-const audioContext = new AudioContext();
-const hostSystem = createHostSystem(audioContext);
+const hostSystem = createHostSystem();
 
 const store = createStore<StoreState>({
   catalogKey: Object.keys(catalog)[0] as CatalogKey,
@@ -28,10 +27,12 @@ const PageRoot = () => {
   const captureSizeWidth = 400 / dpr;
   const captureSizeHeight = 270 / dpr;
 
-  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>({
-    width: captureSizeWidth,
-    height: captureSizeHeight,
-  });
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>(
+    {
+      width: captureSizeWidth,
+      height: captureSizeHeight,
+    },
+  );
 
   const scaling = Math.min(
     captureSizeWidth / frameSize.width,
@@ -39,9 +40,7 @@ const PageRoot = () => {
   );
 
   const onUnitLoaded = (unit: HsUnitInstance) => {
-    if (unit.viewSize) {
-      setFrameSize({ width: unit.viewSize[0], height: unit.viewSize[1] });
-    }
+    unit.subscribeViewSize((size) => setFrameSize(size));
   };
 
   return (
@@ -84,9 +83,9 @@ const PageRoot = () => {
         </div>
 
         <div className="text-gray-500">
-          To capture thumbnail screenshot of the unit, open devtool and select div with id
-          "screenshot-target-container" element (not the inner iframe itself), then right click and
-          choose "Capture node screenshot".
+          To capture thumbnail screenshot of the unit, open devtool and select
+          div with id "screenshot-target-container" element (not the inner
+          iframe itself), then right click and choose "Capture node screenshot".
         </div>
       </div>
     </div>

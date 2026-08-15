@@ -17,13 +17,14 @@ import {
 } from "./unit-persistence";
 
 export function createHostSystem(
-  audioContext: IAudioContext,
+  audioContext?: IAudioContext,
   options?: {
     hostSystemCore?: HostSystemCore;
     customNotesDispatcher?: NotesDispatcher;
     linkageManager?: UnitLinkageManager;
   },
 ): HostSystem {
+  audioContext ??= new AudioContext();
   const hostSystemCore =
     options?.hostSystemCore ?? createHostSystemCore(audioContext);
   const { bus } = hostSystemCore;
@@ -74,6 +75,8 @@ export function createHostSystem(
       const unit = bus.getUnit(unitId);
       if (unit) {
         unitStateOperations.applyStateToUnit(unit, state);
+      } else {
+        console.warn(`unit not found when applying state for ${unitId}`);
       }
     },
     async waitUnitsLoaded() {
