@@ -1,12 +1,9 @@
-import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
 import { UnitCacheEntry } from "../common/internal-types";
 import { parseRemoteUnitUrl } from "../common/unit-url-helpers";
-
-const execFileAsync = promisify(execFile);
+import extract from "extract-zip";
 
 export async function downloadUnitsFromRemote(
   unitCacheEntries: UnitCacheEntry[],
@@ -66,7 +63,7 @@ export async function downloadUnitsFromRemote(
       }
 
       await fs.promises.mkdir(extractDirPath, { recursive: true });
-      await execFileAsync("unzip", ["-q", archivePath, "-d", extractDirPath]);
+      await extract(archivePath, { dir: extractDirPath });
 
       const extractedRootDirEntry = (
         await fs.promises.readdir(extractDirPath, { withFileTypes: true })
