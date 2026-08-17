@@ -213,13 +213,14 @@ pnpm run build
 
 There are no special prerequisites or setup steps — `pnpm run build` is all you need.
 
-## Reference unit implementations
+## Repositories for actual units
 
 React/Vite/TypeScript-based units: [https://github.com/yahiro07/wafer-units](https://github.com/yahiro07/wafer-units)
 
 Units adapted from legacy open-source web apps for Wafer: [https://github.com/yahiro07/wafer-custom-units](https://github.com/yahiro07/wafer-custom-units)
 
-Both are good starting points when building a real unit.
+Here are repositories containing working unit projects.
+Please use these as a reference when building your own unit.
 
 ## License
 
