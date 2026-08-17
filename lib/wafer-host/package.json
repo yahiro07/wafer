@@ -53,7 +53,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "lint": "oxlint --type-aware --type-check"
   },
   "devDependencies": {
