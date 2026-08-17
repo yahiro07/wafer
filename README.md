@@ -97,7 +97,7 @@ When the unit runs standalone, `window.queryUnitInterface` does not exist and `u
 
 ### With React and Vite
 
-The example below uses React, Vite, and TypeScript. A working project lives in [`example-apps/simple-session/`](examples-apps/simple-session/).
+The example below uses React, Vite, and TypeScript. A working project lives in [`example-apps/simple-session/`](example-apps/simple-session).
 
 ```tsx
 import { createHostSystem } from "wafer-host/core";
@@ -162,7 +162,7 @@ When the dev server starts, the Vite plugin downloads and caches these units loc
 
 ### With vanilla JS
 
-This example uses the Web Components wrappers from plain JavaScript. Loading the host library requires ESM. A working sample lives in [`example-apps/simple-session-vanilla/`](examples-apps/simple-session-vanilla/).
+This example uses the Web Components wrappers from plain JavaScript. Loading the host library requires ESM. A working sample lives in [`example-apps/simple-session-vanilla/`](example-apps/simple-session-vanilla).
 
 ```js
 import {
