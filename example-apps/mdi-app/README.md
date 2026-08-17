@@ -26,13 +26,13 @@ Tap the `Play/Pause` button in the bottom left corner to start playback.
 ## prepare
 
 ```
-npm install
+pnpm install
 ```
 
 ## run
 
 ```
-npm run dev
+pnpm run dev
 ```
 
 For the first run, unit-loader vite plugin downloads units and cache them `../.wafer-cache` folder.

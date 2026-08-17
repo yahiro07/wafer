@@ -10,3 +10,17 @@ Capture the image and add it to your unit folder with the name `unit-thumbnail.p
 ## screenshot
 
 ![screenshot](screenshot.png)
+
+## prepare
+
+```
+pnpm install
+```
+
+## run
+
+```
+pnpm run dev
+```
+
+For the first run, unit-loader vite plugin downloads units and cache them `../.wafer-cache` folder.
