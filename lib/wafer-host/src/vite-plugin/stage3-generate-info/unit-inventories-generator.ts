@@ -92,7 +92,7 @@ function getLoaderPageUrlBase(resolvedUnitEntry: ResolvedUnitEntry): string {
 }
 
 //for unit-thumbnail.png and LICENSE text file
-function getUrlBaseForAssets(resolvedUnitEntry: ResolvedUnitEntry): string {
+function _getUrlBaseForAssets(resolvedUnitEntry: ResolvedUnitEntry): string {
   if (resolvedUnitEntry.kind === "file") {
     return `/inventory-units/${resolvedUnitEntry.catalogKey}/`;
   } else {
@@ -112,7 +112,7 @@ function createUnitInventorySpec(
 
   const _meta = meta as any;
   const loaderPageUrlBase = getLoaderPageUrlBase(resolvedUnitEntry);
-  const urlBaseForAssets = getUrlBaseForAssets(resolvedUnitEntry);
+  // const urlBaseForAssets = getUrlBaseForAssets(resolvedUnitEntry);
   const entryFileName = {
     iframe: "index.html",
     customElement: "index.js",
@@ -129,7 +129,7 @@ function createUnitInventorySpec(
     originalPageUrl: `${pageFolderUrl}${entryFileName}`,
     loaderPageUrl: `${loaderPageUrlBase}${entryFileName}`,
     thumbnailUrl: hasThumbnail
-      ? `${urlBaseForAssets}unit-thumbnail.png`
+      ? `${loaderPageUrlBase}unit-thumbnail.png`
       : undefined,
     //
     originalRepositoryUrl: _meta.repositoryUrl ?? _meta.originalRepositoryUrl,
@@ -137,7 +137,7 @@ function createUnitInventorySpec(
     forkedRepositoryUrl: _meta.forkedRepositoryUrl,
     forkedAuthor: _meta.forkedAuthor,
     license: meta.license,
-    licenseTextUrl: hasLicenseText ? `${urlBaseForAssets}LICENSE` : undefined,
+    licenseTextUrl: hasLicenseText ? `${loaderPageUrlBase}LICENSE` : undefined,
   };
 }
 
