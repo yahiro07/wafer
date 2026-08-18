@@ -1,6 +1,7 @@
 {
   "name": "unit-thumbnail",
   "private": "true",
+  "type": "module",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -10,7 +11,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "snap-store": "^0.1.14",
-    "wafer-host": "^0.1.8"
+    "wafer-host": "^0.1.9"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
