@@ -2,7 +2,6 @@ import { CachedUnitEntry, ResolvedUnitEntry } from "../common/internal-types";
 import { UnitFetchMethod } from "../common/types";
 import {
   isUnitCached,
-  pruneCachedUnits,
   RemoteUnitCacheStorageIo,
 } from "./remote-unit-cache-storage-io";
 import { downloadUnitsFromRemote } from "./remote-units-downloader";
@@ -19,11 +18,6 @@ export async function cacheRemoteUnitsIfNeed(
       folderPath: entry.folderPath,
       source: entry.source,
     }));
-
-  await pruneCachedUnits(
-    cacheStorageIo.getUnitsCacheFolderPath(),
-    cacheEntries.map((entry) => entry.folderPath),
-  );
 
   const missingEntries: CachedUnitEntry[] = [];
   for (const entry of cacheEntries) {
