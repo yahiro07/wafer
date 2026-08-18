@@ -69,7 +69,7 @@ function createLoaderNonSharable() {
     const moduleUrl = `${location.origin}${url}?tagName=${tagName}`;
     customElementUnitInterfaceMap.set(moduleUrl, unitInterface);
 
-    const unitElementClass = await import(moduleUrl).then(
+    const unitElementClass = await import(/* @vite-ignore */ moduleUrl).then(
       (module) => module.default,
     );
     customElementUnitInterfaceMap.delete(moduleUrl);
@@ -94,7 +94,7 @@ function createLoaderSharable() {
     if (!loadingItem) {
       const tagName = `unit-${Math.random().toString().slice(2, 8)}`;
       const unitElementClassPromise = (async () => {
-        const unitElementClass = await import(url).then(
+        const unitElementClass = await import(/* @vite-ignore */ url).then(
           (module) => module.default,
         );
         customElements.define(tagName, unitElementClass);
