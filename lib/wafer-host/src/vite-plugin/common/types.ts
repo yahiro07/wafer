@@ -11,6 +11,8 @@ export type UnitSourceUrlsArray = (string | UnitSourceUrlRecord)[];
 
 export type UnitSourceUrlsInput = UnitSourceUrls | UnitSourceUrlsArray;
 
+export type UnitFetchMethod = "auto" | "git" | "zip";
+
 export type UnitInventorySpec = {
   catalogKey: string;
   name: string;

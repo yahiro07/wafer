@@ -3,7 +3,8 @@ import { normalizeCasing } from "../common/common-helper";
 import { ResolvedUnitEntry } from "../common/internal-types";
 import {
   extractDirectTargetUrl,
-  mapUnitUrlToBucketAndPieceNames,
+  getCachedUnitRelativePath,
+  parseRemoteUnitUrl,
 } from "../common/unit-url-helpers";
 
 function mapUrlToResolvedUnitEntry(
@@ -17,15 +18,17 @@ function mapUrlToResolvedUnitEntry(
     const targetUrl = extractDirectTargetUrl(url);
     return { catalogKey, sourceUrlSpec, kind: "direct", targetUrl };
   } else if (url.startsWith("https://") || url.startsWith("http://")) {
-    const { bucketName, pieceName } = mapUnitUrlToBucketAndPieceNames(url);
-    const folderPath = path.join(unitsCacheFolderPath, bucketName, pieceName);
+    const source = parseRemoteUnitUrl(url);
+    const folderPath = path.join(
+      unitsCacheFolderPath,
+      getCachedUnitRelativePath(source),
+    );
     return {
       catalogKey,
       sourceUrlSpec,
       kind: "cache",
       folderPath,
-      bucketName,
-      pieceName,
+      source,
     };
   } else if (url.startsWith("file:///")) {
     const folderPath = url.replace("file:///", "/");

@@ -7,6 +7,7 @@ import {
   UnitInventoriesJson,
   UnitInventorySpec,
 } from "../common/types";
+import { toOriginalPageUrl } from "../common/unit-url-helpers";
 
 async function fetchUnitAssetText(
   resolvedUnitEntry: ResolvedUnitEntry,
@@ -126,7 +127,10 @@ function createUnitInventorySpec(
     outputSignalTypes: meta.outputSignalTypes,
     inputSignalTypes: meta.inputSignalTypes,
     unitTypesVersion: meta.unitTypesVersion,
-    originalPageUrl: `${pageFolderUrl}${entryFileName}`,
+    originalPageUrl:
+      resolvedUnitEntry.kind === "cache"
+        ? toOriginalPageUrl(pageFolderUrl, entryFileName)
+        : `${pageFolderUrl}${entryFileName}`,
     loaderPageUrl: `${loaderPageUrlBase}${entryFileName}`,
     thumbnailUrl: hasThumbnail
       ? `${loaderPageUrlBase}unit-thumbnail.png`

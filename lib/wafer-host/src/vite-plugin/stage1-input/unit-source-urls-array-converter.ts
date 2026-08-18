@@ -3,9 +3,24 @@ import {
   UnitSourceUrlsArray,
   UnitSourceUrlsInput,
 } from "../common/types";
-import { createSegmentsDecoder } from "../common/unit-url-helpers";
+import {
+  createSegmentsDecoder,
+  parseRemoteUnitUrl,
+} from "../common/unit-url-helpers";
 
 function getCatalogKeyFromUrl(url: string) {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      const hostname = new URL(url).hostname;
+      if (hostname === "github.com") {
+        const source = parseRemoteUnitUrl(url);
+        const pieceName = source.piecePath.split("/").filter(Boolean).at(-1);
+        return pieceName ?? source.repo;
+      }
+    } catch {
+      // fall through to the generic decoder
+    }
+  }
   const segDecoder = createSegmentsDecoder(url, {
     removeHeadSlash: true,
   });
