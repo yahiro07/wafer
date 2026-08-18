@@ -21,6 +21,7 @@ export type GitHubUnitSource = {
 
 export type ResolvedUnitEntry = {
   catalogKey: string;
+  publicFolderName: string;
   sourceUrlSpec: string;
 } & (
   | { kind: "cache"; folderPath: string; source: GitHubUnitSource }
