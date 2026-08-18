@@ -146,19 +146,19 @@ There is also `<UnitFrameScaled />`, which automatically scales the unit to fit 
 
 ```ts
 export const unitSourceUrls = [
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r16/graphite-drum-machine/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r16/tonerio-sequencer/",
+  "https://github.com/yahiro07/wafer-units/tree/r16/graphite-drum-machine/",
+  "https://github.com/yahiro07/wafer-units/tree/r16/tonerio-sequencer/",
   ...
 ];
 ```
 
 This is how you declare the units to import; the list is passed to the unit loader plugin.
 
-Here the units are pre-built folders in a GitHub repository, pulled in through jsDelivr. URLs must start with `https://cdn.jsdelivr.net/gh`, and any GitHub repository can be referenced.
+Here the units are pre-built folders in a GitHub repository. URLs must be GitHub tree URLs of the form `https://github.com/{owner}/{repo}/tree/{ref}/{path}/`. `{ref}` is a single path segment (a tag or branch name). `{path}` may be omitted when the unit lives at the repository root. The URL must end with `/`.
 
 To use your own units, build them into a runnable bundle and push the built pages to GitHub.
 
-When the dev server starts, the Vite plugin downloads and caches these units locally and maps requests to the cached content. On a production build they are emitted as local assets.
+When the dev server starts, the Vite plugin fetches these units (via `git` when available, or a zip archive otherwise) and caches them locally. On a production build they are emitted as local assets. Pass `fetchMethod: "git" | "zip"` to the plugin to force one strategy.
 
 ### With vanilla JS
 

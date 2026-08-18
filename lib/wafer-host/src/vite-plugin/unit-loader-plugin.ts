@@ -1,7 +1,11 @@
 import type { Plugin, ResolvedConfig } from "vite";
 import { checkDeepEquality } from "./common/common-helper";
 import { ResolvedUnitEntry } from "./common/internal-types";
-import { UnitSourceUrls, UnitSourceUrlsInput } from "./common/types";
+import {
+  UnitFetchMethod,
+  UnitSourceUrls,
+  UnitSourceUrlsInput,
+} from "./common/types";
 import { checkUnitSourceUrlFormat } from "./common/unit-url-helpers";
 import { createResolvedUnitEntries } from "./stage1-input/unit-entry-resolver";
 import { formatUnitSourceUrlsToDictionary } from "./stage1-input/unit-source-urls-array-converter";
@@ -20,10 +24,12 @@ export function unitLoaderPlugin(options: {
   unitSourceUrls: UnitSourceUrlsInput;
   cacheFolderPath?: string;
   summaryOutputPath?: string;
+  fetchMethod?: UnitFetchMethod;
 }): Plugin {
   const cacheFolderPath = options.cacheFolderPath ?? "~/.wus/cache";
   const summaryOutputPath =
     options.summaryOutputPath ?? "src/unit-inventories.json";
+  const fetchMethod = options.fetchMethod ?? "auto";
   let config: ResolvedConfig;
   let unitSourceUrls: UnitSourceUrls;
   let resolvedUnitEntries: ResolvedUnitEntry[];
@@ -46,7 +52,7 @@ export function unitLoaderPlugin(options: {
       return await cacheRemoteUnitsIfNeed(
         cacheStorageIo,
         resolvedUnitEntries,
-        cacheFolderPath,
+        fetchMethod,
       );
     },
     async processStage3() {

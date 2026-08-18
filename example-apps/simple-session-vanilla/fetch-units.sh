@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 mkdir -p units .tmp
 
 rm -rf .tmp/wafer-units .tmp/wafer-custom-units
-git -c advice.detachedHead=false clone --depth 1 --branch r21 https://github.com/yahiro07/wafer-units.git .tmp/wafer-units
+git -c advice.detachedHead=false clone --depth 1 --branch r22 https://github.com/yahiro07/wafer-units.git .tmp/wafer-units
 git -c advice.detachedHead=false clone --depth 1 --branch r19 https://github.com/yahiro07/wafer-custom-units.git .tmp/wafer-custom-units
 
 cp -R .tmp/wafer-units/{graphite-drum-machine,sunset-delay,tonerio-sequencer} units/

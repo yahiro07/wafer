@@ -1,12 +1,12 @@
 export const unitSourceUrls = [
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r21/graphite-drum-machine/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r21/mini-synth-ge/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r21/bseq2/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r21/tonerio-sequencer/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-units@r21/fluorite-piano-roll/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-custom-units@r19/webaudio-tinysynth-mini/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-custom-units@r19/super-oscillator/",
-  "https://cdn.jsdelivr.net/gh/yahiro07/wafer-custom-units@r19/vue-audio-mixer/",
+  "https://github.com/yahiro07/wafer-units/tree/r22/graphite-drum-machine/",
+  "https://github.com/yahiro07/wafer-units/tree/r22/mini-synth-ge/",
+  "https://github.com/yahiro07/wafer-units/tree/r22/bseq2/",
+  "https://github.com/yahiro07/wafer-units/tree/r22/tonerio-sequencer/",
+  "https://github.com/yahiro07/wafer-units/tree/r22/fluorite-piano-roll/",
+  "https://github.com/yahiro07/wafer-custom-units/tree/r19/webaudio-tinysynth-mini/",
+  "https://github.com/yahiro07/wafer-custom-units/tree/r19/super-oscillator/",
+  "https://github.com/yahiro07/wafer-custom-units/tree/r19/vue-audio-mixer/",
   //add "file://path/to/your/local/unit/to/capture/thumbnail/"
 ];
 
