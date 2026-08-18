@@ -8,7 +8,7 @@ export function createDevServerMiddleware(
   resolvedUnitEntries: ResolvedUnitEntry[],
 ): Connect.NextHandleFunction {
   const resolvedUnitEntriesMap = Object.fromEntries(
-    resolvedUnitEntries.map((entry) => [entry.catalogKey, entry]),
+    resolvedUnitEntries.map((entry) => [entry.publicFolderName, entry]),
   );
   return async (req, res, next) => {
     // console.log("requested", req.url);
@@ -22,10 +22,10 @@ export function createDevServerMiddleware(
 
     if (requestPath.startsWith("/inventory-units/")) {
       const segments = requestPath.replace("/inventory-units/", "").split("/");
-      const catalogKey = segments[0];
+      const publicFolderName = segments[0];
       const pathInUnit = segments.slice(1).join("/");
 
-      const resolvedUnitEntry = resolvedUnitEntriesMap[catalogKey];
+      const resolvedUnitEntry = resolvedUnitEntriesMap[publicFolderName];
       if (resolvedUnitEntry && pathInUnit) {
         if (
           resolvedUnitEntry.kind === "cache" ||

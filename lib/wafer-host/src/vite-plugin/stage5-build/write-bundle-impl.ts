@@ -20,7 +20,7 @@ export async function writeBundleImpl(
       configRoot,
       outDir,
       "inventory-units",
-      resolvedUnitEntry.catalogKey,
+      resolvedUnitEntry.publicFolderName,
     );
     await fs.promises.mkdir(outputFolderPath, { recursive: true });
     await fs.promises.cp(resolvedUnitEntry.folderPath, outputFolderPath, {
