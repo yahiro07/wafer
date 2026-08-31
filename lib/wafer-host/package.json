@@ -1,6 +1,6 @@
 {
   "name": "wafer-host",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "WebAudio host framework for the browser based DAW.",
   "keywords": [
     "daw",
