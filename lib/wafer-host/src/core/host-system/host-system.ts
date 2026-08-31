@@ -83,13 +83,13 @@ export function createHostSystem(
       await delayMs(200); //wait for iframes to be mounted in dom
       await waitPendingUnitsLoaded();
     },
-    deliverNote({ destUnitId, noteNumber, isOn, time, velocity }) {
+    deliverNote({ destUnitId, noteNumber, isOn, time, attrs }) {
       notesDispatcher.pushNoteDeliveryEvent({
         destPortKey: `${destUnitId}.noteInput`,
         noteNumber,
         isOn,
         time,
-        velocity,
+        attrs,
       });
     },
     cleanup() {

@@ -314,7 +314,7 @@ const PlayButton = () => {
 const BottomBar = () => {
   const { unitItems } = store.useSnapshot();
   return (
-    <div className="bg-gray-400 flex-c gap-6 p-3">
+    <div className="bg-gray-400 flex-c gap-6 p-3 z-[100]">
       <PlayButton />
       <div className="flex-ha gap-3">
         {unitItems.map((item) => (

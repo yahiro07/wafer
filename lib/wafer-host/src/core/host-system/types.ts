@@ -1,4 +1,4 @@
-import { MetaAttributes } from "../../unit-types";
+import { MetaAttributes, NoteAttributes } from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import {
   HsAudioInputPort,
@@ -91,7 +91,7 @@ export type NoteDeliveryEvent = {
   noteNumber: number;
   isOn: boolean;
   time?: number;
-  velocity?: number;
+  attrs?: NoteAttributes;
 };
 
 export type AutomationDeliveryEvent = {
@@ -116,7 +116,7 @@ export type UnitNoteOutputMonitorFn = (args: {
   noteNumber: number;
   isOn: boolean;
   time?: number;
-  velocity?: number;
+  attrs?: NoteAttributes;
 }) => void;
 
 //public api for host application
@@ -137,7 +137,7 @@ export type HostSystem = {
     noteNumber: number;
     isOn: boolean;
     time?: number;
-    velocity?: number;
+    attrs?: NoteAttributes;
   }): void;
   cleanup(): void;
   setUnitNoteOutputMonitor(
