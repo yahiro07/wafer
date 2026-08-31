@@ -10,8 +10,13 @@ export type UnitCategoryHint =
 
 export type PortSubtype = "audio" | "note" | "automation";
 
+export type NoteAttributes = {
+  velocity?: number; //0~1
+  [key: string]: any;
+};
+
 export type NoteOutputPort = {
-  noteOn(noteNumber: number, time?: number, velocity?: number): void; //velocity:0~1
+  noteOn(noteNumber: number, time?: number, attrs?: NoteAttributes): void;
   noteOff(noteNumber: number, time?: number): void;
 };
 

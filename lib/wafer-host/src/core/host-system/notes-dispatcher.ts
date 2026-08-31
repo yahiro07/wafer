@@ -47,7 +47,7 @@ export function createNotesDispatcher(
 
   const internal = {
     pushNoteDeliveryEventImpl(noteDeliveryEvent: NoteDeliveryEvent) {
-      const { time, sourcePortKey, destPortKey, noteNumber, velocity, isOn } =
+      const { time, sourcePortKey, destPortKey, noteNumber, attrs, isOn } =
         noteDeliveryEvent;
       let destPortKeys: string[] | undefined;
       if (!sourcePortKey && destPortKey) {
@@ -66,7 +66,7 @@ export function createNotesDispatcher(
               noteNumber,
               isOn,
               time,
-              velocity,
+              attrs,
             });
           }
           if (0) {
@@ -76,7 +76,7 @@ export function createNotesDispatcher(
           }
           for (const port of destPorts) {
             if (isOn) {
-              port.noteOn(noteNumber, time, velocity);
+              port.noteOn(noteNumber, time, attrs);
             } else {
               port.noteOff(noteNumber, time);
             }

@@ -32,13 +32,13 @@ function createHsNoteOutputPort(
     disconnectTo(_port: NoteInputPort) {
       // connectedInputPorts.delete(port);
     },
-    noteOn(noteNumber, time, velocity) {
+    noteOn(noteNumber, time, attrs) {
       notesDispatcher.pushNoteDeliveryEvent({
         sourcePortKey: `${unitId}.noteOutput`,
         noteNumber,
         isOn: true,
         time,
-        velocity,
+        attrs,
       });
     },
     noteOff(noteNumber, time) {
