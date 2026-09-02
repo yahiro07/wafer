@@ -35,6 +35,20 @@ export function createDevServerMiddleware(
             resolvedUnitEntry.folderPath,
             pathInUnit,
           );
+
+          if (!fs.existsSync(targetFilePath)) {
+            res.statusCode = 404;
+            res.end();
+            return;
+          }
+          const stream = fs.createReadStream(targetFilePath);
+          stream.on("error", () => {
+            if (!res.headersSent) {
+              res.statusCode = 404;
+            }
+            res.end();
+          });
+
           // console.log(
           //   "--> resolved by unit loader:",
           //   req.url,
