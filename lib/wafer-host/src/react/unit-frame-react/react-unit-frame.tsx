@@ -19,7 +19,7 @@ type Props = {
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
 
-export const ReactUnitFrame = ({
+const ReactUnitFrameImpl = ({
   unitId,
   unitTemplateFn,
   destSpec,
@@ -29,7 +29,6 @@ export const ReactUnitFrame = ({
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
   const unit = useMemo(() => {
-    checkUnitIdValidity(unitId);
     return instantiateReactUnit(hostSystem, unitTemplateFn, unitId);
   }, [unitTemplateFn, unitId, hostSystem]);
   useEffect(() => {
@@ -55,4 +54,26 @@ export const ReactUnitFrame = ({
   useUnitInputNotesAffecter(unit, inputNotes);
 
   return <unit.RenderUi />;
+};
+
+export const ReactUnitFrame = ({
+  unitId,
+  unitTemplateFn,
+  destSpec,
+  inputNotes,
+  onUnitInstanceLoaded,
+}: Props) => {
+  const valid = useMemo(() => checkUnitIdValidity(unitId), [unitId]);
+  if (!valid) {
+    return <div>Invalid unit id: {unitId}</div>;
+  }
+  return (
+    <ReactUnitFrameImpl
+      unitId={unitId}
+      unitTemplateFn={unitTemplateFn}
+      destSpec={destSpec}
+      inputNotes={inputNotes}
+      onUnitInstanceLoaded={onUnitInstanceLoaded}
+    />
+  );
 };

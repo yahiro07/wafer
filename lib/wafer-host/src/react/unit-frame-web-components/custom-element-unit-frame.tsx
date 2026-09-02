@@ -37,7 +37,11 @@ export const CustomElementUnitFrame = ({
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
     if (containerRef.current) {
-      checkUnitIdValidity(unitId);
+      if (!checkUnitIdValidity(unitId)) {
+        console.warn(`Invalid unit id: ${unitId}`);
+        onLoadFailed?.();
+        return;
+      }
 
       const container = containerRef.current;
       let createdElement: HTMLElement | undefined;

@@ -38,7 +38,11 @@ export const IFrameUnitFrame = ({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useLayoutEffect(() => {
-    checkUnitIdValidity(unitId);
+    if (!checkUnitIdValidity(unitId)) {
+      console.warn(`Invalid unit id: ${unitId}`);
+      onLoadFailed?.();
+      return;
+    }
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
       onUnitInstanceLoaded,

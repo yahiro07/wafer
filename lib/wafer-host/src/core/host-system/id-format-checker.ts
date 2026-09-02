@@ -1,7 +1,8 @@
 export function checkUnitIdValidity(unitId: string) {
   if (!unitId.match(/^[a-zA-Z0-9_-]+$/) || unitId === "$output") {
-    throw new Error(`Invalid unit id: ${unitId}`);
+    return false;
   }
+  return true;
 }
 
 const portIdsReserved = new Set<string>([
