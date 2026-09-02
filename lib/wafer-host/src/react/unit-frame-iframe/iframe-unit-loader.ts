@@ -66,6 +66,10 @@ export function loadIframeUnitInstance(
     clearTimeout(timeoutTimerId);
     unregisterUnit();
     cleanupIFrameCallback?.();
-    win.iframeUnitUnloadingCallback?.();
+    try {
+      win.iframeUnitUnloadingCallback?.();
+    } catch (err) {
+      console.warn(`error on iframeUnitUnloadingCallback: ${unitId}`, err);
+    }
   };
 }

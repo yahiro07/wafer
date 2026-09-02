@@ -6,6 +6,7 @@ import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadCustomElementUnitInstance } from "./unit-element-loader";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -70,15 +71,15 @@ export const CustomElementUnitFrame = ({
 
   useEffect(() => {
     if (hostBpm) {
-      unitInstanceRef.current?.hostCallbacks?.setBpm?.(hostBpm);
+      safeInvoke(unitInstanceRef.current?.hostCallbacks?.setBpm)?.(hostBpm);
     }
   }, [hostBpm]);
 
   useEffect(() => {
     const unit = unitInstanceRef.current;
     if (hostPlaying && unit) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
+      safeInvoke(unit.hostCallbacks?.setPlayState)?.(true);
+      return () => safeInvoke(unit.hostCallbacks?.setPlayState)?.(false);
     }
   }, [hostPlaying]);
 

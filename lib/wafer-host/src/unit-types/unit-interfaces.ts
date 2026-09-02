@@ -35,7 +35,7 @@ export type AutomationPort = {
 };
 
 export type Persistence = {
-  subscribeChange?(fn: () => void): () => void;
+  // subscribeChange?(fn: () => void): () => void;
   emitState?(): Record<string, any>;
   applyState?(state: Record<string, any>): void;
   emitStateBytes?(): Uint8Array;

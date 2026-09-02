@@ -6,6 +6,7 @@ import {
   IAudioContext,
   NotesDispatcher,
 } from "../host-system/types";
+import { safeInvoke } from "../host-system/wrap-unit-call";
 import {
   AudioPort,
   HsAdditionalAudioInputPort,
@@ -67,10 +68,10 @@ function createHsAutomationOutputPort(
       }
     },
     getParameterSpecs() {
-      return connectedInputPort?.getParameterSpecs() ?? [];
+      return safeInvoke(connectedInputPort?.getParameterSpecs)?.() ?? [];
     },
     getParameter(id: string) {
-      return connectedInputPort?.getParameter(id);
+      return safeInvoke(connectedInputPort?.getParameter)?.(id);
     },
     setParameter(id: string, value: number, time?: number) {
       notesDispatcher.pushAutomationDeliveryEvent({
@@ -145,7 +146,7 @@ function createNoteInputWrapper(
         time,
         noteId: "??",
       });
-      noteInput.noteOn(noteNumber, time, velocity);
+      safeInvoke(noteInput.noteOn)?.(noteNumber, time, velocity);
     },
     noteOff(noteNumber, time) {
       oxLogger.noteReceived({
@@ -156,7 +157,7 @@ function createNoteInputWrapper(
         time,
         noteId: "??",
       });
-      noteInput.noteOff(noteNumber, time);
+      safeInvoke(noteInput.noteOff)?.(noteNumber, time);
     },
   };
 }

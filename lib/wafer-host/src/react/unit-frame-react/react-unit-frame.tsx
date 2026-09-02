@@ -9,6 +9,7 @@ import {
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -40,14 +41,14 @@ export const ReactUnitFrame = ({
 
   useEffect(() => {
     if (hostBpm) {
-      unit.hostCallbacks?.setBpm?.(hostBpm);
+      safeInvoke(unit.hostCallbacks?.setBpm)?.(hostBpm);
     }
   }, [hostBpm, unit]);
 
   useEffect(() => {
     if (hostPlaying) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
+      safeInvoke(unit.hostCallbacks?.setPlayState)?.(true);
+      return () => safeInvoke(unit.hostCallbacks?.setPlayState)?.(false);
     }
   }, [hostPlaying, unit]);
 
