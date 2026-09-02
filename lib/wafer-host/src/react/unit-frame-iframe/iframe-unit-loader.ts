@@ -21,12 +21,14 @@ export function loadIframeUnitInstance(
 
   let unitInterface: HsUnitInterface | undefined;
   let timeoutTimerId: NodeJS.Timeout | undefined;
+  let cancelled = false;
 
   const unitInstantiationPromise = new Promise<HsUnitInstance>(
     (resolve, reject) => {
       unitInterface = hostSystem.linkageApi.createUnitInterface(
         unitId,
         (unitInstance) => {
+          if (cancelled) return;
           sideEffects.unitInstanceRef.current = unitInstance;
           sideEffects.onUnitInstanceLoaded?.(unitInstance);
           resolve(unitInstance);
@@ -45,6 +47,8 @@ export function loadIframeUnitInstance(
       };
 
       timeoutTimerId = setTimeout(() => {
+        if (cancelled) return;
+        cancelled = true;
         unitInterface?.cancelLoading();
         sideEffects.onLoadFailed?.();
         reject(new Error(`loading ${unitId} timed out`));
@@ -58,6 +62,7 @@ export function loadIframeUnitInstance(
       unitInstantiationPromise,
     );
   return () => {
+    cancelled = true;
     unitInterface?.cancelLoading();
     clearTimeout(timeoutTimerId);
     unregisterUnit();

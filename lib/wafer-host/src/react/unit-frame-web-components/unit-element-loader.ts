@@ -173,6 +173,7 @@ export function loadCustomElementUnitInstance(
       unitInterface = hostSystem.linkageApi.createUnitInterface(
         unitId,
         (unitInstance) => {
+          if (cancelled) return;
           callbacks.onInstanceLoaded(unitInstance);
           resolve(unitInstance);
           clearTimeout(timeoutTimerId);
@@ -180,10 +181,11 @@ export function loadCustomElementUnitInstance(
       );
 
       timeoutTimerId = setTimeout(() => {
+        if (cancelled) return;
+        cancelled = true;
         unitInterface?.cancelLoading();
         callbacks.onLoadFailed?.();
         reject(new Error(`loading ${unitId} timed out`));
-        cancelled = true;
       }, 5000);
 
       const element = await loadUnitElement(url, unitInterface);
@@ -198,9 +200,9 @@ export function loadCustomElementUnitInstance(
       unitInstantiationPromise,
     );
   return () => {
+    cancelled = true;
     unitInterface?.cancelLoading();
     clearTimeout(timeoutTimerId);
     unregisterUnit();
-    cancelled = true;
   };
 }
