@@ -15,6 +15,7 @@ type Props = {
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | void;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  onLoadFailed?(): void;
 };
 
 export const IFrameUnitFrame = ({
@@ -25,6 +26,7 @@ export const IFrameUnitFrame = ({
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
+  onLoadFailed,
 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -39,6 +41,7 @@ export const IFrameUnitFrame = ({
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
       onUnitInstanceLoaded,
+      onLoadFailed,
       unitInstanceRef,
     });
   }, [pageUrl, hostSystem, unitId]);

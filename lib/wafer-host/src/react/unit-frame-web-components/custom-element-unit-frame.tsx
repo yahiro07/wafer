@@ -4,7 +4,7 @@ import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
-import { createCustomElementUnitInstantiationPromise } from "./unit-element-loader";
+import { loadCustomElementUnitInstance } from "./unit-element-loader";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 
 type Props = {
@@ -14,6 +14,7 @@ type Props = {
   className?: string;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  onLoadFailed?(): void;
 };
 
 export const CustomElementUnitFrame = ({
@@ -23,6 +24,7 @@ export const CustomElementUnitFrame = ({
   className,
   inputNotes,
   onUnitInstanceLoaded,
+  onLoadFailed,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -39,31 +41,26 @@ export const CustomElementUnitFrame = ({
       const container = containerRef.current;
       let createdElement: HTMLElement | undefined;
 
-      const unitInstantiationPromise =
-        createCustomElementUnitInstantiationPromise(
-          unitId,
-          scriptUrl,
-          hostSystem,
-          {
-            onElementCreated(element) {
-              createdElement = element;
-              element.style.width = "100%";
-              element.style.height = "100%";
-              container.appendChild(element);
-            },
-            onInstanceLoaded(instance) {
-              unitInstanceRef.current = instance;
-              onUnitInstanceLoaded?.(instance);
-            },
+      const cleanupFn = loadCustomElementUnitInstance(
+        unitId,
+        scriptUrl,
+        hostSystem,
+        {
+          onElementCreated(element) {
+            createdElement = element;
+            element.style.width = "100%";
+            element.style.height = "100%";
+            container.appendChild(element);
           },
-        );
-      const unregisterUnit =
-        hostSystem.linkageApi.registerPendingUnitInstancePromise(
-          unitId,
-          unitInstantiationPromise,
-        );
+          onInstanceLoaded(instance) {
+            unitInstanceRef.current = instance;
+            onUnitInstanceLoaded?.(instance);
+          },
+          onLoadFailed,
+        },
+      );
       return () => {
-        unregisterUnit();
+        cleanupFn();
         if (createdElement) {
           container.removeChild(createdElement);
         }
