@@ -35,7 +35,6 @@ export function loadIframeUnitInstance(
           clearTimeout(timeoutTimerId);
         },
       );
-      win.unitInterface = unitInterface;
       win.queryUnitInterface = (versionCode: string) => {
         if (versionCode === "wafer-v01") {
           return unitInterface;
