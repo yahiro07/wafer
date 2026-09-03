@@ -1,6 +1,7 @@
 import { removeArrayItems } from "../../utils/array-utils";
 import { createHostStateBus } from "./host-state-bus";
 import { HostSystemCore, IAudioContext } from "./types";
+import { safeInvoke } from "./wrap-unit-call";
 
 export function createHostSystemCore(
   audioContext: IAudioContext,
@@ -39,9 +40,14 @@ export function createHostSystemCore(
         internal.cleanupDesiredConnectionsBeforeRemovingUnit(unitId);
         // bus.internalEventPort.emit({ type: "beforeRemoveUnit", unitId });
         bus.eventPort.emit({ type: "beforeRemoveUnit", unitInstance: unit });
-        unit.cleanup?.();
-        bus.eventPort.emit({ type: "unitRemoved", unitId });
-        bus.units.delete(unitId);
+        try {
+          unit.cleanup?.();
+        } catch (err) {
+          console.warn(`error on cleanup unit: ${unitId}`, err);
+        } finally {
+          bus.eventPort.emit({ type: "unitRemoved", unitId });
+          bus.units.delete(unitId);
+        }
       }
     },
     pushConnectionRule(source, destination, next) {
@@ -70,7 +76,7 @@ export function createHostSystemCore(
     },
     emitMetaAttributes(attributes) {
       for (const unit of bus.getAllUnits()) {
-        unit.hostCallbacks?.setMetaAttributes?.(attributes);
+        safeInvoke(unit.hostCallbacks?.setMetaAttributes)?.(attributes);
       }
     },
   };

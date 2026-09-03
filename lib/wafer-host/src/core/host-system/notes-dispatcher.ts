@@ -6,6 +6,7 @@ import {
   UnitNoteOutputMonitorFn,
 } from "./types";
 import { createWebAudioActionScheduler } from "./webaudio-action-scheduler";
+import { safeInvoke } from "./wrap-unit-call";
 
 function getDestinationPortKeys(
   hostSystemCore: HostSystemCore,
@@ -76,9 +77,9 @@ export function createNotesDispatcher(
           }
           for (const port of destPorts) {
             if (isOn) {
-              port.noteOn(noteNumber, time, attrs);
+              safeInvoke(port.noteOn)?.(noteNumber, time, attrs);
             } else {
-              port.noteOff(noteNumber, time);
+              safeInvoke(port.noteOff)?.(noteNumber, time);
             }
           }
           // }, time);
@@ -121,7 +122,7 @@ export function createNotesDispatcher(
         const port = unit?.primaryInputPorts.automationInput;
         if (port) {
           actionScheduler.pushAction(() => {
-            port.setParameter(parameterId, value, time);
+            safeInvoke(port.setParameter)?.(parameterId, value, time);
           }, time);
         }
       }

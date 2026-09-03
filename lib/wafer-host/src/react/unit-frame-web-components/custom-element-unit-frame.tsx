@@ -4,8 +4,9 @@ import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
 import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
-import { createCustomElementUnitInstantiationPromise } from "./unit-element-loader";
+import { loadCustomElementUnitInstance } from "./unit-element-loader";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -14,6 +15,7 @@ type Props = {
   className?: string;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  onLoadFailed?(): void;
 };
 
 export const CustomElementUnitFrame = ({
@@ -23,6 +25,7 @@ export const CustomElementUnitFrame = ({
   className,
   inputNotes,
   onUnitInstanceLoaded,
+  onLoadFailed,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -34,36 +37,35 @@ export const CustomElementUnitFrame = ({
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useEffect(() => {
     if (containerRef.current) {
-      checkUnitIdValidity(unitId);
+      if (!checkUnitIdValidity(unitId)) {
+        console.warn(`Invalid unit id: ${unitId}`);
+        onLoadFailed?.();
+        return;
+      }
 
       const container = containerRef.current;
       let createdElement: HTMLElement | undefined;
 
-      const unitInstantiationPromise =
-        createCustomElementUnitInstantiationPromise(
-          unitId,
-          scriptUrl,
-          hostSystem,
-          {
-            onElementCreated(element) {
-              createdElement = element;
-              element.style.width = "100%";
-              element.style.height = "100%";
-              container.appendChild(element);
-            },
-            onInstanceLoaded(instance) {
-              unitInstanceRef.current = instance;
-              onUnitInstanceLoaded?.(instance);
-            },
+      const cleanupFn = loadCustomElementUnitInstance(
+        unitId,
+        scriptUrl,
+        hostSystem,
+        {
+          onElementCreated(element) {
+            createdElement = element;
+            element.style.width = "100%";
+            element.style.height = "100%";
+            container.appendChild(element);
           },
-        );
-      const unregisterUnit =
-        hostSystem.linkageApi.registerPendingUnitInstancePromise(
-          unitId,
-          unitInstantiationPromise,
-        );
+          onInstanceLoaded(instance) {
+            unitInstanceRef.current = instance;
+            onUnitInstanceLoaded?.(instance);
+          },
+          onLoadFailed,
+        },
+      );
       return () => {
-        unregisterUnit();
+        cleanupFn();
         if (createdElement) {
           container.removeChild(createdElement);
         }
@@ -73,15 +75,15 @@ export const CustomElementUnitFrame = ({
 
   useEffect(() => {
     if (hostBpm) {
-      unitInstanceRef.current?.hostCallbacks?.setBpm?.(hostBpm);
+      safeInvoke(unitInstanceRef.current?.hostCallbacks?.setBpm)?.(hostBpm);
     }
   }, [hostBpm]);
 
   useEffect(() => {
     const unit = unitInstanceRef.current;
     if (hostPlaying && unit) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
+      safeInvoke(unit.hostCallbacks?.setPlayState)?.(true);
+      return () => safeInvoke(unit.hostCallbacks?.setPlayState)?.(false);
     }
   }, [hostPlaying]);
 

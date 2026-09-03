@@ -1,5 +1,6 @@
 import { PortSubtype } from "../../unit-types";
 import { HostStateBus } from "../host-system/types";
+import { safeInvoke } from "../host-system/wrap-unit-call";
 import {
   DestinationCode,
   HsAudioInputPort,
@@ -132,9 +133,9 @@ function callUnitConnectionCallback(
   portSubtypes: PortSubtype[],
 ) {
   if (operation === "connectTo") {
-    srcUnit.unitCallbacks?.onConnectedTo?.(portId, portSubtypes);
+    safeInvoke(srcUnit.unitCallbacks?.onConnectedTo)?.(portId, portSubtypes);
   } else {
-    srcUnit.unitCallbacks?.onDisconnectedTo?.(portId);
+    safeInvoke(srcUnit.unitCallbacks?.onDisconnectedTo)?.(portId);
   }
 }
 

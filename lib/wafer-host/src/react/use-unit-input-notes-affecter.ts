@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { HsUnitInstance } from "../core";
+import { safeInvoke } from "../core/host-system/wrap-unit-call";
 
 export function useUnitInputNotesAffecter(
   unitInstance: HsUnitInstance | null,
@@ -16,11 +17,11 @@ export function useUnitInputNotesAffecter(
         (note) => !inputNotes?.includes(note),
       );
       for (const note of notesToAdd) {
-        unitInstance.primaryInputPorts.noteInput?.noteOn?.(note);
+        safeInvoke(unitInstance.primaryInputPorts.noteInput?.noteOn)?.(note);
         activeNotes.add(note);
       }
       for (const note of notesToRemove) {
-        unitInstance.primaryInputPorts.noteInput?.noteOff?.(note);
+        safeInvoke(unitInstance.primaryInputPorts.noteInput?.noteOff)?.(note);
         activeNotes.delete(note);
       }
     }

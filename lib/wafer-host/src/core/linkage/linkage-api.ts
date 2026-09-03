@@ -28,22 +28,35 @@ export function createLinkageApi(
     },
     registerPendingUnitInstancePromise(unitId, unitInstancePromise) {
       const unitLoadingId = `${unitId}-${seqLoadingIndex++}`;
-      type Phase = "loading" | "loaded" | "loadCancelled" | "unloaded";
+      type Phase =
+        | "loading"
+        | "loaded"
+        | "loadCancelled"
+        | "loadFailed"
+        | "unloaded";
       let phase: Phase = "loading";
       void (async () => {
-        hostSystemCore.pushUnitLoadingId(unitLoadingId);
-        const unit = await unitInstancePromise;
-        // @ts-expect-error
-        if (phase === "loadCancelled") return;
-        hostSystemCore.clearUnitLoadingId(unitLoadingId);
-        hostSystemCore.addUnit(unit);
-        phase = "loaded";
+        try {
+          hostSystemCore.pushUnitLoadingId(unitLoadingId);
+
+          const unit = await unitInstancePromise;
+          // @ts-expect-error
+          if (phase === "loadCancelled") return;
+          hostSystemCore.addUnit(unit);
+          phase = "loaded";
+        } catch (err) {
+          phase = "loadFailed";
+          console.warn(err);
+          console.warn(`failed to load ${unitId}`);
+        } finally {
+          hostSystemCore.clearUnitLoadingId(unitLoadingId);
+        }
       })();
       return () => {
         if (phase === "loading") {
           hostSystemCore.clearUnitLoadingId(unitLoadingId);
           phase = "loadCancelled";
-        } else {
+        } else if (phase === "loaded") {
           hostSystemCore.removeUnit(unitId);
           phase = "unloaded";
         }

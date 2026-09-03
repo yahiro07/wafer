@@ -9,6 +9,7 @@ import {
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -18,7 +19,7 @@ type Props = {
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
 };
 
-export const ReactUnitFrame = ({
+const ReactUnitFrameImpl = ({
   unitId,
   unitTemplateFn,
   destSpec,
@@ -28,7 +29,6 @@ export const ReactUnitFrame = ({
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
   const unit = useMemo(() => {
-    checkUnitIdValidity(unitId);
     return instantiateReactUnit(hostSystem, unitTemplateFn, unitId);
   }, [unitTemplateFn, unitId, hostSystem]);
   useEffect(() => {
@@ -40,18 +40,40 @@ export const ReactUnitFrame = ({
 
   useEffect(() => {
     if (hostBpm) {
-      unit.hostCallbacks?.setBpm?.(hostBpm);
+      safeInvoke(unit.hostCallbacks?.setBpm)?.(hostBpm);
     }
   }, [hostBpm, unit]);
 
   useEffect(() => {
     if (hostPlaying) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
+      safeInvoke(unit.hostCallbacks?.setPlayState)?.(true);
+      return () => safeInvoke(unit.hostCallbacks?.setPlayState)?.(false);
     }
   }, [hostPlaying, unit]);
 
   useUnitInputNotesAffecter(unit, inputNotes);
 
   return <unit.RenderUi />;
+};
+
+export const ReactUnitFrame = ({
+  unitId,
+  unitTemplateFn,
+  destSpec,
+  inputNotes,
+  onUnitInstanceLoaded,
+}: Props) => {
+  const valid = useMemo(() => checkUnitIdValidity(unitId), [unitId]);
+  if (!valid) {
+    return <div>Invalid unit id: {unitId}</div>;
+  }
+  return (
+    <ReactUnitFrameImpl
+      unitId={unitId}
+      unitTemplateFn={unitTemplateFn}
+      destSpec={destSpec}
+      inputNotes={inputNotes}
+      onUnitInstanceLoaded={onUnitInstanceLoaded}
+    />
+  );
 };

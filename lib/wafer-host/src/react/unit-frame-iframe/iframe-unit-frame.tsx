@@ -6,6 +6,7 @@ import { useHostAppContext } from "../host-app-context";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import { loadIframeUnitInstance } from "./iframe-unit-loader";
 import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -15,6 +16,7 @@ type Props = {
   inputNotes?: number[];
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | void;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  onLoadFailed?(): void;
 };
 
 export const IFrameUnitFrame = ({
@@ -25,6 +27,7 @@ export const IFrameUnitFrame = ({
   inputNotes,
   onIframeMounted,
   onUnitInstanceLoaded,
+  onLoadFailed,
 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -35,25 +38,32 @@ export const IFrameUnitFrame = ({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: manual management
   useLayoutEffect(() => {
-    checkUnitIdValidity(unitId);
+    if (!checkUnitIdValidity(unitId)) {
+      console.warn(`Invalid unit id: ${unitId}`);
+      onLoadFailed?.();
+      return;
+    }
     return loadIframeUnitInstance(hostSystem, unitId, iframeRef.current!, {
       onIframeMounted,
       onUnitInstanceLoaded,
+      onLoadFailed,
       unitInstanceRef,
     });
   }, [pageUrl, hostSystem, unitId]);
 
   useEffect(() => {
     if (hostBpm) {
-      unitInstanceRef.current?.hostCallbacks?.setBpm?.(hostBpm);
+      safeInvoke(unitInstanceRef.current?.hostCallbacks?.setBpm)?.(hostBpm);
     }
   }, [hostBpm]);
 
   useEffect(() => {
     const unit = unitInstanceRef.current;
     if (hostPlaying && unit) {
-      unit.hostCallbacks?.setPlayState?.(true);
-      return () => unit.hostCallbacks?.setPlayState?.(false);
+      safeInvoke(unit.hostCallbacks?.setPlayState)?.(true);
+      return () => {
+        safeInvoke(unit.hostCallbacks?.setPlayState)?.(false);
+      };
     }
   }, [hostPlaying]);
 

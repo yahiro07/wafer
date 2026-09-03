@@ -1,4 +1,5 @@
 import { oxLogger } from "../host-system/orchestration-logger";
+import { safeInvoke } from "../host-system/wrap-unit-call";
 import { HsUnitInstance } from "../linkage/types";
 
 type CrossingStepInfo = {
@@ -41,7 +42,7 @@ function processUnitsSchedulingCore(
       const processStepFn = unit.clockHandlers?.processStep;
       if (processStepFn) {
         oxLogger.unitClockingFrameCall(unit.unitId);
-        processStepFn(
+        safeInvoke(processStepFn)?.(
           crossingStepIndex.stepIndex,
           crossingStepIndex.time,
           unitStepDurationSec,
@@ -53,7 +54,7 @@ function processUnitsSchedulingCore(
     const processSchedulingFn = unit.clockHandlers?.processScheduling;
     if (processSchedulingFn) {
       oxLogger.unitClockingFrameCall(unit.unitId);
-      processSchedulingFn(timeFrom, barFrom, barTo, bpm);
+      safeInvoke(processSchedulingFn)?.(timeFrom, barFrom, barTo, bpm);
     }
   }
 }
@@ -63,7 +64,7 @@ function processUnitsStartStop(
   method: "start" | "stop",
 ) {
   for (const unit of units) {
-    unit.clockHandlers?.[method]?.();
+    safeInvoke(unit.clockHandlers?.[method])?.();
   }
 }
 

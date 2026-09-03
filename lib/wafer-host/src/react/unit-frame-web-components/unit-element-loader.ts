@@ -1,4 +1,5 @@
 import { HostSystem, HsUnitInstance } from "../../core";
+import { HsUnitInterface } from "../../core/linkage/types";
 import { UnitInterface, UnitInterfaceProvider } from "../../unit-types";
 
 /*
@@ -152,27 +153,56 @@ async function loadUnitElement(
   }
 }
 
-export function createCustomElementUnitInstantiationPromise(
+export function loadCustomElementUnitInstance(
   unitId: string,
   url: string,
   hostSystem: HostSystem,
   callbacks: {
     onElementCreated: (element: HTMLElement) => void;
     onInstanceLoaded: (unitInstance: HsUnitInstance) => void;
+    onLoadFailed?: () => void;
   },
 ) {
-  return new Promise<HsUnitInstance>(
+  let unitInterface: HsUnitInterface | undefined;
+  let timeoutTimerId: NodeJS.Timeout | undefined;
+  let cancelled = false;
+
+  const unitInstantiationPromise = new Promise<HsUnitInstance>(
     // oxlint-disable-next-line no-async-promise-executor
-    async (resolve) => {
-      const unitInterface = hostSystem.linkageApi.createUnitInterface(
+    async (resolve, reject) => {
+      unitInterface = hostSystem.linkageApi.createUnitInterface(
         unitId,
         (unitInstance) => {
+          if (cancelled) return;
           callbacks.onInstanceLoaded(unitInstance);
           resolve(unitInstance);
+          clearTimeout(timeoutTimerId);
         },
       );
+
+      timeoutTimerId = setTimeout(() => {
+        if (cancelled) return;
+        cancelled = true;
+        unitInterface?.cancelLoading();
+        callbacks.onLoadFailed?.();
+        reject(new Error(`loading ${unitId} timed out`));
+      }, 5000);
+
       const element = await loadUnitElement(url, unitInterface);
+      if (cancelled) return;
       callbacks.onElementCreated(element);
     },
   );
+
+  const unregisterUnit =
+    hostSystem.linkageApi.registerPendingUnitInstancePromise(
+      unitId,
+      unitInstantiationPromise,
+    );
+  return () => {
+    cancelled = true;
+    unitInterface?.cancelLoading();
+    clearTimeout(timeoutTimerId);
+    unregisterUnit();
+  };
 }

@@ -1,11 +1,14 @@
 import { base64Helper, isUint8ArrayLike } from "../../utils/binary-helper";
 import { HsUnitInstance, HsUnitStateData } from "../linkage/types";
 import { HostStateBus } from "./types";
+import { wrapUnitCall } from "./wrap-unit-call";
 
 export const unitStateOperations = {
   readStateFromUnit(unit: HsUnitInstance): HsUnitStateData | undefined {
     const stateInput = unit.persistence;
-    const state = stateInput?.emitStateBytes?.() ?? stateInput?.emitState?.();
+    const state = wrapUnitCall(
+      () => stateInput?.emitStateBytes?.() ?? stateInput?.emitState?.(),
+    );
     if (!state) {
       return undefined;
     }
@@ -21,18 +24,20 @@ export const unitStateOperations = {
     }
   },
   applyStateToUnit(unit: HsUnitInstance, stateData: HsUnitStateData) {
-    const stateInput = unit.persistence;
-    if (stateData.type === "bytes" && stateInput?.applyStateBytes) {
-      const bytes = base64Helper.decode(stateData.base64);
-      console.log(`call applyStateBytes for ${unit.unitId}`);
-      stateInput.applyStateBytes(bytes);
-    } else if (stateData.type === "json" && stateInput?.applyState) {
-      const data = structuredClone(stateData.json);
-      console.log(`call applyState for ${unit.unitId}`);
-      stateInput.applyState(data);
-    } else {
-      console.warn(`invalid condition applyStateToUnit for ${unit.unitId}`);
-    }
+    wrapUnitCall(() => {
+      const stateInput = unit.persistence;
+      if (stateData.type === "bytes" && stateInput?.applyStateBytes) {
+        const bytes = base64Helper.decode(stateData.base64);
+        console.log(`call applyStateBytes for ${unit.unitId}`);
+        stateInput.applyStateBytes(bytes);
+      } else if (stateData.type === "json" && stateInput?.applyState) {
+        const data = structuredClone(stateData.json);
+        console.log(`call applyState for ${unit.unitId}`);
+        stateInput.applyState(data);
+      } else {
+        console.warn(`invalid condition applyStateToUnit for ${unit.unitId}`);
+      }
+    });
   },
 };
 

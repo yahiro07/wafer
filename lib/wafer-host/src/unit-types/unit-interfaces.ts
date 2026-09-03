@@ -35,7 +35,7 @@ export type AutomationPort = {
 };
 
 export type Persistence = {
-  subscribeChange?(fn: () => void): () => void;
+  // subscribeChange?(fn: () => void): () => void;
   emitState?(): Record<string, any>;
   applyState?(state: Record<string, any>): void;
   emitStateBytes?(): Uint8Array;
@@ -69,8 +69,8 @@ export type MetaAttributes = Record<string, any>;
 
 export type SongKeySpec = {
   mode: "major" | "minor";
-  root: number; //0 for C/Cm, 1 for C#/C#m, 2 for D/Dm, -1 for B/Bm, ...etc
-  keyTranspose: number; //0 for C/Am, 1 for C#/A#m, 2 for D/Bm, -1 for B/G#m, ...etc
+  root: number; //-12~12, 0 for C/Cm, 1 for C#/C#m, 2 for D/Dm, -1 for B/Bm, ...etc
+  relativeKeyTranspose: number; //-12~12, 0 for C/Am, 1 for C#/A#m, 2 for D/Bm, -1 for B/G#m, ...etc
 };
 
 export type HostCallbacks = {
