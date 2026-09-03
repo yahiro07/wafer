@@ -70,7 +70,7 @@ export type MetaAttributes = Record<string, any>;
 export type SongKeySpec = {
   mode: "major" | "minor";
   root: number; //-12~12, 0 for C/Cm, 1 for C#/C#m, 2 for D/Dm, -1 for B/Bm, ...etc
-  keyTranspose: number; //-12~12, 0 for C/Am, 1 for C#/A#m, 2 for D/Bm, -1 for B/G#m, ...etc
+  relativeKeyTranspose: number; //-12~12, 0 for C/Am, 1 for C#/A#m, 2 for D/Bm, -1 for B/G#m, ...etc
 };
 
 export type HostCallbacks = {
