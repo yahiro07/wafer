@@ -28,11 +28,15 @@ export type HostSystemInternalEvent =
   | { type: "pendingUnitsLoaded" };
 
 export type ConnectionRule = {
-  connectionKey: string; // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  //OR
+  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}.${destParameterId}
+  connectionKey: string;
   srcPortKey: string; //${unitId}.${portId}
   destPortKey: string; //${unitId}.${portId}
   srcUnitId: string;
   destUnitId: string;
+  destParameterId?: string;
 };
 
 export type HostStateBus = {

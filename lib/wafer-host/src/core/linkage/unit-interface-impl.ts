@@ -98,18 +98,18 @@ function createHsAdditionalAudioInputPort(
 function createHsAutomationOutputPort(
   unitId: string,
   notesDispatcher: NotesDispatcher,
-  id: string,
+  portId: string,
   label?: string,
 ): HsAutomationOutputPort {
   return {
     emitValue(value, options) {
       notesDispatcher.pushAutomationDeliveryEvent({
-        sourcePortKey: `${unitId}.automationOutput`,
+        sourcePortKey: `${unitId}.${portId}`,
         value,
         options,
       });
     },
-    id,
+    id: portId,
     label,
   };
 }

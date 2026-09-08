@@ -8,7 +8,7 @@ import {
 import { createWebAudioActionScheduler } from "./webaudio-action-scheduler";
 import { safeInvoke } from "./wrap-unit-call";
 
-function getDestinationPortKeys(
+function getNoteDestinationPortKeys(
   hostSystemCore: HostSystemCore,
   sourcePortKey: string,
 ): string[] {
@@ -24,15 +24,30 @@ function getDestinationPortKeys(
     .map((it) => it.destPortKey);
 }
 
+function getAutomationDestinationPortKeyAndParameterIds(
+  hostSystemCore: HostSystemCore,
+  sourcePortKey: string,
+): { portKey: string; parameterId?: string }[] {
+  return hostSystemCore.bus
+    .getConnectionRules()
+    .filter((it) => it.srcPortKey === sourcePortKey)
+    .map((it) => ({
+      portKey: it.destPortKey,
+      parameterId: it.destParameterId,
+    }));
+}
+
 function mapPortKeysToPorts(
   hostSystemCore: HostSystemCore,
   portKeys: string[],
 ): HsNoteInputPort[] {
   return portKeys
     .map((portKey) => {
-      const unitId = portKey.split(".")[0];
-      const unit = hostSystemCore.bus.getUnit(unitId);
-      return unit?.primaryInputPorts.noteInput;
+      const [unitId, portId] = portKey.split(".")[0];
+      if (portId === "primaryInput" || portId === "noteInput") {
+        const unit = hostSystemCore.bus.getUnit(unitId);
+        return unit?.primaryInputPorts.noteInput;
+      }
     })
     .filter(Boolean) as HsNoteInputPort[];
 }
@@ -54,7 +69,10 @@ export function createNotesDispatcher(
       if (!sourcePortKey && destPortKey) {
         destPortKeys = [destPortKey];
       } else if (sourcePortKey) {
-        destPortKeys = getDestinationPortKeys(hostSystemCore, sourcePortKey);
+        destPortKeys = getNoteDestinationPortKeys(
+          hostSystemCore,
+          sourcePortKey,
+        );
       }
       if (destPortKeys) {
         const sourceUnitId = sourcePortKey?.split(".")[0];
@@ -110,20 +128,20 @@ export function createNotesDispatcher(
       }
     },
     pushAutomationDeliveryEvent(automationDeliveryEvent) {
-      const { sourcePortKey, parameterId, value, time } =
-        automationDeliveryEvent;
-      const destPortKey = getDestinationPortKeys(
+      const { sourcePortKey, value, options } = automationDeliveryEvent;
+      const destItems = getAutomationDestinationPortKeyAndParameterIds(
         hostSystemCore,
         sourcePortKey,
-      )[0];
-      if (destPortKey) {
-        const destUnitId = destPortKey.split(".")[0];
+      );
+      for (const destItem of destItems) {
+        const destUnitId = destItem.portKey.split(".")[0];
         const unit = hostSystemCore.bus.getUnit(destUnitId);
-        const port = unit?.primaryInputPorts.automationInput;
-        if (port) {
+        const port = unit?.automationInput;
+        const parameterId = destItem.parameterId;
+        if (port && parameterId) {
           actionScheduler.pushAction(() => {
-            safeInvoke(port.setParameter)?.(parameterId, value, time);
-          }, time);
+            safeInvoke(port.setParameter)?.(parameterId, value, options);
+          }, options?.time);
         }
       }
     },
