@@ -1,4 +1,8 @@
-import { MetaAttributes, NoteAttributes } from "../../unit-types";
+import {
+  AutomationValueOptions,
+  MetaAttributes,
+  NoteAttributes,
+} from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import {
   HsAudioInputPort,
@@ -96,9 +100,8 @@ export type NoteDeliveryEvent = {
 
 export type AutomationDeliveryEvent = {
   sourcePortKey: string;
-  parameterId: string;
   value: number;
-  time?: number;
+  options?: AutomationValueOptions;
 };
 
 export type NotesDispatcher = {

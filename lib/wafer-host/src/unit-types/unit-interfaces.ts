@@ -29,21 +29,23 @@ export type AutomationParameterSpec = {
   //all parameters are ranged in 0~1
 };
 
+export type AutomationValueOptions = {
+  time?: number;
+  duration?: number;
+};
+
 export type AutomationInputPort = {
   getParameterSpecs(): AutomationParameterSpec[];
   getParameter(id: string): number | undefined;
   setParameter(
     id: string,
     value: number,
-    options?: { time?: number; duration?: number },
+    options?: AutomationValueOptions,
   ): void;
 };
 
 export type AutomationOutputPort = {
-  emitValue(
-    value: number,
-    options?: { time?: number; duration?: number },
-  ): void;
+  emitValue(value: number, options?: AutomationValueOptions): void;
 };
 
 export type Persistence = {
