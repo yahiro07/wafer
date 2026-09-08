@@ -1,4 +1,4 @@
-import { AutomationPort, NoteInputPort, PortSubtype } from "../../unit-types";
+import { NoteInputPort, PortSubtype } from "../../unit-types";
 import { checkPortIdValidity } from "../host-system/id-format-checker";
 import { oxLogger } from "../host-system/orchestration-logger";
 import {
@@ -13,6 +13,7 @@ import {
   HsAdditionalAudioOutputPort,
   HsAudioInputPort,
   HsAudioOutputPort,
+  HsAutomationInputPort,
   HsAutomationOutputPort,
   HsNoteOutputPort,
   HsPortInfo,
@@ -25,14 +26,7 @@ function createHsNoteOutputPort(
   unitId: string,
   notesDispatcher: NotesDispatcher,
 ): HsNoteOutputPort {
-  // const connectedInputPorts = new Set<NotePort>();
   return {
-    connectTo(_port: NoteInputPort) {
-      // connectedInputPorts.add(port);
-    },
-    disconnectTo(_port: NoteInputPort) {
-      // connectedInputPorts.delete(port);
-    },
     noteOn(noteNumber, time, attrs) {
       notesDispatcher.pushNoteDeliveryEvent({
         sourcePortKey: `${unitId}.noteOutput`,
@@ -57,28 +51,12 @@ function createHsAutomationOutputPort(
   unitId: string,
   notesDispatcher: NotesDispatcher,
 ): HsAutomationOutputPort {
-  let connectedInputPort: AutomationPort | undefined;
   return {
-    connectTo(port: AutomationPort) {
-      connectedInputPort = port;
-    },
-    disconnectTo(port: AutomationPort) {
-      if (connectedInputPort === port) {
-        connectedInputPort = undefined;
-      }
-    },
-    getParameterSpecs() {
-      return safeInvoke(connectedInputPort?.getParameterSpecs)?.() ?? [];
-    },
-    getParameter(id: string) {
-      return safeInvoke(connectedInputPort?.getParameter)?.(id);
-    },
-    setParameter(id: string, value: number, time?: number) {
+    emitValue(value, options) {
       notesDispatcher.pushAutomationDeliveryEvent({
         sourcePortKey: `${unitId}.automationOutput`,
-        parameterId: id,
         value,
-        time,
+        options,
       });
     },
   };
@@ -165,18 +143,18 @@ function createNoteInputWrapper(
 function buildPortInfos(
   primaryInputPorts: HsUnitInstance["primaryInputPorts"],
   primaryOutputPorts: HsUnitInstance["primaryOutputPorts"],
-  additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
   additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
+  additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
+  automationInput: HsAutomationInputPort | undefined,
+  automationOutput: HsAutomationOutputPort | undefined,
 ): HsPortInfo[] {
   const primaryOutputSubtypes = [
     primaryOutputPorts.audioOutput && "audio",
     primaryOutputPorts.noteOutput && "note",
-    primaryOutputPorts.automationOutput && "automation",
   ].filter(Boolean) as PortSubtype[];
   const primaryInputSubtypes = [
     primaryInputPorts.audioInput && "audio",
     primaryInputPorts.noteInput && "note",
-    primaryInputPorts.automationInput && "automation",
   ].filter(Boolean) as PortSubtype[];
   return [
     primaryOutputSubtypes.length > 0
@@ -207,8 +185,8 @@ function buildPortInfos(
       subtype: "note",
       portId: "noteOutput",
     },
-    primaryOutputPorts.automationOutput && {
-      type: "primaryInner",
+    automationOutput && {
+      type: "additional",
       direction: "output",
       subtype: "automation",
       portId: "automationOutput",
@@ -225,8 +203,8 @@ function buildPortInfos(
       subtype: "note",
       portId: "noteInput",
     },
-    primaryInputPorts.automationInput && {
-      type: "primaryInner",
+    automationInput && {
+      type: "additional",
       direction: "input",
       subtype: "automation",
       portId: "automationInput",
@@ -360,18 +338,19 @@ export function createUnitInterface(
         noteInput: attrs.noteInput
           ? createNoteInputWrapper(attrs.noteInput, unitId)
           : undefined,
-        automationInput: attrs.automationInput,
       };
       const primaryOutputPorts = {
         audioOutput: audioOutputPort,
         noteOutput: noteOutputPort,
-        automationOutput: automationOutputPort,
       };
+      const automationInputPort = attrs.automationInput;
       const portInfos = buildPortInfos(
         primaryInputPorts,
         primaryOutputPorts,
-        additionalAudioOutputs,
         additionalAudioInputs,
+        additionalAudioOutputs,
+        automationInputPort,
+        automationOutputPort,
       );
 
       const subscribeViewSize = (fn: ViewSizeListener) => {
