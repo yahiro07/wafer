@@ -24,14 +24,26 @@ export type NoteInputPort = NoteOutputPort;
 
 export type AutomationParameterSpec = {
   id: string;
+  label?: string;
   steps?: number; //2 for on/off, 3 for low/medium/high, etc
   //all parameters are ranged in 0~1
 };
 
-export type AutomationPort = {
+export type AutomationInputPort = {
   getParameterSpecs(): AutomationParameterSpec[];
   getParameter(id: string): number | undefined;
-  setParameter(id: string, value: number, time?: number): void;
+  setParameter(
+    id: string,
+    value: number,
+    options?: { time?: number; duration?: number },
+  ): void;
+};
+
+export type AutomationOutputPort = {
+  emitValue(
+    value: number,
+    options?: { time?: number; duration?: number },
+  ): void;
 };
 
 export type Persistence = {
@@ -98,7 +110,7 @@ export type UnitInterface = {
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
   createNoteOutputPort(): NoteOutputPort;
-  createAutomationOutputPort(): AutomationPort;
+  createAutomationOutputPort(): AutomationOutputPort;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   sendMessageToHost(message: object): void;
@@ -111,7 +123,7 @@ export type UnitInterface = {
     noteInput?: NoteInputPort;
     persistence?: Persistence;
     clockHandlers?: ClockHandlers;
-    automationInput?: AutomationPort;
+    automationInput?: AutomationInputPort;
     unitCallbacks?: UnitCallbacks;
     presetProvider?: PresetProvider;
     cleanup?: () => void;
