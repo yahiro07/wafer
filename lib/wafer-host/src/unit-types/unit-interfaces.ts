@@ -112,7 +112,7 @@ export type UnitInterface = {
   audioOutputNode: AudioNode;
   audioInputNode: AudioNode;
   createNoteOutputPort(): NoteOutputPort;
-  createAutomationOutputPort(): AutomationOutputPort;
+  createAutomationOutputPort(id?: string, label?: string): AutomationOutputPort;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   sendMessageToHost(message: object): void;

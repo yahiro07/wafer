@@ -36,7 +36,10 @@ type WrapperOutputPort<T> = T & {
 };
 export type HsNoteOutputPort = NoteOutputPort;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
-export type HsAutomationOutputPort = AutomationOutputPort;
+export type HsAutomationOutputPort = AutomationOutputPort & {
+  id: string;
+  label?: string;
+};
 export type HsAdditionalAudioOutputPort =
   WrapperOutputPort<HsAdditionalAudioPort>;
 
@@ -84,7 +87,7 @@ export type HsUnitInstance = {
     noteOutput?: HsNoteOutputPort;
   };
   automationInput?: HsAutomationInputPort;
-  automationOutput?: HsAutomationOutputPort;
+  automationOutputs?: Record<string, HsAutomationOutputPort>;
   additionalAudioOutputs?: Record<string, HsAdditionalAudioOutputPort>;
   additionalAudioInputs?: Record<string, HsAdditionalAudioPort>;
   hostCallbacks?: HostCallbacks;

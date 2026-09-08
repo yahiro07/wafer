@@ -47,21 +47,6 @@ function createHsNoteOutputPort(
   };
 }
 
-function createHsAutomationOutputPort(
-  unitId: string,
-  notesDispatcher: NotesDispatcher,
-): HsAutomationOutputPort {
-  return {
-    emitValue(value, options) {
-      notesDispatcher.pushAutomationDeliveryEvent({
-        sourcePortKey: `${unitId}.automationOutput`,
-        value,
-        options,
-      });
-    },
-  };
-}
-
 function createHsAudioOutputPort(
   audioContext: IAudioContext,
 ): HsAudioOutputPort {
@@ -110,6 +95,25 @@ function createHsAdditionalAudioInputPort(
   return { node, id, label };
 }
 
+function createHsAutomationOutputPort(
+  unitId: string,
+  notesDispatcher: NotesDispatcher,
+  id: string,
+  label?: string,
+): HsAutomationOutputPort {
+  return {
+    emitValue(value, options) {
+      notesDispatcher.pushAutomationDeliveryEvent({
+        sourcePortKey: `${unitId}.automationOutput`,
+        value,
+        options,
+      });
+    },
+    id,
+    label,
+  };
+}
+
 function createNoteInputWrapper(
   noteInput: NoteInputPort,
   unitId: string,
@@ -146,7 +150,7 @@ function buildPortInfos(
   additionalAudioInputs: HsUnitInstance["additionalAudioInputs"],
   additionalAudioOutputs: HsUnitInstance["additionalAudioOutputs"],
   automationInput: HsAutomationInputPort | undefined,
-  automationOutput: HsAutomationOutputPort | undefined,
+  automationOutputs: HsUnitInstance["automationOutputs"],
 ): HsPortInfo[] {
   const primaryOutputSubtypes = [
     primaryOutputPorts.audioOutput && "audio",
@@ -185,12 +189,6 @@ function buildPortInfos(
       subtype: "note",
       portId: "noteOutput",
     },
-    automationOutput && {
-      type: "additional",
-      direction: "output",
-      subtype: "automation",
-      portId: "automationOutput",
-    },
     primaryInputPorts.audioInput && {
       type: "primaryInner",
       direction: "input",
@@ -209,6 +207,15 @@ function buildPortInfos(
       subtype: "automation",
       portId: "automationInput",
     },
+    ...(automationOutputs
+      ? Object.values(automationOutputs).map((port) => ({
+          type: "additional",
+          direction: "output",
+          subtype: "automation",
+          portId: port.id,
+          label: port.label,
+        }))
+      : []),
     ...(additionalAudioOutputs
       ? Object.values(additionalAudioOutputs).map((port) => ({
           type: "additional",
@@ -230,6 +237,13 @@ function buildPortInfos(
   ].filter(Boolean) as HsPortInfo[];
 }
 
+function makeSequentialPortId(existingIds: string[], prefix: string) {
+  for (let i = 1; ; i++) {
+    const candidateId = i === 1 ? prefix : `${prefix}${i}`;
+    if (!existingIds.includes(candidateId)) return candidateId;
+  }
+}
+
 export function createUnitInterface(
   hostSystemCore: HostSystemCore,
   notesDispatcher: NotesDispatcher,
@@ -242,13 +256,14 @@ export function createUnitInterface(
   let audioOutputPort: HsAudioOutputPort | undefined;
   let audioInputPort: HsAudioInputPort | undefined;
   let noteOutputPort: HsNoteOutputPort | undefined;
-  let automationOutputPort: HsAutomationOutputPort | undefined;
   let additionalAudioOutputs:
     | Record<string, HsAdditionalAudioOutputPort>
     | undefined;
   let additionalAudioInputs:
     | Record<string, HsAdditionalAudioInputPort>
     | undefined;
+  let automationOutputPorts: Record<string, HsAutomationOutputPort> | undefined;
+
   let portsFixed = false;
 
   let latestViewSize: HsViewSize | undefined;
@@ -294,29 +309,50 @@ export function createUnitInterface(
       noteOutputPort = createHsNoteOutputPort(unitId, notesDispatcher);
       return noteOutputPort;
     },
-    createAutomationOutputPort() {
+    createAdditionalAudioOutputNode(id, label) {
       raiseIfInvalidPortsAccess(
-        "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
+        "unitInterface.createAdditionalAudioOutputNode cannot be called after completeSetup",
       );
-      automationOutputPort = createHsAutomationOutputPort(
-        unitId,
-        notesDispatcher,
-      );
-      return automationOutputPort;
-    },
-    createAdditionalAudioOutputNode(id: string, label?: string) {
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioOutputPort(audioContext, id, label);
       additionalAudioOutputs ??= {};
       additionalAudioOutputs[id] = port;
       return port.node;
     },
-    createAdditionalAudioInputNode(id: string, label?: string) {
+    createAdditionalAudioInputNode(id, label) {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createAdditionalAudioInputNode cannot be called after completeSetup",
+      );
       checkPortIdValidity(id);
       const port = createHsAdditionalAudioInputPort(audioContext, id, label);
       additionalAudioInputs ??= {};
       additionalAudioInputs[id] = port;
       return port.node;
+    },
+    createAutomationOutputPort(id, label) {
+      raiseIfInvalidPortsAccess(
+        "unitInterface.createAutomationOutputPort cannot be called after completeSetup",
+      );
+      if (id) {
+        checkPortIdValidity(id);
+        if (automationOutputPorts?.[id]) {
+          console.warn(`duplicated automation output port id: ${id}`);
+        }
+      } else {
+        id = makeSequentialPortId(
+          Object.keys(automationOutputPorts ?? {}),
+          "automationOutput",
+        );
+      }
+      const port = createHsAutomationOutputPort(
+        unitId,
+        notesDispatcher,
+        id,
+        label,
+      );
+      automationOutputPorts ??= {};
+      automationOutputPorts[id] = port;
+      return port;
     },
     emitMetaAttributes(metaAttrs) {
       hostSystemCore.emitMetaAttributes(metaAttrs);
@@ -350,7 +386,7 @@ export function createUnitInterface(
         additionalAudioInputs,
         additionalAudioOutputs,
         automationInputPort,
-        automationOutputPort,
+        automationOutputPorts,
       );
 
       const subscribeViewSize = (fn: ViewSizeListener) => {
