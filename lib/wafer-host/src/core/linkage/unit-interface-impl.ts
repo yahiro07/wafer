@@ -405,6 +405,8 @@ export function createUnitInterface(
         primaryOutputPorts: primaryOutputPorts,
         additionalAudioOutputs,
         additionalAudioInputs,
+        automationInput: automationInputPort,
+        automationOutputs: automationOutputPorts,
         hostCallbacks: attrs.hostCallbacks,
         clockHandlers: attrs.clockHandlers,
         persistence: attrs.persistence,
