@@ -29,8 +29,7 @@ export type HostSystemInternalEvent =
 
 export type ConnectionRule = {
   // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
-  //OR
-  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}.${destParameterId}
+  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}#${destParameterId} (for automation)
   connectionKey: string;
   srcPortKey: string; //${unitId}.${portId}
   destPortKey: string; //${unitId}.${portId}
