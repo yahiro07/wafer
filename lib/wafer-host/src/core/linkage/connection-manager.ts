@@ -52,10 +52,10 @@ function createUnitPortConnectionEntry(
 type CompositePort = {
   audioOutput?: HsAudioOutputPort;
   noteOutput?: HsNoteOutputPort;
-  automationOutput?: HsAutomationOutputPort;
   audioInput?: HsAudioInputPort;
   noteInput?: HsNoteInputPort;
   automationInput?: HsAutomationInputPort;
+  automationOutput?: HsAutomationOutputPort;
 };
 
 function updateConnectionCompositePortToOutput(
@@ -82,11 +82,9 @@ function updateConnectionBetweenCompositePort(
     portSubtypes.push("audio");
   }
   if (srcOuts.noteOutput && destIns.noteInput) {
-    srcOuts.noteOutput[operation](destIns.noteInput);
     portSubtypes.push("note");
   }
   if (srcOuts.automationOutput && destIns.automationInput) {
-    srcOuts.automationOutput[operation](destIns.automationInput);
     portSubtypes.push("automation");
   }
   return portSubtypes.length > 0 ? portSubtypes : undefined;
@@ -102,11 +100,14 @@ function getUnitOutputCompositePort(
     return { audioOutput: unit.primaryOutputPorts.audioOutput };
   } else if (portId === "noteOutput") {
     return { noteOutput: unit.primaryOutputPorts.noteOutput };
-  } else if (portId === "automationOutput") {
-    return { automationOutput: unit.primaryOutputPorts.automationOutput };
   }
-  const port = unit.additionalAudioOutputs?.[portId];
-  return port ? { audioOutput: port } : undefined;
+  const audioOutput = unit.additionalAudioOutputs?.[portId];
+  if (audioOutput) return { audioOutput };
+
+  const automationOutput = unit.automationOutputs?.[portId];
+  if (automationOutput) return { automationOutput };
+
+  return undefined;
 }
 
 function getUnitInputCompositePort(
@@ -120,7 +121,7 @@ function getUnitInputCompositePort(
   } else if (portId === "noteInput") {
     return { noteInput: unit.primaryInputPorts.noteInput };
   } else if (portId === "automationInput") {
-    return { automationInput: unit.primaryInputPorts.automationInput };
+    return { automationInput: unit.automationInput };
   }
   const port = unit.additionalAudioInputs?.[portId];
   return port ? { audioInput: port } : undefined;
@@ -221,6 +222,10 @@ function updateUnitConnectionToPort(
             portSubtypes,
           );
           logConnectionChange(from, to, operation);
+        } else {
+          console.warn(
+            `no connectable portSubtypes for ${from.unitId}.${from.portId} --> ${to.unitId}.${to.portId}`,
+          );
         }
       }
     }
@@ -229,7 +234,7 @@ function updateUnitConnectionToPort(
 
 function extractSingleSourceCode(code: string): UnitPortSpec {
   const segments = code.split(".");
-  if (segments.length === 2) {
+  if (segments.length >= 2) {
     return { unitId: segments[0], portId: segments[1] };
   } else {
     return { unitId: code, portId: "primaryOutput" };
@@ -238,7 +243,7 @@ function extractSingleSourceCode(code: string): UnitPortSpec {
 
 function extractSingleDestCode(code: string): UnitPortSpec {
   const segments = code.split(".");
-  if (segments.length === 2) {
+  if (segments.length >= 2) {
     return { unitId: segments[0], portId: segments[1] };
   } else {
     return { unitId: code, portId: "primaryInput" };

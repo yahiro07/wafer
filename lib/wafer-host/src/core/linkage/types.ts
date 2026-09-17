@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import {
-  AutomationPort,
+  AutomationInputPort,
+  AutomationOutputPort,
   ClockHandlers,
   HostCallbacks,
   NoteInputPort,
@@ -26,16 +27,19 @@ export type HsUnitStateData =
 
 export type HsAudioInputPort = AudioPort;
 export type HsNoteInputPort = NoteInputPort;
-export type HsAutomationInputPort = AutomationPort;
+export type HsAutomationInputPort = AutomationInputPort;
 export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
 
 type WrapperOutputPort<T> = T & {
   connectTo(port: T): void;
   disconnectTo(port: T): void;
 };
-export type HsNoteOutputPort = WrapperOutputPort<NoteOutputPort>;
+export type HsNoteOutputPort = NoteOutputPort;
 export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
-export type HsAutomationOutputPort = WrapperOutputPort<AutomationPort>;
+export type HsAutomationOutputPort = AutomationOutputPort & {
+  id: string;
+  label?: string;
+};
 export type HsAdditionalAudioOutputPort =
   WrapperOutputPort<HsAdditionalAudioPort>;
 
@@ -77,13 +81,13 @@ export type HsUnitInstance = {
   primaryInputPorts: {
     audioInput?: HsAudioInputPort;
     noteInput?: HsNoteInputPort;
-    automationInput?: HsAutomationInputPort;
   };
   primaryOutputPorts: {
     audioOutput?: HsAudioOutputPort;
     noteOutput?: HsNoteOutputPort;
-    automationOutput?: HsAutomationOutputPort;
   };
+  automationInput?: HsAutomationInputPort;
+  automationOutputs?: Record<string, HsAutomationOutputPort>;
   additionalAudioOutputs?: Record<string, HsAdditionalAudioOutputPort>;
   additionalAudioInputs?: Record<string, HsAdditionalAudioPort>;
   hostCallbacks?: HostCallbacks;

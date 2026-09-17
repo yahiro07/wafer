@@ -1,4 +1,8 @@
-import { MetaAttributes, NoteAttributes } from "../../unit-types";
+import {
+  AutomationValueOptions,
+  MetaAttributes,
+  NoteAttributes,
+} from "../../unit-types";
 import { EventPort } from "../../utils/event-port";
 import {
   HsAudioInputPort,
@@ -24,11 +28,14 @@ export type HostSystemInternalEvent =
   | { type: "pendingUnitsLoaded" };
 
 export type ConnectionRule = {
-  connectionKey: string; // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}
+  // ${srcUnitId}.${srcPortId}>${destUnitId}.${destPortId}#${destParameterId} (for automation)
+  connectionKey: string;
   srcPortKey: string; //${unitId}.${portId}
   destPortKey: string; //${unitId}.${portId}
   srcUnitId: string;
   destUnitId: string;
+  destParameterId?: string;
 };
 
 export type HostStateBus = {
@@ -96,9 +103,8 @@ export type NoteDeliveryEvent = {
 
 export type AutomationDeliveryEvent = {
   sourcePortKey: string;
-  parameterId: string;
   value: number;
-  time?: number;
+  options?: AutomationValueOptions;
 };
 
 export type NotesDispatcher = {
