@@ -1,15 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { HsUnitInstance } from "../../core";
 import { checkUnitIdValidity } from "../../core/host-system/id-format-checker";
+import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 import { UnitDestinationSpec } from "../destination-spec";
 import { useHostAppContext } from "../host-app-context";
+import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
 import { useUnitInputNotesAffecter } from "../use-unit-input-notes-affecter";
 import {
   instantiateReactUnit,
   ReactUnitTemplateFn,
 } from "./react-unit-interface";
-import { useAffectUnitSourcedConnections } from "../use-affect-unit-sourced-connections";
-import { safeInvoke } from "../../core/host-system/wrap-unit-call";
 
 type Props = {
   unitId: string;
@@ -31,10 +31,16 @@ const ReactUnitFrameImpl = ({
   const unit = useMemo(() => {
     return instantiateReactUnit(hostSystem, unitTemplateFn, unitId);
   }, [unitTemplateFn, unitId, hostSystem]);
+
   useEffect(() => {
-    onUnitInstanceLoaded?.(unit);
     return hostSystem.linkageApi.registerUnitInstance(unit);
-  }, [unit, onUnitInstanceLoaded, hostSystem]);
+  }, [unit, hostSystem]);
+
+  const onLoadedRef = useRef(onUnitInstanceLoaded);
+  onLoadedRef.current = onUnitInstanceLoaded;
+  useEffect(() => {
+    onLoadedRef.current?.(unit);
+  }, [unit]);
 
   useAffectUnitSourcedConnections(unitId, destSpec, hostSystem);
 

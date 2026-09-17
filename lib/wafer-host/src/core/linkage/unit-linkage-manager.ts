@@ -10,7 +10,8 @@ function decodeConnectionKey(key: string): {
   srcPortKey: string;
   destPortKey: string;
 } {
-  const [srcPortKey, destPortKey] = key.split(">");
+  const [srcPortKey, destPortKeyBase] = key.split(">");
+  const destPortKey = destPortKeyBase.split("#")[0];
   const srcUnitId = srcPortKey.split(".")[0];
   const destUnitId = destPortKey.split(".")[0];
   return {
