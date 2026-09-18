@@ -47,6 +47,5 @@ export function createHostStateBus(
     unitLoadingIds,
     connectionRules,
     messagesFromUnitsPrimaryHandler: undefined,
-    messagesFromUnitsListeners: new Set(),
   };
 }

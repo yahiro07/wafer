@@ -359,11 +359,12 @@ export function createUnitInterface(
     },
     sendMessageToHost(message) {
       const primaryHandler = hostSystemCore.bus.messagesFromUnitsPrimaryHandler;
-      const listeners = hostSystemCore.bus.messagesFromUnitsListeners.values();
       const result = primaryHandler?.(message, unitId);
-      for (let listener of listeners) {
-        listener(message, unitId);
-      }
+      hostSystemCore.bus.eventPort.emit({
+        type: "messageFromUnit",
+        unitId,
+        message,
+      });
       return result;
     },
     setViewSize(width, height, preferJustSize) {

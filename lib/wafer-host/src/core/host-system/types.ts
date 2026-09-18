@@ -18,7 +18,8 @@ export type HostSystemEvent =
   | { type: "loadCompleted" }
   | { type: "unitAdded"; unitInstance: HsUnitInstance }
   | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
-  | { type: "unitRemoved"; unitId: string };
+  | { type: "unitRemoved"; unitId: string }
+  | { type: "messageFromUnit"; unitId: string; message: object };
 
 export type HostSystemInternalEvent =
   | { type: "connectionRulesChanged" }
@@ -49,7 +50,6 @@ export type HostStateBus = {
   getConnectionRules(): readonly ConnectionRule[];
   getUnitLoadingIds(): ReadonlySet<string>;
   messagesFromUnitsPrimaryHandler: MessagesFromUnitsPrimaryHandler | undefined;
-  messagesFromUnitsListeners: Set<MessagesFromUnitsListener>;
 };
 
 export type HostStateBusImpl = HostStateBus & {
@@ -131,11 +131,6 @@ export type MessagesFromUnitsPrimaryHandler = (
   senderUnitId: string,
 ) => any;
 
-export type MessagesFromUnitsListener = (
-  message: object,
-  senderUnitId: string,
-) => void;
-
 //public api for host application
 export type HostSystem = {
   audioContext: IAudioContext;
@@ -148,7 +143,6 @@ export type HostSystem = {
   setMessagesFromUnitsPrimaryHandler(
     handler: MessagesFromUnitsPrimaryHandler | undefined,
   ): void;
-  addMessagesFromUnitsListener(listener: MessagesFromUnitsListener): () => void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
   getAllUnitStates(): HsUnitStateData[];
