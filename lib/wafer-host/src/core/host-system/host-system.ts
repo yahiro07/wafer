@@ -1,6 +1,5 @@
 import { delayMs } from "../../utils/timer-utils";
 import { createLinkageApi } from "../linkage/linkage-api";
-import { HsUnitStateData } from "../linkage/types";
 import { createUnitLinkageManager } from "../linkage/unit-linkage-manager";
 import { createHostSystemCore } from "./host-system-core";
 import { createNotesDispatcher } from "./notes-dispatcher";
@@ -61,23 +60,24 @@ export function createHostSystem(
     getAllUnitStates() {
       return unitPersistenceHandlers.exportUnitStates();
     },
-    setAllUnitStates(unitStates: HsUnitStateData[]) {
+    setAllUnitStates(unitStates) {
       unitPersistenceHandlers.importUnitStates(unitStates);
     },
     emitMetaAttributes(attributes) {
       hostSystemCore.emitMetaAttributes(attributes);
     },
-    sendMessageToUnit(unitId: string, message: object) {
+    sendMessageToUnit(unitId, message) {
       const unit = bus.getUnit(unitId);
       if (unit) {
-        unit.unitCallbacks?.onMessageFromHost?.(message);
+        return unit.unitCallbacks?.onMessageFromHost?.(message);
       }
+      return undefined;
     },
-    getUnitState(unitId: string) {
+    getUnitState(unitId) {
       const unit = bus.getUnit(unitId);
       return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;
     },
-    setUnitState(unitId: string, state: HsUnitStateData) {
+    setUnitState(unitId, state) {
       const unit = bus.getUnit(unitId);
       if (unit) {
         unitStateOperations.applyStateToUnit(unit, state);
