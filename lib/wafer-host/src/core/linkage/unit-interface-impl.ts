@@ -362,7 +362,7 @@ export function createUnitInterface(
       const result = primaryHandler?.(message, unitId);
       hostSystemCore.bus.eventPort.emit({
         type: "messageFromUnit",
-        unitId,
+        senderUnitId: unitId,
         message,
       });
       return result;

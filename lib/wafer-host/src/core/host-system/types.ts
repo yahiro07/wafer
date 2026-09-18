@@ -19,7 +19,7 @@ export type HostSystemEvent =
   | { type: "unitAdded"; unitInstance: HsUnitInstance }
   | { type: "beforeRemoveUnit"; unitInstance: HsUnitInstance }
   | { type: "unitRemoved"; unitId: string }
-  | { type: "messageFromUnit"; unitId: string; message: object };
+  | { type: "messageFromUnit"; senderUnitId: string; message: object };
 
 export type HostSystemInternalEvent =
   | { type: "connectionRulesChanged" }
