@@ -98,7 +98,7 @@ export type UnitCallbacks = {
   onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
   onDisconnectedTo?(srcPortId: string): void;
   // onMessageFromSourceUnit?(message: object): void;
-  onMessageFromHost?(message: object): void;
+  onMessageFromHost?(message: object): any;
 };
 
 export type PresetProvider = {
@@ -116,7 +116,7 @@ export type UnitInterface = {
   createAutomationOutputPort(id?: string, label?: string): AutomationOutputPort;
   createAdditionalAudioOutputNode(id: string, label?: string): AudioNode;
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
-  sendMessageToHost(message: object): void;
+  sendMessageToHost(message: object): any;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
   // sendMessageToDestinationUnits(message: object): void;
   setViewSize(width: number, height: number, preferJustSize?: boolean): void;
