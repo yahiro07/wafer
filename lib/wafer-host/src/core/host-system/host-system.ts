@@ -73,6 +73,15 @@ export function createHostSystem(
       }
       return undefined;
     },
+    setMessagesFromUnitsPrimaryHandler(callback) {
+      bus.messagesFromUnitsPrimaryHandler = callback;
+    },
+    addMessagesFromUnitsListener(listener) {
+      bus.messagesFromUnitsListeners.add(listener);
+      return () => {
+        bus.messagesFromUnitsListeners.delete(listener);
+      };
+    },
     getUnitState(unitId) {
       const unit = bus.getUnit(unitId);
       return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;

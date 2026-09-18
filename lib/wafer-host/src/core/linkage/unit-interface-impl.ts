@@ -358,11 +358,13 @@ export function createUnitInterface(
       hostSystemCore.emitMetaAttributes(metaAttrs);
     },
     sendMessageToHost(message) {
-      hostSystemCore.bus.eventPort.emit({
-        type: "messageFromUnit",
-        message,
-        senderUnitId: unitId,
-      });
+      const primaryHandler = hostSystemCore.bus.messagesFromUnitsPrimaryHandler;
+      const listeners = hostSystemCore.bus.messagesFromUnitsListeners.values();
+      const result = primaryHandler?.(message, unitId);
+      for (let listener of listeners) {
+        listener(message, unitId);
+      }
+      return result;
     },
     setViewSize(width, height, preferJustSize) {
       setViewSizeInternal({ width, height, preferJustSize });
