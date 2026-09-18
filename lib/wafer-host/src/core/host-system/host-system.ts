@@ -67,6 +67,12 @@ export function createHostSystem(
     emitMetaAttributes(attributes) {
       hostSystemCore.emitMetaAttributes(attributes);
     },
+    sendMessageToUnit(unitId: string, message: object) {
+      const unit = bus.getUnit(unitId);
+      if (unit) {
+        unit.unitCallbacks?.onMessageFromHost?.(message);
+      }
+    },
     getUnitState(unitId: string) {
       const unit = bus.getUnit(unitId);
       return unit ? unitStateOperations.readStateFromUnit(unit) : undefined;
