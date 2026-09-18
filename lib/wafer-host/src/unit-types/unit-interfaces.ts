@@ -98,6 +98,7 @@ export type UnitCallbacks = {
   onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
   onDisconnectedTo?(srcPortId: string): void;
   // onMessageFromSourceUnit?(message: object): void;
+  onMessageFromHost?(message: object): void;
 };
 
 export type PresetProvider = {

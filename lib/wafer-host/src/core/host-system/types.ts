@@ -133,6 +133,7 @@ export type HostSystem = {
   getConnectionRules(): readonly ConnectionRule[];
   setMasterGain(gain: number): void;
   emitMetaAttributes(attributes: MetaAttributes): void;
+  sendMessageToUnit(unitId: string, message: object): void;
   getUnitState(unitId: string): HsUnitStateData | undefined;
   setUnitState(unitId: string, state: HsUnitStateData): void;
   getAllUnitStates(): HsUnitStateData[];
