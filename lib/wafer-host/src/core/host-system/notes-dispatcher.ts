@@ -43,7 +43,7 @@ function mapPortKeysToPorts(
 ): HsNoteInputPort[] {
   return portKeys
     .map((portKey) => {
-      const [unitId, portId] = portKey.split(".")[0];
+      const [unitId, portId] = portKey.split(".");
       if (portId === "primaryInput" || portId === "noteInput") {
         const unit = hostSystemCore.bus.getUnit(unitId);
         return unit?.primaryInputPorts.noteInput;
