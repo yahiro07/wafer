@@ -49,7 +49,6 @@ export type AutomationOutputPort = {
 };
 
 export type Persistence = {
-  // subscribeChange?(fn: () => void): () => void;
   emitState?(): Record<string, any>;
   applyState?(state: Record<string, any>): void;
   emitStateBytes?(): Uint8Array;
@@ -95,9 +94,9 @@ export type HostCallbacks = {
 };
 
 export type UnitCallbacks = {
-  onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
-  onDisconnectedTo?(srcPortId: string): void;
-  // onMessageFromSourceUnit?(message: object): void;
+  //deprecated
+  // onConnectedTo?(srcPortId: string, linkedPortSubtypes: PortSubtype[]): void;
+  // onDisconnectedTo?(srcPortId: string): void;
   onMessageFromHost?(message: object): any;
 };
 
@@ -124,7 +123,6 @@ export type UnitInterface = {
   createAdditionalAudioInputNode(id: string, label?: string): AudioNode;
   sendMessageToHost(message: object): any;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
-  // sendMessageToDestinationUnits(message: object): void;
   setViewSize(payload: ViewSizeSetterPayload): void;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
