@@ -108,6 +108,12 @@ export type PresetProvider = {
   applyCommand?(commandName: string): void | boolean; //if true returned, host ui resets the preset selection
 };
 
+export type ViewSizeSetterPayload = {
+  width: number;
+  height: number;
+  preferJustSize?: boolean;
+};
+
 export type UnitInterface = {
   audioContext: AudioContext;
   audioOutputNode: AudioNode;
@@ -119,7 +125,7 @@ export type UnitInterface = {
   sendMessageToHost(message: object): any;
   emitMetaAttributes(metaAttrs: MetaAttributes): void;
   // sendMessageToDestinationUnits(message: object): void;
-  setViewSize(width: number, height: number, preferJustSize?: boolean): void;
+  setViewSize(payload: ViewSizeSetterPayload): void;
   completeSetup(attrs: {
     unitAspects: UnitAspects;
     hostCallbacks?: HostCallbacks;
