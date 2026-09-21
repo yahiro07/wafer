@@ -18,6 +18,7 @@ type Props = {
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
   onLoadFailed?(): void;
+  viewActive?: boolean;
 };
 
 export const UnitFrameScaled = ({
@@ -29,6 +30,7 @@ export const UnitFrameScaled = ({
   onIframeMounted,
   onUnitInstanceLoaded,
   onLoadFailed,
+  viewActive,
 }: Props) => {
   const outerDivRef = useRef<HTMLDivElement>(null);
   const [outerSize, setOuterSize] = useState<Size | null>(null);
@@ -114,6 +116,7 @@ export const UnitFrameScaled = ({
           onIframeMounted={onIframeMounted}
           onUnitInstanceLoaded={handleUnitInstanceLoaded}
           onLoadFailed={onLoadFailed}
+          viewActive={viewActive}
         />
       </div>
     </div>

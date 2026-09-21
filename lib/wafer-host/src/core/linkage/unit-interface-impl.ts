@@ -367,8 +367,8 @@ export function createUnitInterface(
       });
       return result;
     },
-    setViewSize(width, height, preferJustSize) {
-      setViewSizeInternal({ width, height, preferJustSize });
+    setViewSize(viewSize) {
+      setViewSizeInternal(viewSize);
     },
     completeSetup(attrs) {
       if (cancelled) return;

@@ -16,6 +16,7 @@ type Props = {
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
   onLoadFailed?(): void;
+  viewActive?: boolean;
 };
 
 export const CustomElementUnitFrame = ({
@@ -26,6 +27,7 @@ export const CustomElementUnitFrame = ({
   inputNotes,
   onUnitInstanceLoaded,
   onLoadFailed,
+  viewActive = true,
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -88,6 +90,10 @@ export const CustomElementUnitFrame = ({
   }, [hostPlaying]);
 
   useUnitInputNotesAffecter(unitInstanceRef.current, inputNotes);
+
+  useEffect(() => {
+    unitInstanceRef.current?.unitCallbacks?.setViewActive?.(viewActive);
+  }, [viewActive]);
 
   return (
     <div
