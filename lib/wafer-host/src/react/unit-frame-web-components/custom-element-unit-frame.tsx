@@ -93,7 +93,7 @@ export const CustomElementUnitFrame = ({
 
   useEffect(() => {
     unitInstanceRef.current?.unitCallbacks?.setViewActive?.(viewActive);
-  }, [viewActive]);
+  }, [viewActive, unitInstanceRef.current]);
 
   return (
     <div
