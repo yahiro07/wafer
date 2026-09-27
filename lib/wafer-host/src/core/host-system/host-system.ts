@@ -108,5 +108,6 @@ export function createHostSystem(
       notesDispatcher.setUnitNoteOutputMonitor(monitorFn);
     },
     linkageApi,
+    notesDispatcher,
   };
 }

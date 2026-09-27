@@ -41,16 +41,19 @@ function getAutomationDestinationPortKeyAndParameterIds(
 function mapPortKeysToPorts(
   hostSystemCore: HostSystemCore,
   portKeys: string[],
-): HsNoteInputPort[] {
+): { unitId: string; port: HsNoteInputPort }[] {
   return portKeys
     .map((portKey) => {
       const [unitId, portId] = portKey.split(".");
       if (portId === "primaryInput" || portId === "noteInput") {
         const unit = hostSystemCore.bus.getUnit(unitId);
-        return unit?.primaryInputPorts.noteInput;
+        // return unit?.primaryInputPorts.noteInput;
+        if (unit) {
+          return { unitId, port: unit.primaryInputPorts.noteInput };
+        }
       }
     })
-    .filter(Boolean) as HsNoteInputPort[];
+    .filter(Boolean) as { unitId: string; port: HsNoteInputPort }[];
 }
 
 export function createNotesDispatcher(
@@ -96,8 +99,8 @@ export function createNotesDispatcher(
       }
       if (destPortKeys) {
         const sourceUnitId = sourcePortKey?.split(".")[0];
-        const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
-        if (destPorts.length > 0) {
+        const destPortItems = mapPortKeysToPorts(hostSystemCore, destPortKeys);
+        if (destPortItems.length > 0) {
           const sideEffects = () => {
             if (sourceUnitId) {
               unitNoteOutputMonitorFn?.({
@@ -114,19 +117,21 @@ export function createNotesDispatcher(
               );
             }
           };
-          for (const port of destPorts) {
+          for (const portItem of destPortItems) {
+            const { unitId: destUnitId, port } = portItem;
             if (isOn) {
               sideEffects();
               safeInvoke(port.noteOn)?.(noteNumber, time, attrs);
             } else {
               // safeInvoke(port.noteOff)?.(noteNumber, time);
-              delayedEventScheduler.pushNoteOffInvocation(
-                port,
-                sourcePortKey ?? "",
+              delayedEventScheduler.pushNoteOffInvocationItem({
+                notePort: port,
+                noteSourceUnitId: sourceUnitId ?? "",
+                noteDestinationUnitId: destUnitId ?? "",
                 noteNumber,
                 time,
                 sideEffects,
-              );
+              });
             }
           }
         }
@@ -174,6 +179,9 @@ export function createNotesDispatcher(
     },
     setUnitNoteOutputMonitor(monitorFn) {
       unitNoteOutputMonitorFn = monitorFn;
+    },
+    flushAllNotesOff(options) {
+      delayedEventScheduler.flushAllNotesOff(options);
     },
   };
 }

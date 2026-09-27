@@ -4,8 +4,8 @@ import { IAudioContext } from "./types";
 import { safeInvoke } from "./wrap-unit-call";
 
 type NoteOffInvocationItem = {
-  type: "noteOff";
-  senderKey: string;
+  noteSourceUnitId: string;
+  noteDestinationUnitId: string;
   notePort: NoteInputPort;
   noteNumber: number;
   time: number;
@@ -13,14 +13,9 @@ type NoteOffInvocationItem = {
 };
 
 type DelayedEventScheduler = {
-  pushNoteOffInvocation(
-    notePort: NoteInputPort,
-    senderKey: string,
-    noteNumber: number,
-    time?: number,
-    sideEffects?: () => void,
-  ): void;
+  pushNoteOffInvocationItem(item: NoteOffInvocationItem): void;
   forceFlushEventsTillTime(time: number): void;
+  flushAllNotesOff(options?: { noteSourceUnitId?: string }): void;
 };
 
 export function createDelayedEventScheduler(
@@ -55,10 +50,8 @@ export function createDelayedEventScheduler(
       }, delayMs);
     },
     executeItem(item: NoteOffInvocationItem) {
-      if (item.type === "noteOff") {
-        item.sideEffects?.();
-        safeInvoke(item.notePort.noteOff)?.(item.noteNumber, item.time);
-      }
+      item.sideEffects?.();
+      safeInvoke(item.notePort.noteOff)?.(item.noteNumber, item.time);
     },
     flushQueue() {
       const now = audioContext.currentTime;
@@ -82,24 +75,16 @@ export function createDelayedEventScheduler(
   };
 
   return {
-    pushNoteOffInvocation(notePort, senderKey, noteNumber, time, sideEffects) {
+    pushNoteOffInvocationItem(scheduledItem) {
       const now = audioContext.currentTime;
-      const scheduledTime = time ?? now;
+      const scheduledTime = scheduledItem.time;
       const thresholdTime = now + aheadTimeSec;
-
-      const scheduledItem: NoteOffInvocationItem = {
-        type: "noteOff",
-        notePort,
-        senderKey,
-        noteNumber,
-        time: scheduledTime,
-        sideEffects,
-      };
 
       const advancingItems = queue.filter(
         (item) =>
-          item.senderKey === senderKey &&
-          item.noteNumber === noteNumber &&
+          item.noteSourceUnitId === scheduledItem.noteSourceUnitId &&
+          item.noteDestinationUnitId === scheduledItem.noteDestinationUnitId &&
+          item.noteNumber === scheduledItem.noteNumber &&
           item.time > scheduledTime,
       );
       if (advancingItems.length > 0) {
@@ -136,6 +121,17 @@ export function createDelayedEventScheduler(
           internal.executeItem(item);
         }
       }
+    },
+    flushAllNotesOff(options) {
+      const { noteSourceUnitId } = options ?? {};
+      const items = queue.filter(
+        (it) => !noteSourceUnitId || it.noteSourceUnitId == noteSourceUnitId,
+      );
+      for (const item of items) {
+        item.time = audioContext.currentTime;
+        internal.executeItem(item);
+      }
+      queue = queue.filter((it) => !items.includes(it));
     },
   };
 }
