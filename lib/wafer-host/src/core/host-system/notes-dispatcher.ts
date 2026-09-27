@@ -1,4 +1,5 @@
 import { HsNoteInputPort } from "../linkage/types";
+import { createDelayedEventScheduler } from "./delayed-event-scheduler";
 import {
   HostSystemCore,
   NoteDeliveryEvent,
@@ -55,6 +56,9 @@ function mapPortKeysToPorts(
 export function createNotesDispatcher(
   hostSystemCore: HostSystemCore,
 ): NotesDispatcher {
+  const delayedEventScheduler = createDelayedEventScheduler(
+    hostSystemCore.bus.audioContext,
+  );
   const actionScheduler = createWebAudioActionScheduler(
     hostSystemCore.bus.audioContext,
   );
@@ -63,8 +67,24 @@ export function createNotesDispatcher(
 
   const internal = {
     pushNoteDeliveryEventImpl(noteDeliveryEvent: NoteDeliveryEvent) {
-      const { time, sourcePortKey, destPortKey, noteNumber, attrs, isOn } =
-        noteDeliveryEvent;
+      const {
+        time: inputTime,
+        sourcePortKey,
+        destPortKey,
+        noteNumber,
+        attrs,
+        isOn,
+      } = noteDeliveryEvent;
+
+      const time = Math.max(
+        inputTime ?? 0,
+        hostSystemCore.bus.audioContext.currentTime,
+      );
+      if (isOn) {
+        //flush reserved note off events before note on
+        delayedEventScheduler.forceFlushEventsTillTime(time + 0.005);
+      }
+
       let destPortKeys: string[] | undefined;
       if (!sourcePortKey && destPortKey) {
         destPortKeys = [destPortKey];
@@ -78,29 +98,37 @@ export function createNotesDispatcher(
         const sourceUnitId = sourcePortKey?.split(".")[0];
         const destPorts = mapPortKeysToPorts(hostSystemCore, destPortKeys);
         if (destPorts.length > 0) {
-          // actionScheduler.pushAction(() => {
-          if (sourceUnitId) {
-            unitNoteOutputMonitorFn?.({
-              sourceUnitId,
-              noteNumber,
-              isOn,
-              time,
-              attrs,
-            });
-          }
-          if (0) {
-            console.log(
-              `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
-            );
-          }
+          const sideEffects = () => {
+            if (sourceUnitId) {
+              unitNoteOutputMonitorFn?.({
+                sourceUnitId,
+                noteNumber,
+                isOn,
+                time: inputTime,
+                attrs,
+              });
+            }
+            if (0) {
+              console.log(
+                `deliverNote ${sourcePortKey}-->${destPortKeys.join(", ")} ${noteNumber} ${isOn ? "on" : "off"} ${time}`,
+              );
+            }
+          };
           for (const port of destPorts) {
             if (isOn) {
+              sideEffects();
               safeInvoke(port.noteOn)?.(noteNumber, time, attrs);
             } else {
-              safeInvoke(port.noteOff)?.(noteNumber, time);
+              // safeInvoke(port.noteOff)?.(noteNumber, time);
+              delayedEventScheduler.pushNoteOffInvocation(
+                port,
+                sourcePortKey ?? "",
+                noteNumber,
+                time,
+                sideEffects,
+              );
             }
           }
-          // }, time);
         }
       }
     },
@@ -116,7 +144,6 @@ export function createNotesDispatcher(
           );
           return;
         }
-        // console.log(`hopIds: ${hopIds.join(" > ")}`);
         try {
           hopIds.push(sourcePortKey);
           internal.pushNoteDeliveryEventImpl(noteDeliveryEvent);
