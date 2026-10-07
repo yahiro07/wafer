@@ -64,6 +64,14 @@ export function createLinkageApi(
     },
     reserveConnection(source, destination, enabled) {
       hostSystemCore.pushConnectionRule(source, destination, enabled);
+      if (!enabled) {
+        const [destUnitId, destPortId] = destination.split(".");
+        if (destPortId === "primaryInput" || destPortId === "noteInput") {
+          notesDispatcher.forceStopActiveNotes({
+            noteDestinationUnitId: destUnitId,
+          });
+        }
+      }
     },
   };
 }

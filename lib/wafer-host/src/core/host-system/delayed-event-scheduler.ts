@@ -15,7 +15,10 @@ type NoteOffInvocationItem = {
 type DelayedEventScheduler = {
   pushNoteOffInvocationItem(item: NoteOffInvocationItem): void;
   forceFlushEventsTillTime(time: number): void;
-  flushPendingNotesOff(options?: { noteSourceUnitId?: string }): void;
+  flushPendingNotesOff(options?: {
+    noteSourceUnitId?: string;
+    noteDestinationUnitId?: string;
+  }): void;
 };
 
 export function createDelayedEventScheduler(
@@ -123,9 +126,12 @@ export function createDelayedEventScheduler(
       }
     },
     flushPendingNotesOff(options) {
-      const { noteSourceUnitId } = options ?? {};
+      const { noteSourceUnitId, noteDestinationUnitId } = options ?? {};
       const items = queue.filter(
-        (it) => !noteSourceUnitId || it.noteSourceUnitId == noteSourceUnitId,
+        (it) =>
+          (!noteSourceUnitId || it.noteSourceUnitId == noteSourceUnitId) &&
+          (!noteDestinationUnitId ||
+            it.noteDestinationUnitId == noteDestinationUnitId),
       );
       for (const item of items) {
         item.time = audioContext.currentTime;
