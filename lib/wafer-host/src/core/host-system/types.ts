@@ -116,7 +116,7 @@ export type NotesDispatcher = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
-  flushAllNotesOff(options?: { noteSourceUnitId?: string }): void;
+  flushPendingNotesOff(options?: { noteSourceUnitId?: string }): void;
 };
 
 export type UnitNoteOutputMonitorFn = (args: {

@@ -180,8 +180,8 @@ export function createNotesDispatcher(
     setUnitNoteOutputMonitor(monitorFn) {
       unitNoteOutputMonitorFn = monitorFn;
     },
-    flushAllNotesOff(options) {
-      delayedEventScheduler.flushAllNotesOff(options);
+    flushPendingNotesOff(options) {
+      delayedEventScheduler.flushPendingNotesOff(options);
     },
   };
 }

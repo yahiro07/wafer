@@ -15,7 +15,7 @@ type NoteOffInvocationItem = {
 type DelayedEventScheduler = {
   pushNoteOffInvocationItem(item: NoteOffInvocationItem): void;
   forceFlushEventsTillTime(time: number): void;
-  flushAllNotesOff(options?: { noteSourceUnitId?: string }): void;
+  flushPendingNotesOff(options?: { noteSourceUnitId?: string }): void;
 };
 
 export function createDelayedEventScheduler(
@@ -122,7 +122,7 @@ export function createDelayedEventScheduler(
         }
       }
     },
-    flushAllNotesOff(options) {
+    flushPendingNotesOff(options) {
       const { noteSourceUnitId } = options ?? {};
       const items = queue.filter(
         (it) => !noteSourceUnitId || it.noteSourceUnitId == noteSourceUnitId,
