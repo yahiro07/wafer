@@ -76,7 +76,10 @@ export const UnitFrameScaled = ({
       if (preferJustSize) {
         return { width: `${width}px`, height: `${height}px` };
       } else {
-        return { width: `${100 / scale}%`, height: `${100 / scale}%` };
+        return {
+          width: `calc(${100 / scale}% + 1px)`,
+          height: `calc(${100 / scale}% + 1px)`,
+        };
       }
     }
   }, [unitViewSize, scale]);
@@ -97,8 +100,6 @@ export const UnitFrameScaled = ({
       <div
         style={{
           flexShrink: 0,
-          // width: `${100 / scale}%`,
-          // height: `${100 / scale}%`,
           width: styleScalerDivSize?.width,
           height: styleScalerDivSize?.height,
           transform: `scale(${scale})`,
