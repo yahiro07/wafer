@@ -8,7 +8,7 @@ import {
 } from "../host-system/types";
 import { safeInvoke } from "../host-system/wrap-unit-call";
 import {
-  AudioPort,
+  HsAudioPort,
   HsAdditionalAudioInputPort,
   HsAdditionalAudioOutputPort,
   HsAudioInputPort,
@@ -53,10 +53,10 @@ function createHsAudioOutputPort(
   const node = audioContext.createGain();
   return {
     node,
-    connectTo(port: AudioPort) {
+    connectTo(port: HsAudioPort) {
       node.connect(port.node);
     },
-    disconnectTo(port: AudioPort) {
+    disconnectTo(port: HsAudioPort) {
       node.disconnect(port.node);
     },
   };
@@ -77,10 +77,10 @@ function createHsAdditionalAudioOutputPort(
     id,
     label,
     node,
-    connectTo(port: AudioPort) {
+    connectTo(port: HsAudioPort) {
       node.connect(port.node);
     },
-    disconnectTo(port: AudioPort) {
+    disconnectTo(port: HsAudioPort) {
       node.disconnect(port.node);
     },
   };

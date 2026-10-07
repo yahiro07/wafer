@@ -1,7 +1,7 @@
 import { PortSubtype } from "../../unit-types";
 import { HostStateBus } from "../host-system/types";
 import {
-  DestinationCode,
+  HsDestinationCode,
   HsAudioInputPort,
   HsAudioOutputPort,
   HsAutomationInputPort,
@@ -21,7 +21,7 @@ export type ConnectionManagerSingle = {
 };
 
 export type ConnectionManager = {
-  setConnectionChange(srcUnitId: string, destSpec: DestinationCode): void;
+  setConnectionChange(srcUnitId: string, destSpec: HsDestinationCode): void;
   onUnitRemoving(unitId: string): void;
 };
 
