@@ -9,9 +9,3 @@ export const unitSourceUrls = [
   "https://github.com/yahiro07/wafer-custom-units/tree/r19/vue-audio-mixer/",
   //add "file:///path/to/your/local/unit/to/capture/thumbnail/"
 ];
-
-if (0) {
-  const toAbsolute = (path: string) => new URL(path, import.meta.url).pathname;
-  const localWaferUnitsBase = toAbsolute("../../../../wafer-units/");
-  unitSourceUrls.push(`file://${localWaferUnitsBase}/dist/orion/`);
-}
