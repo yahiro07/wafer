@@ -12,6 +12,7 @@ type Props = {
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | undefined;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
   onLoadFailed?(): void;
+  viewActive?: boolean;
 };
 
 export const UnitFrame = ({
@@ -23,6 +24,7 @@ export const UnitFrame = ({
   onIframeMounted,
   onUnitInstanceLoaded,
   onLoadFailed,
+  viewActive,
 }: Props) => {
   if (unitUrl.endsWith(".js")) {
     return (
@@ -34,6 +36,7 @@ export const UnitFrame = ({
         inputNotes={inputNotes}
         onUnitInstanceLoaded={onUnitInstanceLoaded}
         onLoadFailed={onLoadFailed}
+        viewActive={viewActive}
       />
     );
   } else {
@@ -47,6 +50,7 @@ export const UnitFrame = ({
         onIframeMounted={onIframeMounted}
         onUnitInstanceLoaded={onUnitInstanceLoaded}
         onLoadFailed={onLoadFailed}
+        viewActive={viewActive}
       />
     );
   }

@@ -1,8 +1,7 @@
 import { PortSubtype } from "../../unit-types";
 import { HostStateBus } from "../host-system/types";
-import { safeInvoke } from "../host-system/wrap-unit-call";
 import {
-  DestinationCode,
+  HsDestinationCode,
   HsAudioInputPort,
   HsAudioOutputPort,
   HsAutomationInputPort,
@@ -22,7 +21,7 @@ export type ConnectionManagerSingle = {
 };
 
 export type ConnectionManager = {
-  setConnectionChange(srcUnitId: string, destSpec: DestinationCode): void;
+  setConnectionChange(srcUnitId: string, destSpec: HsDestinationCode): void;
   onUnitRemoving(unitId: string): void;
 };
 
@@ -128,15 +127,15 @@ function getUnitInputCompositePort(
 }
 
 function callUnitConnectionCallback(
-  srcUnit: HsUnitInstance,
-  portId: string,
+  _srcUnit: HsUnitInstance,
+  _portId: string,
   operation: ConnectingOperation,
-  portSubtypes: PortSubtype[],
+  _portSubtypes: PortSubtype[],
 ) {
   if (operation === "connectTo") {
-    safeInvoke(srcUnit.unitCallbacks?.onConnectedTo)?.(portId, portSubtypes);
+    // safeInvoke(srcUnit.unitCallbacks?.onConnectedTo)?.(portId, portSubtypes);
   } else {
-    safeInvoke(srcUnit.unitCallbacks?.onDisconnectedTo)?.(portId);
+    // safeInvoke(srcUnit.unitCallbacks?.onDisconnectedTo)?.(portId);
   }
 }
 

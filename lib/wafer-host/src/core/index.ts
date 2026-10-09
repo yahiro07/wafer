@@ -1,18 +1,9 @@
 export * from "./host-system/host-system";
+export * from "./host-system/host-system-core";
 export * from "./host-system/orchestration-logger";
 export * from "./host-system/types";
 export type { WebAudioActionScheduler } from "./host-system/webaudio-action-scheduler";
-export type {
-  DestinationCode,
-  HsPortDirection,
-  HsPortInfo,
-  HsPortInfoAdditional,
-  HsPortInfoPrimary,
-  HsPortInfoPrimaryInner,
-  HsPortSubtype,
-  HsUnitInstance,
-  HsUnitStateData,
-} from "./linkage/types";
+export * from "./linkage/types";
 export * from "./linkage/unit-interface-impl";
 export * from "./sequencer-tick-driver/sequencer-tick-driver";
 export * from "./sequencer-tick-driver/sequencer-tick-driver-core";

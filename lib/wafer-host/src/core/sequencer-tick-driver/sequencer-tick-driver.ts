@@ -39,6 +39,7 @@ export function createSequencerTickDriver(
     stop() {
       core.stop();
       processUnitsStartStop(getAllUnits(), "stop");
+      hostSystem.notesDispatcher.forceStopActiveNotes();
       oxLogger.clockingStop();
     },
   };

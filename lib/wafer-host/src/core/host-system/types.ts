@@ -116,6 +116,8 @@ export type NotesDispatcher = {
   setUnitNoteOutputMonitor(
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
+  forceStopActiveNotes(options?: { noteDestinationUnitId?: string }): void;
+  flushPendingNotesOff(options?: { noteSourceUnitId?: string }): void;
 };
 
 export type UnitNoteOutputMonitorFn = (args: {
@@ -160,4 +162,5 @@ export type HostSystem = {
     monitorFn: UnitNoteOutputMonitorFn | undefined,
   ): void;
   linkageApi: LinkageApi;
+  notesDispatcher: NotesDispatcher;
 };

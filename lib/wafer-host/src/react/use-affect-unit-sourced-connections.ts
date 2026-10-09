@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { DestinationCode, HostSystem } from "../core";
+import { HsDestinationCode, HostSystem } from "../core";
 import {
   serializeUnitDestinationSpec,
   UnitDestinationSpec,
@@ -41,7 +41,7 @@ function createUnitPortConnectionEntry(
 
 function buildConnectionEntries(
   srcUnitId: string,
-  destSpec: DestinationCode,
+  destSpec: HsDestinationCode,
 ): ConnectionEntry[] {
   return destSpec.split("|").flatMap((part) => {
     const segments = part.split(":");

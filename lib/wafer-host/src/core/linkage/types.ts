@@ -13,7 +13,7 @@ import {
   UnitInterface,
 } from "../../unit-types";
 
-export type AudioPort = { node: AudioNode };
+export type HsAudioPort = { node: AudioNode };
 
 export type HsAdditionalAudioPort = {
   node: AudioNode;
@@ -25,7 +25,7 @@ export type HsUnitStateData =
   | { unitId: string; type: "bytes"; base64: string }
   | { unitId: string; type: "json"; json: Record<string, any> };
 
-export type HsAudioInputPort = AudioPort;
+export type HsAudioInputPort = HsAudioPort;
 export type HsNoteInputPort = NoteInputPort;
 export type HsAutomationInputPort = AutomationInputPort;
 export type HsAdditionalAudioInputPort = HsAdditionalAudioPort;
@@ -35,7 +35,7 @@ type WrapperOutputPort<T> = T & {
   disconnectTo(port: T): void;
 };
 export type HsNoteOutputPort = NoteOutputPort;
-export type HsAudioOutputPort = WrapperOutputPort<AudioPort>;
+export type HsAudioOutputPort = WrapperOutputPort<HsAudioPort>;
 export type HsAutomationOutputPort = AutomationOutputPort & {
   id: string;
   label?: string;
@@ -110,7 +110,7 @@ desSpec="unit1&unit2|port1:unit3.port2&unit4"
 //self.primaryOutput --> unit1.primaryInput, unit2.primaryInput
 //self.port1 --> unit3.port2, unit4.primaryInput
 */
-export type DestinationCode = string;
+export type HsDestinationCode = string;
 
 export type HsUnitInterface = UnitInterface & {
   cancelLoading(): void;

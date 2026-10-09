@@ -17,6 +17,7 @@ type Props = {
   onIframeMounted?(iframe: HTMLIFrameElement): (() => void) | void;
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
   onLoadFailed?(): void;
+  viewActive?: boolean;
 };
 
 export const IFrameUnitFrame = ({
@@ -28,6 +29,7 @@ export const IFrameUnitFrame = ({
   onIframeMounted,
   onUnitInstanceLoaded,
   onLoadFailed,
+  viewActive = true,
 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const unitInstanceRef = useRef<HsUnitInstance>(null);
@@ -68,6 +70,10 @@ export const IFrameUnitFrame = ({
   }, [hostPlaying]);
 
   useUnitInputNotesAffecter(unitInstanceRef.current, inputNotes);
+
+  useEffect(() => {
+    unitInstanceRef.current?.unitCallbacks?.setViewActive?.(viewActive);
+  }, [viewActive, unitInstanceRef.current]);
 
   return (
     <iframe

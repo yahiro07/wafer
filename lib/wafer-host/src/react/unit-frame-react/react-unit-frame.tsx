@@ -17,6 +17,7 @@ type Props = {
   destSpec?: UnitDestinationSpec;
   inputNotes?: number[];
   onUnitInstanceLoaded?(unitInstance: HsUnitInstance): void;
+  viewActive?: boolean;
 };
 
 const ReactUnitFrameImpl = ({
@@ -25,6 +26,7 @@ const ReactUnitFrameImpl = ({
   destSpec,
   inputNotes,
   onUnitInstanceLoaded,
+  viewActive = true,
 }: Props) => {
   const { hostSystem, hostBpm, hostPlaying } = useHostAppContext();
 
@@ -59,6 +61,10 @@ const ReactUnitFrameImpl = ({
 
   useUnitInputNotesAffecter(unit, inputNotes);
 
+  useEffect(() => {
+    unit.unitCallbacks?.setViewActive?.(viewActive);
+  }, [viewActive, unit]);
+
   return <unit.RenderUi />;
 };
 
@@ -68,6 +74,7 @@ export const ReactUnitFrame = ({
   destSpec,
   inputNotes,
   onUnitInstanceLoaded,
+  viewActive,
 }: Props) => {
   const valid = useMemo(() => checkUnitIdValidity(unitId), [unitId]);
   if (!valid) {
@@ -80,6 +87,7 @@ export const ReactUnitFrame = ({
       destSpec={destSpec}
       inputNotes={inputNotes}
       onUnitInstanceLoaded={onUnitInstanceLoaded}
+      viewActive={viewActive}
     />
   );
 };
