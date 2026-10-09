@@ -7,7 +7,7 @@ export const unitSourceUrls = [
   "https://github.com/yahiro07/wafer-custom-units/tree/r19/webaudio-tinysynth-mini/",
   "https://github.com/yahiro07/wafer-custom-units/tree/r19/super-oscillator/",
   "https://github.com/yahiro07/wafer-custom-units/tree/r19/vue-audio-mixer/",
-  //add "file://path/to/your/local/unit/to/capture/thumbnail/"
+  //add "file:///path/to/your/local/unit/to/capture/thumbnail/"
 ];
 
 if (0) {
