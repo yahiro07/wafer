@@ -253,6 +253,7 @@ class UnitFrameScaled extends HTMLElement {
         overflow: hidden;
       }
       #scaler{
+        flex-shrink: 0;
         transform-origin: center;
         display: flex;
         justify-content: center;
@@ -310,8 +311,8 @@ class UnitFrameScaled extends HTMLElement {
             scalerDiv.style.width = width + "px";
             scalerDiv.style.height = height + "px";
           } else {
-            scalerDiv.style.width = `${100 / scale}%`;
-            scalerDiv.style.height = `${100 / scale}%`;
+            scalerDiv.style.width = `calc(${100 / scale}% + 1px)`;
+            scalerDiv.style.height = `calc(${100 / scale}% + 1px)`;
           }
         }
       },
