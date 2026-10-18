@@ -53,7 +53,7 @@ let oscillatorNode;
 const synthesizer = {
   noteOn(noteNumber) {
     oscillatorNode = audioContext.createOscillator();
-    oscillatorNode.frequency = MidiToFrequency(noteNumber);
+    oscillatorNode.frequency.value = MidiToFrequency(noteNumber);
     oscillatorNode.connect(destinationNode);
     oscillatorNode.start();
   },
@@ -83,7 +83,7 @@ This is an example of a synthesizer unit implemented as an iframe.
 
 The parent page injects a `queryUnitInterface()` function into the iframe's `window`. The `unitInterface` object it returns is the entry point for all communication with the host.
 
-When writing a unit in TypeScript, use the typed wrapper around `window.queryUnitInterface` that `@wafer-host/unit-types` provides.
+When writing a unit in TypeScript, use the typed wrapper around `window.queryUnitInterface` that `wafer-host/unit-types` provides.
 
 When the unit runs standalone, `window.queryUnitInterface` does not exist and `unitInterface` is `undefined`. The code above is written so that running the unit on its own during development does not throw.
 
@@ -118,7 +118,7 @@ const App = () => {
       />
       <UnitFrame
         unitId="synth1"
-        unitUrl={catalog.webaudioTinySynthMini.loaderPageUrl}
+        unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
         destSpec="effect1"
       />
       <UnitFrame
