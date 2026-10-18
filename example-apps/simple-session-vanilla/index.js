@@ -1,8 +1,8 @@
 import {
   createHostSystem,
   createSequencerTickDriver,
-} from "https://esm.sh/wafer-host/core";
-import { registerCustomElements } from "https://esm.sh/wafer-host/custom-elements";
+} from "https://esm.sh/wafer-host@0.1.19/core";
+import { registerCustomElements } from "https://esm.sh/wafer-host@0.1.19/custom-elements";
 
 const hostSystem = createHostSystem();
 registerCustomElements(hostSystem);
