@@ -67,12 +67,16 @@ const UnitTiles = () => {
         destSpec="$output"
         unitUrl={catalog.sunsetDelay.loaderPageUrl}
       />
-
       <UnitFrameScaled
         className="bg-gray-400"
         unitId="sequencer1"
         destSpec="synth1"
         unitUrl={catalog.tonerioSequencer.loaderPageUrl}
+        onUnitInstanceLoaded={(unit) => {
+          if (unit.presetProvider?.getCommandNames?.().includes("random")) {
+            unit.presetProvider?.applyCommand?.("random");
+          }
+        }}
       />
       <UnitFrameScaled
         className="bg-gray-400"
