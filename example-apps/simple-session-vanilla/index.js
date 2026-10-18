@@ -34,6 +34,18 @@ function setupBpmInput(bpmInput, bpmText) {
   });
 }
 
+function randomizeSequencerPattern() {
+  const sequencerFrame = document.querySelector(
+    'unit-frame-scaled[unit-id="sequencer1"]',
+  );
+  sequencerFrame.onUnitInstanceLoaded = (unit) => {
+    if (unit.presetProvider?.getCommandNames?.().includes("random")) {
+      unit.presetProvider.applyCommand("random");
+    }
+  };
+}
+randomizeSequencerPattern();
+
 window.addEventListener("load", () => {
   const getElement = (id) => document.getElementById(id);
   const doms = {

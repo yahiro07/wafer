@@ -248,6 +248,11 @@ const UnitWindow = ({ unitItem }: { unitItem: UnitItem }) => {
             unitId={unitItem.unitId}
             unitUrl={catalog[unitItem.catalogKey].loaderPageUrl}
             destSpec={unitItem.destSpec}
+            onUnitInstanceLoaded={(unit) => {
+              if (unitItem.catalogKey === "tonerioSequencer") {
+                unit.presetProvider?.applyCommand?.("random");
+              }
+            }}
           />
         </div>
       </div>
@@ -328,7 +333,7 @@ const BottomBar = () => {
 const App = () => {
   const { playing } = store.useSnapshot();
   return (
-    <HostAppProvider hostSystem={hostSystem} playing={playing}>
+    <HostAppProvider hostSystem={hostSystem} playing={playing} bpm={100}>
       <div className={cx("flex-v select-none", css({ height: "100dvh" }))}>
         <DeskSection />
         <BottomBar />
