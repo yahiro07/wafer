@@ -18,8 +18,8 @@ importers:
         specifier: ^0.1.14
         version: 0.1.14(react@19.2.8)
       wafer-host:
-        specifier: ^0.1.9
-        version: 0.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^0.1.18
+        version: 0.1.18(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@twind/core':
         specifier: ^1.1.3
@@ -497,8 +497,8 @@ packages:
       yaml:
         optional: true
 
-  wafer-host@0.1.9:
-    resolution: {integrity: sha512-IPz4p0zKlOb5B/rETIt7cA85fvmgcCY5Kin74XPERkK8E9ykx1QV8MOomduM34YO3xnAGNHMGH0oZOCoXnvfTQ==}
+  wafer-host@0.1.18:
+    resolution: {integrity: sha512-z6Fspf6fb2omVXazPJ/GX6GMTa3MX+/SCLRFOLTXGWHFG0L8DXShKWTnCxRBVeJcRmV4coZ+KevociYHrMpeeA==}
     peerDependencies:
       react: ^19.2.6
       react-dom: ^19.2.6
@@ -786,7 +786,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  wafer-host@0.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  wafer-host@0.1.18(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     optionalDependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
