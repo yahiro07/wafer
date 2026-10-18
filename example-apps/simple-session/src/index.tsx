@@ -22,7 +22,7 @@ const store = createStore<StoreState>({
 const ControlBar = () => {
   const { playing, bpm } = store.useSnapshot();
   return (
-    <div className="flex-c gap-6 bg-gray-400 h-[70px]">
+    <div className="flex-c gap-6 bg-neutral-400 h-[60px]">
       <button
         className={clsx(
           "p-3 bd-none bg-gray-200 cursor-pointer",
@@ -52,23 +52,23 @@ const UnitTiles = () => {
   return (
     <div
       className={clsx(
-        "grid grid-cols-2 grid-rows-2 gap-2 w-[1200px] h-[700px] overflow-hidden",
+        "grid grid-cols-2 grid-rows-2 gap-1 w-[1200px] h-[800px] overflow-hidden",
       )}
     >
       <UnitFrameScaled
-        className="bg-gray-400"
+        className="bg-gray-300"
         unitId="drum1"
         destSpec="$output"
         unitUrl={catalog.shinyDrumMachine.loaderPageUrl}
       />
       <UnitFrameScaled
-        className="bg-gray-400"
+        className="bg-gray-300"
         unitId="effect1"
         destSpec="$output"
         unitUrl={catalog.sunsetDelay.loaderPageUrl}
       />
       <UnitFrameScaled
-        className="bg-gray-400"
+        className="bg-gray-300"
         unitId="sequencer1"
         destSpec="synth1"
         unitUrl={catalog.tonerioSequencer.loaderPageUrl}
@@ -79,7 +79,7 @@ const UnitTiles = () => {
         }}
       />
       <UnitFrameScaled
-        className="bg-gray-400"
+        className="bg-gray-300"
         unitId="synth1"
         destSpec="effect1"
         unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
@@ -90,8 +90,8 @@ const UnitTiles = () => {
 
 const PageRoot = () => {
   return (
-    <div className="w-dvw h-dvh flex-c bg-gray-500">
-      <div className="flex-v gap-2">
+    <div className="w-dvw h-dvh flex-c bg-white">
+      <div className="flex-v gap-1">
         <ControlBar />
         <UnitTiles />
       </div>
