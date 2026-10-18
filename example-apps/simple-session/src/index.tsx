@@ -57,9 +57,22 @@ const UnitTiles = () => {
     >
       <UnitFrameScaled
         className="bg-gray-400"
+        unitId="drum1"
+        destSpec="$output"
+        unitUrl={catalog.shinyDrumMachine.loaderPageUrl}
+      />
+      <UnitFrameScaled
+        className="bg-gray-400"
         unitId="effect1"
         destSpec="$output"
         unitUrl={catalog.sunsetDelay.loaderPageUrl}
+      />
+
+      <UnitFrameScaled
+        className="bg-gray-400"
+        unitId="sequencer1"
+        destSpec="synth1"
+        unitUrl={catalog.tonerioSequencer.loaderPageUrl}
       />
       <UnitFrameScaled
         className="bg-gray-400"
@@ -67,25 +80,13 @@ const UnitTiles = () => {
         destSpec="effect1"
         unitUrl={catalog.webaudioTinysynthMini.loaderPageUrl}
       />
-      <UnitFrameScaled
-        className="bg-gray-400"
-        unitId="drum1"
-        destSpec="$output"
-        unitUrl={catalog.graphiteDrumMachine.loaderPageUrl}
-      />
-      <UnitFrameScaled
-        className="bg-gray-400"
-        unitId="sequencer1"
-        destSpec="synth1"
-        unitUrl={catalog.tonerioSequencer.loaderPageUrl}
-      />
     </div>
   );
 };
 
 const PageRoot = () => {
   return (
-    <div className="w-dvw h-dvh flex-c bg-gray-100">
+    <div className="w-dvw h-dvh flex-c bg-gray-500">
       <div className="flex-v gap-2">
         <ControlBar />
         <UnitTiles />
