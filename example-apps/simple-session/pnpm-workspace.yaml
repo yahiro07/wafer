@@ -1,3 +1,6 @@
+allowBuilds:
+  esbuild: false
+  workerd: false
 minimumReleaseAgeExclude:
   - wafer-host
   - snap-store@0.1.14
