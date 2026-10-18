@@ -10,6 +10,10 @@ import { UnitInterface, UnitInterfaceProvider } from "../unit-types";
 type LoadedCallback = (unitInstance: HsUnitInstance) => void;
 type CleanupFn = () => void;
 
+function readViewActiveAttribute(value: string | null): boolean {
+  return value !== "false";
+}
+
 type UnitElementClass = CustomElementConstructor & {
   supportsSharableUnitClass?: boolean;
 };
@@ -120,15 +124,26 @@ const moduleLocal = {
 
 class UnitFrame extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["unit-id", "dest-spec", "url"];
+    return ["unit-id", "dest-spec", "url", "view-active"];
   }
   onUnitInstanceLoaded: LoadedCallback | null = null;
   _cleanup: CleanupFn | null = null;
+  #unitInstance: HsUnitInstance | null = null;
+  #viewActive = true;
+
+  attributeChangedCallback(name: string): void {
+    if (name !== "view-active") return;
+    this.#viewActive = readViewActiveAttribute(
+      this.getAttribute("view-active"),
+    );
+    this.#syncViewActive();
+  }
 
   connectedCallback(): void {
     this.#mount();
   }
   disconnectedCallback(): void {
+    this.#unitInstance = null;
     this._cleanup?.();
     this._cleanup = null;
   }
@@ -153,7 +168,7 @@ class UnitFrame extends HTMLElement {
         destSpec,
         url,
         (unitInstance) => {
-          this.onUnitInstanceLoaded?.(unitInstance);
+          this.#handleUnitLoaded(unitInstance);
         },
       ).then((cleanup) => {
         this._cleanup = cleanup;
@@ -166,16 +181,41 @@ class UnitFrame extends HTMLElement {
         destSpec,
         url,
         (unitInstance) => {
-          this.onUnitInstanceLoaded?.(unitInstance);
+          this.#handleUnitLoaded(unitInstance);
         },
       );
     }
+  }
+
+  #syncViewActive(): void {
+    this.#unitInstance?.unitCallbacks?.setViewActive?.(this.#viewActive);
+  }
+
+  #handleUnitLoaded(unitInstance: HsUnitInstance): void {
+    this.#unitInstance = unitInstance;
+    this.#syncViewActive();
+    this.onUnitInstanceLoaded?.(unitInstance);
   }
 }
 
 class UnitFrameScaled extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["unit-id", "dest-spec", "url"];
+    return ["unit-id", "dest-spec", "url", "view-active"];
+  }
+
+  attributeChangedCallback(
+    name: string,
+    _oldValue: string | null,
+    value: string | null,
+  ): void {
+    if (name !== "view-active") return;
+    const unitFrame = this.shadowRoot?.querySelector("#unit-frame");
+    if (!unitFrame) return;
+    if (value === null) {
+      unitFrame.removeAttribute("view-active");
+    } else {
+      unitFrame.setAttribute("view-active", value);
+    }
   }
 
   onUnitInstanceLoaded: LoadedCallback | null = null;
@@ -219,18 +259,22 @@ class UnitFrameScaled extends HTMLElement {
         align-items: center;
       }
       </style>
-      <div id="scaler">
-        <unit-frame id="unit-frame" unit-id="${unitId}" dest-spec="${destSpec}" url="${url}"></unit-frame>
-      </div>
+      <div id="scaler"></div>
     `;
 
-    const unitFrame = shadowRoot.querySelector(
-      "#unit-frame",
-    ) as UnitFrame | null;
     const scalerDiv = shadowRoot.querySelector(
       "#scaler",
     ) as HTMLDivElement | null;
-    if (!unitFrame || !scalerDiv) {
+    const unitFrame = document.createElement("unit-frame") as UnitFrame;
+    unitFrame.id = "unit-frame";
+    unitFrame.setAttribute("unit-id", unitId);
+    unitFrame.setAttribute("dest-spec", destSpec);
+    unitFrame.setAttribute("url", url);
+    const viewActive = this.getAttribute("view-active");
+    if (viewActive !== null) {
+      unitFrame.setAttribute("view-active", viewActive);
+    }
+    if (!scalerDiv) {
       throw new Error("unit-frame-scaled failed to mount internal elements");
     }
 
@@ -298,6 +342,7 @@ class UnitFrameScaled extends HTMLElement {
       internal.setupObserveUnitSize(unitInstance);
       this.onUnitInstanceLoaded?.(unitInstance);
     };
+    scalerDiv.appendChild(unitFrame);
   }
 }
 
