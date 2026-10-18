@@ -59,7 +59,7 @@ export function createHostSystemCore(
         const srcUnitId = source.split(".")[0];
         const [former, destParameterId] = destination.split("#");
         const [destUnitId, destPortId] = former.split(".");
-        const destPortKey = `${destUnitId}.${destPortId}`;
+        const destPortKey = `${destUnitId}.${destPortId || "primaryInput"}`;
         bus.connectionRules.push({
           connectionKey,
           srcPortKey: source,
